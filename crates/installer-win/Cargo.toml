@@ -1,0 +1,18 @@
+[package]
+name = "installer-win"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Instalador nativo de TeatroGestión para Windows 11 (Ballet Oficial de Córdoba)"
+
+[[bin]]
+name = "Instalar_TeatroGestion"
+path = "src/main.rs"
+
+[dependencies]
+gestion-license = { path = "../gestion-license" }
+rusqlite = { workspace = true }
+rpassword = "7"
+zeroize = "1"

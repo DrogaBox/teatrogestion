@@ -1,0 +1,43 @@
+==============================================================================
+   TEATROGESTIÓN — BALLET OFICIAL DE CÓRDOBA (WINDOWS 11)
+   Teatro del Libertador Gral. San Martín
+==============================================================================
+
+★ REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS. ★
+
+MÓDULOS INCLUIDOS:
+------------------
+1. Gestión de Repartos, Elencos y Roles de Funciones.
+2. Inventario Integral de Ballet (Mallas, Zapatillas de Punta/Media Punta,
+   Calzas, Suspensores, Cancán, Accesorios, Talles y Stock).
+3. Entregas y Devoluciones a Bailarines con Firma Digital y Exportación PDF/Excel.
+4. Planillas de Asistencia Diaria y Partes Diarios de Ensayo.
+5. Sincronización en Red Local (LAN Sync / WebSocket) con la App Android (Samsung Galaxy A53)
+   y comunicación con la suite TeatroCue.
+
+INSTALACIÓN EN WINDOWS 11:
+--------------------------
+1. Conecte este pendrive a la Notebook de Inspección o PC con Windows 11.
+2. Ejecute (doble clic) en:
+      Instalar_TeatroGestion.exe   (o Instalar_TeatroGestion.bat)
+3. El instalador copiará los archivos a:
+      C:\TeatroGestion  (o %LOCALAPPDATA%\TeatroGestion)
+   y creará automáticamente el acceso directo "TeatroGestión" en su Escritorio
+   y en el Menú Inicio con el icono oficial del teatro.
+4. Listo. Puede iniciar la aplicación directamente desde el acceso directo.
+
+USO PORTÁTIL (SIN INSTALAR):
+----------------------------
+Si no desea instalar el programa en la PC, puede ejecutarlo directamente
+desde el pendrive entrando a la carpeta:
+      TeatroGestion\TeatroGestion.exe
+
+REQUISITOS DEL SISTEMA:
+-----------------------
+- Windows 11 de 64 bits (o Windows 10 v1809+).
+- Microsoft Edge WebView2 Runtime (preinstalado por defecto en Windows 11).
+- 4 GB de memoria RAM (óptimo 8 GB).
+- Red Wi-Fi compartida para sincronización LAN con los dispositivos móviles.
+
+★ REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS. ★
+==============================================================================

@@ -1,0 +1,34 @@
+[package]
+name = "gestion-license"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Licencia offline de TeatroGestión: Machine ID, firmas Ed25519 y archivo de clave maestra cifrado."
+
+[lib]
+name = "gestion_license"
+path = "src/lib.rs"
+
+[[bin]]
+name = "teatrogestion-keygen"
+path = "src/bin/keygen.rs"
+
+[dependencies]
+sha2 = "0.10"
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+rand_core = { version = "0.6", features = ["getrandom"] }
+aes-gcm = "0.10"
+pbkdf2 = "0.12"
+hmac = "0.12"
+zeroize = "1"
+rpassword = "7"
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62", features = ["Win32_Foundation", "Win32_System_Registry", "Win32_Security"] }
+
+[features]
+default = []
+enforce-license = []

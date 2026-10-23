@@ -1,0 +1,38 @@
+# Compilación
+/target/
+node_modules/
+/ui/dist/
+crates/gestion-app/gen/android/build/
+crates/gestion-app/gen/android/app/build/
+crates/gestion-app/gen/android/.gradle/
+crates/gestion-app/gen/android/local.properties
+.gradle/
+
+# Datos, claves y firmas: nunca al repositorio
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.key
+*.enc
+*.jks
+*.keystore
+*.pem
+.env
+.env.*
+
+# Binarios generados (se publican como releases)
+*.apk
+*.idsig
+/paquete-actualizacion/*.exe
+/paquete-actualizacion/*.zip
+
+# Capturas y borradores de trabajo
+/teatro_*.png
+/icon_v*.png
+/icon_v*.svg
+.DS_Store
+.freebuff/
+
+# Documentación interna de planificación
+/docs/

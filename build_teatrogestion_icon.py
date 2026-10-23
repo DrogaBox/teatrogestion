@@ -1,0 +1,41 @@
+import subprocess
+
+svg_tg = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Outer Rounded Squircle -->
+  <rect x="40" y="40" width="944" height="944" rx="210" fill="#18181e" stroke="#ffb31a" stroke-width="26"/>
+  
+  <!-- Subtle Theatrical Proscenium Arch in Background -->
+  <path d="M 180 710 C 180 260, 844 260, 844 710 Z" fill="#252633" opacity="0.65"/>
+
+  <!-- Main Golden Disc -->
+  <circle cx="512" cy="495" r="255" fill="#ffb31a"/>
+
+  <!-- Five Bottom Theatrical Footlight Pillars (Teatro Suite Signature) -->
+  <g fill="#ffb31a">
+    <rect x="290" y="705" width="44" height="65" rx="22"/>
+    <rect x="390" y="680" width="44" height="120" rx="22"/>
+    <rect x="490" y="650" width="44" height="180" rx="22"/>
+    <rect x="590" y="680" width="44" height="120" rx="22"/>
+    <rect x="690" y="705" width="44" height="65" rx="22"/>
+  </g>
+
+  <!-- Golden Stage Star Above Monogram -->
+  <polygon points="512,280 523,306 551,307 528,324 537,351 512,335 487,351 496,324 473,307 501,306" fill="#18181e"/>
+
+  <!-- Monogram TG in Dark Charcoal (#18181e) with Precision Geometry -->
+  <g fill="#18181e">
+    <!-- Letter T -->
+    <path d="M 324 375 L 484 375 L 484 435 L 432 435 L 432 635 L 376 635 L 376 435 L 324 435 Z"/>
+
+    <!-- Letter G (Refined Modern Geometric Sans) -->
+    <path d="M 602 375 C 672 375, 712 418, 712 485 L 656 485 C 656 448, 634 430, 602 430 C 564 430, 536 458, 536 505 C 536 552, 564 580, 602 580 C 634 580, 656 562, 656 532 L 602 532 L 602 485 L 712 485 L 712 555 C 696 605, 658 635, 602 635 C 528 635, 480 580, 480 505 C 480 430, 528 375, 602 375 Z"/>
+  </g>
+</svg>
+"""
+
+with open('teatrogestion.svg', 'w') as f:
+    f.write(svg_tg)
+
+# Generate PNG in 512x512
+subprocess.run(['rsvg-convert', '-w', '512', '-h', '512', 'teatrogestion.svg', '-o', 'teatrogestion.png'], check=True)
+print("teatrogestion.png rendered successfully.")

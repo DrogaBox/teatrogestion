@@ -1,0 +1,21 @@
+[package]
+name = "updater-win"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Actualizar_TeatroGestion.exe: actualiza TeatroGestión en una PC con Windows sin necesidad del pendrive (un solo archivo)."
+
+[lib]
+name = "updater_win"
+path = "src/lib.rs"
+
+[[bin]]
+name = "Actualizar_TeatroGestion"
+path = "src/main.rs"
+
+[dependencies]
+gestion-core = { path = "../gestion-core" }
+gestion-license = { path = "../gestion-license" }
+rusqlite = { workspace = true }

@@ -1,0 +1,39 @@
+ACTUALIZAR TEATROGESTIÓN (para la PC de la Inspección)
+=======================================================
+
+1) Descomprima este archivo (clic derecho > "Extraer todo...").
+
+2) Haga doble clic en:   Actualizar_TeatroGestion.exe
+
+   - Si Windows muestra "Windows protegió su PC": toque "Más información" y
+     después "Ejecutar de todos modos". Es normal en programas nuevos.
+   - Si TeatroGestión está abierto, el actualizador le ofrece cerrarlo.
+
+3) Cuando diga "¡LISTO!", abra TeatroGestión desde el acceso directo del
+   Escritorio como siempre.
+
+QUÉ PASA CON MIS DATOS
+----------------------
+- Su información (personal, asistencia, inventario, Bóveda de Inspección) y su
+  licencia NO se tocan.
+- Antes de actualizar se hace una copia de seguridad de la base de datos en:
+     %APPDATA%\com.teatrogestion.app\respaldos
+  (se guardan las últimas 5).
+- La versión anterior del programa queda guardada como
+  "TeatroGestion.exe.anterior" en la carpeta de instalación.
+- Si algo no coincide, el actualizador NO cambia nada y se lo dice.
+
+SI ALGO FALLA
+-------------
+Mande una foto del mensaje o el archivo "actualizacion.log" que está en la
+carpeta de instalación (normalmente C:\TeatroGestion).
+
+NOVEDADES (version 1.1)
+-----------------------
+Al abrir el programa por primera vez aparece una ventana "Novedades" con todo
+lo que se agrego y se arreglo; despues se puede volver a ver en el menu
+"Mas" > "Novedades". La Ayuda tambien esta actualizada.
+
+IMPORTANTE: la sincronizacion por Wi-Fi con el celular usa una clave. Se ve
+en "Mas" > "Sincronizar por Wi-Fi" de la PC; en el celular se escribe una sola
+vez. Hay que instalar tambien la app nueva del celular.

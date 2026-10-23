@@ -1,0 +1,35 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/gestion-core",
+    "crates/gestion-app",
+    "crates/installer-win",
+    "crates/updater-win",
+    "crates/gestion-license",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.77"
+authors = ["Inspección del Ballet Oficial de Córdoba — Teatro del Libertador San Martín"]
+license = "Proprietary"
+repository = "https://local.teatrodelibertador.gob.ar/teatro-gestion"
+
+[workspace.dependencies]
+rusqlite = { version = "0.31.0", features = ["bundled", "backup", "functions", "serde_json"] }
+thiserror = "1.0.61"
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = "1.0.117"
+chrono = { version = "0.4.38", default-features = false, features = ["clock", "std", "serde"] }
+uuid = { version = "1.8.0", features = ["v4", "v7", "fast-rng", "serde"] }
+blake3 = "1.5.1"
+zstd = "0.13.1"
+proptest = "1.4.0"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
+opt-level = 3

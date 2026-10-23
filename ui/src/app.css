@@ -1,0 +1,191 @@
+@import "tailwindcss";
+
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --tc-bg: #121214;
+  --tc-panel: #1a1a1e;
+  --tc-panel-raised: #24242a;
+  --tc-row-alt: #17171b;
+  --tc-grid: #34343c;
+  --tc-text: #d8d8dc;
+  --tc-text-dim: #82828a;
+  --tc-amber: #ffb31a;
+  --tc-amber-dim: #8a6214;
+  --tc-green: #3de06a;
+  --tc-cyan: #2ed6e8;
+  --tc-red: #ff4a4a;
+  color-scheme: dark;
+}
+
+body {
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+  background-color: #121214;
+  color: #d8d8dc;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  color-scheme: dark;
+}
+
+/* Apariencia sobria de teatro para selects, options, inputs y textareas */
+select {
+  background-color: #1a1a1e !important;
+  color: #d8d8dc !important;
+  border-color: #34343c !important;
+  color-scheme: dark;
+}
+
+select option, select optgroup {
+  background-color: #1a1a1e !important;
+  color: #d8d8dc !important;
+}
+
+input, textarea {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+  cursor: pointer;
+}
+
+/* =============================================================================
+   REGLAS DE IMPRESIÓN Y EXPORTACIÓN A PDF OFICIAL (A4 LANDSCAPE)
+   Evita corte de filas, repite encabezados thead y asegura márgenes limpios
+============================================================================= */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 14mm 10mm 14mm 10mm;
+  }
+
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    color-scheme: light !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    page-break-inside: auto !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  td, th {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  tfoot {
+    display: table-footer-group !important;
+  }
+
+  .overflow-x-auto, .overflow-y-auto {
+    overflow: visible !important;
+  }
+
+  /* La pantalla de trabajo tiene altura fija y desplazamiento propio: al imprimir fluye normal. */
+  .app-shell {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  .app-scroll {
+    overflow: visible !important;
+    height: auto !important;
+  }
+}
+
+
+/* =============================================================================
+   CELULAR (≤ 767 px): lectura cómoda y botones tocables con el dedo
+   - Textos mínimos legibles (nada por debajo de 12 px)
+   - Ventanas grandes a pantalla completa (sin márgenes que roban lugar)
+   - Controles de al menos 40 px de alto
+============================================================================= */
+@media screen and (max-width: 767px) {
+  [class*="text-[8px]"], [class*="text-[9px]"], [class*="text-[10px]"] { font-size: 12px !important; line-height: 1.35 !important; }
+  [class*="text-[11px]"] { font-size: 13px !important; line-height: 1.4 !important; }
+  .text-xs { font-size: 14px !important; line-height: 1.45 !important; }
+  .text-sm { font-size: 15px !important; }
+
+  button:not(table button):not([data-compact]),
+  select, input[type="text"], input[type="search"], input[type="number"], input[type="date"], input[type="time"], input[type="password"], input[type="email"], input[type="tel"], textarea {
+    min-height: 40px;
+  }
+  input, select, textarea { font-size: 16px !important; } /* evita el zoom automático al tocar un campo */
+
+  /* Ventanas grandes: pantalla completa */
+  .fixed.inset-0.z-50:has(> [class*="max-w-2xl"]),
+  .fixed.inset-0.z-50:has(> [class*="max-w-3xl"]),
+  .fixed.inset-0.z-50:has(> [class*="max-w-4xl"]),
+  .fixed.inset-0.z-50:has(> [class*="max-w-5xl"]),
+  .fixed.inset-0.z-50:has(> [class*="max-w-6xl"]) {
+    padding: 0 !important;
+    align-items: stretch !important;
+  }
+  .fixed.inset-0.z-50 > [class*="max-w-2xl"],
+  .fixed.inset-0.z-50 > [class*="max-w-3xl"],
+  .fixed.inset-0.z-50 > [class*="max-w-4xl"],
+  .fixed.inset-0.z-50 > [class*="max-w-5xl"],
+  .fixed.inset-0.z-50 > [class*="max-w-6xl"] {
+    max-width: none !important;
+    width: 100% !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    overflow-y: auto;
+  }
+  /* Tablas anchas: se desplazan de costado dentro de su caja */
+  .overflow-x-auto, .overflow-auto { -webkit-overflow-scrolling: touch; }
+}
+
+@media screen and (max-width: 767px) {
+  /* Barras superiores de ventanas grandes: se acomodan en varias líneas en vez de desbordar */
+  .fixed.inset-0.z-50 > div > div:first-child[class*="justify-between"] {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-top: calc(0.5rem + env(safe-area-inset-top, 0px));
+  }
+  .fixed.inset-0.z-50 > div > div:first-child[class*="justify-between"] > div:first-child { flex: 1 1 100%; min-width: 0; }
+  .fixed.inset-0.z-50 > div > div:first-child[class*="justify-between"] h2 { white-space: normal; flex-wrap: wrap; }
+
+  /* Tablas dentro de ventanas: ancho cómodo y desplazamiento horizontal, sin textos apretados */
+  .fixed.inset-0.z-50 .overflow-x-auto > table { min-width: 680px; }
+  .fixed.inset-0.z-50 .overflow-x-auto th,
+  .fixed.inset-0.z-50 .overflow-x-auto td { white-space: nowrap; }
+}
+
+@media screen and (max-width: 767px) {
+  button.tg-close { min-width: 44px; min-height: 44px; font-size: 20px !important; line-height: 1 !important; }
+}
+
+/* Escritorio: tamaños de letra mínimos más cómodos (la pantalla, no el papel) */
+@media screen and (min-width: 768px) {
+  [class*="text-[8px]"], [class*="text-[9px]"] { font-size: 11px !important; }
+  [class*="text-[10px]"] { font-size: 11.5px !important; }
+  [class*="text-[11px]"] { font-size: 12.5px !important; }
+  .text-xs { font-size: 13px !important; line-height: 1.45 !important; }
+}
