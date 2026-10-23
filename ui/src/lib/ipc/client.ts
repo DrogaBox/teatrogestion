@@ -655,6 +655,21 @@ export const api = {
   deleteWorkCastingPlan: (planId: string): Promise<void> =>
     invoke('delete_work_casting_plan', { planId }),
 
+  getUpdateStatus: (): Promise<UpdateStatus> =>
+    invoke('get_update_status'),
+
+  setUpdateToken: (token: string): Promise<void> =>
+    invoke('set_update_token', { token }),
+
+  clearUpdateToken: (): Promise<void> =>
+    invoke('clear_update_token'),
+
+  checkForUpdate: (): Promise<UpdateInfo | null> =>
+    invoke('check_for_update'),
+
+  installUpdate: (info: UpdateInfo): Promise<InstallOutcome> =>
+    invoke('install_update', { info }),
+
   getLicenseInfo: (): Promise<LicenseInfo> =>
     invoke('get_license_info'),
 
@@ -809,6 +824,28 @@ export interface SyncReportDto {
   records_applied: number;
   synced_at_iso: string;
   message: string;
+}
+
+export interface UpdateInfo {
+  version: string;
+  name: string;
+  notes: string;
+  published_at: string;
+  asset_id: number;
+  asset_name: string;
+  asset_size: number;
+  asset_digest: string | null;
+}
+
+export interface UpdateStatus {
+  version: string;
+  platform: 'windows' | 'android' | null;
+  has_token: boolean;
+}
+
+export interface InstallOutcome {
+  mode: 'windows' | 'android';
+  path: string;
 }
 
 export interface LicenseInfo {

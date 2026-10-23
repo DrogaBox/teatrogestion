@@ -6,10 +6,11 @@ members = [
     "crates/installer-win",
     "crates/updater-win",
     "crates/gestion-license",
+    "crates/gestion-update",
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "1.2.0"
 edition = "2021"
 rust-version = "1.77"
 authors = ["Inspección del Ballet Oficial de Córdoba — Teatro del Libertador San Martín"]

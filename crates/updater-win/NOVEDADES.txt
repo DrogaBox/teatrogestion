@@ -1,10 +1,11 @@
-Novedades de esta versión de TeatroGestión (1.1)
+Novedades de esta versión de TeatroGestión (1.2)
 ------------------------------------------------
 - Nueva pantalla de Inicio con el resumen del día: asistencia, agenda de clases y ensayos, y avisos importantes.
 - Código IJ (inasistencia justificada) con tope de 2 por mes y 10 por año, en la planilla BOP y en la asistencia diaria.
 - Estado «Adecuación de tareas» para quienes trabajan en otra área: cuenta como presente.
 - Lo cargado en la planilla BOP ahora se ve igual en la asistencia diaria. «Sin parte» ya no baja el presentismo.
 - Menús reordenados (Documentos, Depósito y personal, Más), letras más grandes y textos en español.
+- Actualización automática: desde esta versión TeatroGestión busca sola las versiones nuevas y muestra qué cambia (menú Más > Actualizaciones).
 - Ventana de Novedades y Ayuda actualizada (menú Más).
 - La sincronización por Wi-Fi usa una clave compartida: hay que actualizar también la app del celular.
 - Sus datos (personal, asistencia, inventario, Bóveda de Inspección) y su licencia NO se tocan.

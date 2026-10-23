@@ -10,7 +10,7 @@
 
   // Búsqueda y Navegación
   let searchQuery = $state('');
-  let activeTopic = $state<'intro' | 'personnel' | 'regime' | 'attendance' | 'casting' | 'vault' | 'admin_reset' | 'sync_mobile' | 'home' | 'news'>('intro');
+  let activeTopic = $state<'intro' | 'personnel' | 'regime' | 'attendance' | 'casting' | 'vault' | 'admin_reset' | 'sync_mobile' | 'home' | 'news' | 'updates'>('intro');
 
   const topics = [
     { id: 'intro', label: '1. Inicio & Licencia Offline', badge: 'Windows 11' },
@@ -22,7 +22,8 @@
     { id: 'admin_reset', label: '7. Recuperar Contraseña (Admin)', badge: 'master.key.enc' },
     { id: 'sync_mobile', label: '8. Sincronización LAN & Android', badge: 'P2P / APK' },
     { id: 'home', label: '9. Pantalla de Inicio', badge: 'Resumen del día' },
-    { id: 'news', label: '10. Novedades de la versión', badge: 'v' + CHANGELOG[0].version },
+    { id: 'updates', label: '10. Actualizaciones automáticas', badge: 'Más > Actualizaciones' },
+    { id: 'news', label: '11. Novedades de la versión', badge: 'v' + CHANGELOG[0].version },
   ];
 
   function matchesSearch(text: string): boolean {
@@ -442,10 +443,27 @@
           {/if}
 
           <!-- CAPÍTULO 10 -->
+          {#if activeTopic === 'updates' && matchesSearch('actualizaciones actualizar version nueva token github descargar instalar')}
+            <div class="space-y-4">
+              <div class="border-l-4 border-[#00e676] pl-3 py-0.5">
+                <h3 class="text-base font-bold text-white">10. Actualizaciones automáticas</h3>
+                <p class="text-xs text-[#8e8e9f]">La aplicación avisa cuando hay una versión nueva y muestra qué cambia.</p>
+              </div>
+              <div class="space-y-3 text-xs text-[#c0c0d0]">
+                <p><strong class="text-white">Primera vez:</strong> menú <strong>Más → Actualizaciones</strong> y escribir el token de actualización que entrega el desarrollador. Se carga una sola vez en cada equipo; la aplicación comprueba que funcione antes de guardarlo.</p>
+                <p><strong class="text-white">Después:</strong> la aplicación busca sola una vez por día. Si hay una versión nueva se abre una ventana con las notas y el botón «Descargar e instalar». También se puede buscar a mano desde el mismo menú.</p>
+                <p><strong class="text-white">En la PC:</strong> se descarga el actualizador, se verifica y se ejecuta. TeatroGestión se cierra, se hace una copia de seguridad de los datos y se reemplaza solo el programa. La base de datos y la licencia no se tocan.</p>
+                <p><strong class="text-white">En el celular:</strong> se descarga el APK y Android pide confirmar la instalación. La primera vez puede pedir permiso para instalar desde esta aplicación.</p>
+                <p><strong class="text-white">Sin internet:</strong> no pasa nada, simplemente no busca. El resto del programa funciona igual.</p>
+              </div>
+            </div>
+          {/if}
+
+          <!-- CAPÍTULO 11 -->
           {#if activeTopic === 'news' && matchesSearch('novedades cambios version changelog arreglos')}
             <div class="space-y-5">
               <div class="border-l-4 border-[#00e676] pl-3 py-0.5">
-                <h3 class="text-base font-bold text-white">10. Novedades de cada versión</h3>
+                <h3 class="text-base font-bold text-white">11. Novedades de cada versión</h3>
                 <p class="text-xs text-[#8e8e9f]">Qué se agregó y qué se arregló. También está en el menú Más → Novedades.</p>
               </div>
               {#each CHANGELOG as v}

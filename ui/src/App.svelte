@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import {
     api,
+    type UpdateInfo,
     type DailyScheduleAggregate,
     type ScheduleConflict,
     type WorkRegime
@@ -33,6 +34,7 @@
   import DancerDepositSearch from './lib/components/mobile/DancerDepositSearch.svelte';
   import MobileStockCatalogView from './lib/components/mobile/MobileStockCatalogView.svelte';
   import GaynorDecoder from './lib/components/mobile/GaynorDecoder.svelte';
+  import UpdateModal from './lib/components/UpdateModal.svelte';
   import ChangelogModal from './lib/components/ChangelogModal.svelte';
   import { CURRENT_VERSION } from './lib/changelog';
   import MenuButton from './lib/components/MenuButton.svelte';
@@ -62,8 +64,28 @@
   let showVaultModal = $state(false);
   let showHelpModal = $state(false);
   let showChangelogModal = $state(false);
+  let showUpdateModal = $state(false);
+  let foundUpdate = $state<UpdateInfo | null>(null);
   let licenseInfo = $state<LicenseInfo | null>(null);
   let prefilledStockItem = $state<StockItemAvailabilityDto | null>(null);
+
+  // Busca versiones nuevas como máximo una vez cada 24 horas, solo si ya hay token cargado.
+  async function autoCheckForUpdate() {
+    try {
+      const last = Number(localStorage.getItem('tg_last_update_check') ?? 0);
+      if (Date.now() - last < 24 * 3600 * 1000) return;
+      const status = await api.getUpdateStatus();
+      if (!status.platform || !status.has_token) return;
+      const info = await api.checkForUpdate();
+      localStorage.setItem('tg_last_update_check', String(Date.now()));
+      if (info) {
+        foundUpdate = info;
+        showUpdateModal = true;
+      }
+    } catch {
+      /* sin conexión o sin acceso: no se molesta a la usuaria */
+    }
+  }
 
   async function loadLicenseInfo() {
     try {
@@ -146,6 +168,7 @@
         localStorage.setItem('tg_last_seen_version', CURRENT_VERSION);
       }
     } catch { /* sin almacenamiento: no se muestra */ }
+    autoCheckForUpdate();
     loadSchedule(currentDate);
   });
 </script>
@@ -231,7 +254,8 @@
               ...(viewMode === 'mobile' ? [{ label: 'Escáner de códigos', hint: 'Leer códigos de barras con la cámara', onSelect: () => (showBarcodeScannerModal = true) }] : []),
               { label: 'Licencia', hint: 'Estado y vencimiento', onSelect: () => (showLicenseModal = true) },
               { label: 'Asistente de configuración', hint: 'Parámetros de jornada y salas', onSelect: () => (showSetupWizardModal = true) },
-              { label: 'Novedades', hint: 'Qué se agregó y se arregló en esta versión', separatorBefore: true, onSelect: () => (showChangelogModal = true) },
+              { label: 'Actualizaciones', hint: 'Buscar e instalar versiones nuevas', separatorBefore: true, onSelect: () => { foundUpdate = null; showUpdateModal = true; } },
+              { label: 'Novedades', hint: 'Qué se agregó y se arregló en esta versión', onSelect: () => (showChangelogModal = true) },
               { label: 'Ayuda y manual', hint: 'Guías paso a paso', onSelect: () => (showHelpModal = true) },
             ]}
           />
@@ -860,6 +884,7 @@
   />
 {/if}
 
+<UpdateModal isOpen={showUpdateModal} initialInfo={foundUpdate} onClose={() => (showUpdateModal = false)} />
 <ChangelogModal isOpen={showChangelogModal} onClose={() => (showChangelogModal = false)} />
 
 <HelpCenterModal

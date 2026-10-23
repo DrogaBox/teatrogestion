@@ -10,6 +10,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.2',
+    date: '23/10/2026',
+    title: 'Actualización automática',
+    added: [
+      'La aplicación busca versiones nuevas por sí sola (una vez por día) y muestra las notas de cada versión antes de instalar.',
+      'Menú Más > Actualizaciones: buscar a mano, cargar el token de acceso una sola vez y quitarlo si hace falta.',
+      'En Windows se descarga el actualizador, se verifica su huella SHA-256 y se ejecuta con copia de seguridad previa. En el celular se descarga el APK y se abre el instalador de Android.',
+    ],
+    fixed: [],
+  },
+  {
     version: '1.1',
     date: '23/10/2026',
     title: 'Pantalla de Inicio, nuevas reglas de asistencia y celular rediseñado',

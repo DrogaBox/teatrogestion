@@ -1,0 +1,14 @@
+[package]
+name = "gestion-update"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Búsqueda y descarga de versiones nuevas desde los releases de un repositorio de GitHub"
+
+[dependencies]
+ureq = { version = "2", default-features = false, features = ["tls", "json"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = "0.10"
