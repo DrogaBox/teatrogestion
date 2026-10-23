@@ -273,7 +273,7 @@ pub fn export_sync_bundle(
         "SELECT id, schedule_id, room_id, start_time, end_time, activity_type,
                 work_id, passage_id, custom_passage_label, confirmation_state,
                 sound_requirement, teatrocue_cue_ref, master_id, pianist_id,
-                allow_shared_room, notes, sort_order
+                allow_shared_room, notes, sort_order, sound_tech_id
          FROM rehearsal_blocks",
     )?;
     let rehearsal_blocks = stmt
@@ -296,6 +296,30 @@ pub fn export_sync_bundle(
                 "allow_shared_room": row.get::<_, i32>(14)? == 1,
                 "notes": row.get::<_, Option<String>>(15)?,
                 "sort_order": row.get::<_, i32>(16)?,
+                "sound_tech_id": row.get::<_, Option<String>>(17)?,
+            }))
+        })?
+        .collect::<Result<Vec<Value>, _>>()?;
+
+    // 10. Morning classes
+    let mut stmt = conn.prepare(
+        "SELECT id, schedule_id, room_id, gender_division, start_time, end_time,
+                master_id, pianist_id, notes, sound_tech_id
+         FROM morning_classes",
+    )?;
+    let morning_classes = stmt
+        .query_map([], |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, String>(0)?,
+                "schedule_id": row.get::<_, String>(1)?,
+                "room_id": row.get::<_, String>(2)?,
+                "gender_division": row.get::<_, String>(3)?,
+                "start_time": row.get::<_, String>(4)?,
+                "end_time": row.get::<_, String>(5)?,
+                "master_id": row.get::<_, String>(6)?,
+                "pianist_id": row.get::<_, String>(7)?,
+                "notes": row.get::<_, Option<String>>(8)?,
+                "sound_tech_id": row.get::<_, Option<String>>(9)?,
             }))
         })?
         .collect::<Result<Vec<Value>, _>>()?;
@@ -315,6 +339,7 @@ pub fn export_sync_bundle(
         physio_sessions,
         daily_schedules,
         rehearsal_blocks,
+        morning_classes,
     })
 }
 
@@ -778,14 +803,15 @@ pub fn import_sync_bundle(
         let allow_shared = if item["allow_shared_room"].as_bool().unwrap_or(false) { 1 } else { 0 };
         let notes = item["notes"].as_str();
         let sort_order = item["sort_order"].as_i64().unwrap_or(0);
+        let sound_tech_id = item["sound_tech_id"].as_str();
 
         let changes = tx.execute(
             "INSERT INTO rehearsal_blocks (
                 id, schedule_id, room_id, start_time, end_time, activity_type,
                 work_id, passage_id, custom_passage_label, confirmation_state,
                 sound_requirement, teatrocue_cue_ref, master_id, pianist_id,
-                allow_shared_room, notes, sort_order
-             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
+                allow_shared_room, notes, sort_order, sound_tech_id
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)
              ON CONFLICT(id) DO UPDATE SET
                 room_id = excluded.room_id,
                 start_time = excluded.start_time,
@@ -801,16 +827,54 @@ pub fn import_sync_bundle(
                 pianist_id = excluded.pianist_id,
                 allow_shared_room = excluded.allow_shared_room,
                 notes = excluded.notes,
-                sort_order = excluded.sort_order",
+                sort_order = excluded.sort_order,
+                sound_tech_id = excluded.sound_tech_id",
             params![
                 id, sched_id, room_id, start_time, end_time, activity_type,
                 work_id, passage_id, custom_passage, confirmation,
                 sound_req, teatrocue_ref, master_id, pianist_id,
-                allow_shared, notes, sort_order
+                allow_shared, notes, sort_order, sound_tech_id
             ],
         )?;
         if changes > 0 {
             total_applied += 1;
+        }
+    }
+
+    // 10. Morning classes
+    for item in &bundle.morning_classes {
+        total_received += 1;
+        let result = tx.execute(
+            "INSERT INTO morning_classes (
+                id, schedule_id, room_id, gender_division, start_time, end_time,
+                master_id, pianist_id, notes, sound_tech_id
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
+             ON CONFLICT(id) DO UPDATE SET
+                room_id = excluded.room_id,
+                gender_division = excluded.gender_division,
+                master_id = excluded.master_id,
+                pianist_id = excluded.pianist_id,
+                notes = excluded.notes,
+                sound_tech_id = excluded.sound_tech_id",
+            params![
+                item["id"].as_str().unwrap_or_default(),
+                item["schedule_id"].as_str().unwrap_or_default(),
+                item["room_id"].as_str().unwrap_or("SALA_1"),
+                item["gender_division"].as_str().unwrap_or("FEMALE"),
+                item["start_time"].as_str().unwrap_or("09:00"),
+                item["end_time"].as_str().unwrap_or("10:15"),
+                item["master_id"].as_str().unwrap_or_default(),
+                item["pianist_id"].as_str().unwrap_or_default(),
+                item["notes"].as_str(),
+                item["sound_tech_id"].as_str(),
+            ],
+        );
+        match result {
+            Ok(n) if n > 0 => total_applied += 1,
+            Ok(_) => {}
+            // Otra clase ya ocupa esa sala o ese maestro ese día, o falta el parte del día: se conserva lo local.
+            Err(rusqlite::Error::SqliteFailure(e, _)) if e.code == rusqlite::ErrorCode::ConstraintViolation => {}
+            Err(e) => return Err(e.into()),
         }
     }
 

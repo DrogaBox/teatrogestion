@@ -24,6 +24,8 @@
   let personnel = $state<PersonnelWithQuotaDto[]>([]);
   let masters = $derived(personnel.filter(p => p.role === 'MASTER' && p.is_active));
   let pianists = $derived(personnel.filter(p => p.role === 'PIANIST' && p.is_active));
+  let soundTechs = $derived(personnel.filter(p => p.role === 'SOUND_TECH' && p.is_active));
+  let soundTechId = $state('');
 
   async function loadPersonnel() {
     try {
@@ -58,6 +60,7 @@
     masterId = masters.length > 0 ? masters[0].id : 'PER_MASTER_ANANIEV';
     pianistId = pianists.length > 0 ? pianists[0].id : 'PER_PIANIST_ROMERO';
     accompanimentType = 'pianist';
+    soundTechId = '';
     showModal = true;
   }
 
@@ -69,6 +72,7 @@
     endTime = c.end_time;
     masterId = c.master_id;
     pianistId = c.pianist_id;
+    soundTechId = c.sound_tech_id || '';
     accompanimentType = c.pianist_id === 'PER_SOUND_TEATROCUE' ? 'teatrocue' : 'pianist';
     showModal = true;
   }
@@ -86,6 +90,7 @@
         end_time: endTime,
         master_id: masterId,
         pianist_id: accompanimentType === 'teatrocue' ? 'PER_SOUND_TEATROCUE' : pianistId,
+        sound_tech_id: soundTechId || null,
       };
 
       await api.upsertMorningClass(payload);
@@ -158,6 +163,10 @@
             <div class="text-[11px] text-[#82828a] flex items-center gap-1 font-mono">
               <span>{c.pianist_id === 'PER_SOUND_TEATROCUE' ? 'Pista:' : 'Piano:'}</span>
               <span class="text-[#d8d8dc]">{c.pianist_name || 'Sin pianista'}</span>
+              {#if c.sound_tech_name}
+                <span class="text-[#82828a]">· Sonido:</span>
+                <span class="text-[#2ed6e8]">{c.sound_tech_name.split(',')[0]}</span>
+              {/if}
             </div>
           </div>
         </div>
@@ -261,6 +270,16 @@
             >
               Pista TeatroCue
             </button>
+          </div>
+
+          <div class="mb-2">
+            <label for="class-soundtech-select" class="block text-[10px] font-bold uppercase text-[#2ed6e8] mb-1 font-mono">Sonidista a cargo</label>
+            <select id="class-soundtech-select" bind:value={soundTechId} class="w-full h-8 px-2.5 bg-[#121214] border border-[#34343c] rounded text-xs font-bold text-[#d8d8dc] outline-none focus:border-[#ffb31a]">
+              <option value="">Sin asignar</option>
+              {#each soundTechs as t}
+                <option value={t.id}>{t.last_name}, {t.first_name}</option>
+              {/each}
+            </select>
           </div>
 
           {#if accompanimentType === 'pianist'}

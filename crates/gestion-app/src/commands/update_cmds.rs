@@ -23,6 +23,8 @@ fn asset_rule() -> Option<(&'static str, AssetRule)> {
         Some(("windows", AssetRule { suffix: ".exe", prefix: "actualizar_" }))
     } else if cfg!(target_os = "android") {
         Some(("android", AssetRule { suffix: ".apk", prefix: "" }))
+    } else if cfg!(target_os = "linux") {
+        Some(("linux", AssetRule { suffix: "-x86_64", prefix: "teatrogestion-linux" }))
     } else {
         None
     }
@@ -127,7 +129,44 @@ pub async fn install_update(app: AppHandle, info: UpdateInfo) -> Result<InstallO
         });
         return Ok(InstallOutcome { mode: "windows".into(), path: dest.to_string_lossy().into_owned() });
     }
+    if platform == "linux" {
+        replace_linux_binary(&dest)?;
+        let handle = app.clone();
+        tauri::async_runtime::spawn(async move {
+            std::thread::sleep(std::time::Duration::from_millis(800));
+            handle.restart();
+        });
+        return Ok(InstallOutcome { mode: "linux".into(), path: dest.to_string_lossy().into_owned() });
+    }
     Ok(InstallOutcome { mode: "android".into(), path: dest.to_string_lossy().into_owned() })
+}
+
+/// Reemplaza el programa en ejecución por el descargado. El anterior queda como `<programa>.anterior`; si algo falla
+/// antes del cambio, no se toca nada.
+#[cfg(target_os = "linux")]
+fn replace_linux_binary(downloaded: &std::path::Path) -> Result<(), String> {
+    use std::os::unix::fs::PermissionsExt;
+    let current = std::env::current_exe().map_err(|e| format!("No se pudo ubicar el programa instalado: {e}"))?;
+    let fresh = current.with_extension("nuevo");
+    let old = current.with_extension("anterior");
+    std::fs::copy(downloaded, &fresh).map_err(|e| format!("No se pudo escribir en {}: {e}", fresh.display()))?;
+    std::fs::set_permissions(&fresh, std::fs::Permissions::from_mode(0o755)).map_err(|e| e.to_string())?;
+    let _ = std::fs::remove_file(&old);
+    std::fs::rename(&current, &old).map_err(|e| {
+        let _ = std::fs::remove_file(&fresh);
+        format!("No se pudo reemplazar el programa: {e}")
+    })?;
+    std::fs::rename(&fresh, &current).map_err(|e| {
+        let _ = std::fs::rename(&old, &current);
+        format!("No se pudo poner el programa nuevo: {e}")
+    })?;
+    let _ = std::fs::remove_file(downloaded);
+    Ok(())
+}
+
+#[cfg(not(target_os = "linux"))]
+fn replace_linux_binary(_downloaded: &std::path::Path) -> Result<(), String> {
+    Err("Solo disponible en Linux.".into())
 }
 
 #[cfg(windows)]

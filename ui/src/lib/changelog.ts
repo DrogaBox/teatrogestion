@@ -10,6 +10,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.3',
+    date: '23/10/2026',
+    title: 'Sonidista a cargo en clases, ensayos y funciones',
+    added: [
+      'Cada clase, ensayo o función puede indicar el sonidista a cargo. Aparece en las tarjetas, en el parte oficial, en el plan semanal impreso y en la agenda de Inicio, para pasarle las planillas al jefe de sonido.',
+      'Si el mismo sonidista queda asignado a dos lugares al mismo tiempo, la auditoría del cronograma lo marca como conflicto.',
+      'Las clases matutinas ahora también se sincronizan entre la PC y el celular.',
+      'Al duplicar un día se copia también el sonidista.',
+    ],
+    fixed: [
+      'Un ensayo nuevo ya no viene con bailarines, maestro y pasaje de ejemplo precargados: si no se elige reparto, queda sin reparto en lugar de asignar a la primera bailarina de la lista.',
+      'Guardar un ensayo ya no le cambia la obra por «El lago de los cisnes»: se conserva la obra y el pasaje que tenía.',
+      'El parte oficial ya no muestra un reparto de ejemplo cuando el ensayo no tiene reparto cargado: dice «Reparto a confirmar».',
+    ],
+  },
+  {
     version: '1.2',
     date: '23/10/2026',
     title: 'Actualización automática',

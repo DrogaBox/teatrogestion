@@ -80,6 +80,9 @@
       if (out.mode === 'windows') {
         message = 'Se abrió el actualizador. TeatroGestión se cierra ahora: siga las indicaciones de la ventana negra.';
         phase = 'done';
+      } else if (out.mode === 'linux') {
+        message = 'Versión nueva instalada. La aplicación se reinicia.';
+        phase = 'done';
       } else {
         const bridge = (window as any).TGUpdate;
         const r: string = bridge?.installApk ? bridge.installApk(out.path) : 'sin-puente';
@@ -111,7 +114,7 @@
 
       <div class="flex-1 overflow-y-auto p-5 space-y-4">
         {#if status && !status.platform}
-          <p class="text-sm text-[#82828a]">La actualización automática solo está disponible en Windows y en el celular Android.</p>
+          <p class="text-sm text-[#82828a]">La actualización automática solo está disponible en Windows, Linux y en el celular Android.</p>
         {:else if status && !status.has_token}
           <div class="space-y-2">
             <p class="text-sm">Para buscar versiones nuevas hace falta el <strong>token de actualización</strong>. Se escribe una sola vez en este equipo.</p>

@@ -94,12 +94,12 @@
       ...schedule.morning_classes.map((c: any) => ({
         start: c.start_time, end: c.end_time, kind: 'clase' as const,
         title: `Clase · ${ROOMS[c.room] ?? c.room}`,
-        detail: [c.master_name, c.pianist_name].filter(Boolean).join(' · '),
+        detail: [c.master_name, c.pianist_name, c.sound_tech_name ? 'Sonido: ' + c.sound_tech_name : ''].filter(Boolean).join(' · '),
       })),
       ...schedule.rehearsal_blocks.map((b: any) => ({
         start: b.start_time, end: b.end_time, kind: 'ensayo' as const,
         title: `${b.work_title ?? b.passage_name} · ${ROOMS[b.room] ?? b.room}`,
-        detail: b.work_title ? b.passage_name : (b.master_name ?? ''),
+        detail: [b.work_title ? b.passage_name : b.master_name, b.sound_tech_name ? 'Sonido: ' + b.sound_tech_name : ''].filter(Boolean).join(' · '),
       })),
     ].sort((a, b) => a.start.localeCompare(b.start)),
   );

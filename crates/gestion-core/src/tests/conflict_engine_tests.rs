@@ -45,6 +45,8 @@ fn sample_rehearsal_block(
         master_name: master.map(|(_, name)| name.to_string()),
         pianist_id: pianist.map(|(id, _)| id.to_string()),
         pianist_name: pianist.map(|(_, name)| name.to_string()),
+        sound_tech_id: None,
+        sound_tech_name: None,
         allow_shared_room: false,
         cast_groups: vec![RehearsalCastGroup {
             id: format!("GRP-{id}"),
@@ -76,6 +78,8 @@ fn test_contiguous_blocks_have_no_false_positive_collisions() {
             master_name: "Pino".to_string(),
             pianist_id: "PER_PIANIST_ROMERO".to_string(),
             pianist_name: "Romero".to_string(),
+            sound_tech_id: None,
+            sound_tech_name: None,
         },
         MorningClassSlot {
             id: "MC-SALA3".to_string(),
@@ -87,6 +91,8 @@ fn test_contiguous_blocks_have_no_false_positive_collisions() {
             master_name: "Ananiev".to_string(),
             pianist_id: "PER_PIANIST_VILLEGAS".to_string(),
             pianist_name: "Villegas".to_string(),
+            sound_tech_id: None,
+            sound_tech_name: None,
         },
     ];
 
@@ -327,6 +333,8 @@ fn test_class_to_rehearsal_rest_violation() {
         master_name: "Pino".to_string(),
         pianist_id: "PER_PIANIST_ROMERO".to_string(),
         pianist_name: "Romero".to_string(),
+        sound_tech_id: None,
+        sound_tech_name: None,
     }];
 
     // Ensayo comienza a las 10:20 (solo 5 min de descanso tras terminar la clase a las 10:15)
@@ -395,3 +403,32 @@ fn test_compensatory_rest_day_violation() {
     ));
 }
 
+
+#[test]
+fn test_detects_sound_tech_in_two_places_at_once() {
+    let mut schedule = DailyScheduleAggregate::new_default(
+        "SCH-2026-10-21".to_string(),
+        "2026-10-21".to_string(),
+        WorkRegime::Ordinary,
+    );
+    let mut a = sample_rehearsal_block("SND-1", RoomCode::Sala1, "10:30", "11:30", "Cisne Negro", None, None, vec![]);
+    let mut b = sample_rehearsal_block("SND-2", RoomCode::Escenario, "11:00", "12:00", "Danza Española", None, None, vec![]);
+    a.sound_tech_id = Some("PER_SOUND_A".to_string());
+    a.sound_tech_name = Some("Sonidista A".to_string());
+    b.sound_tech_id = Some("PER_SOUND_A".to_string());
+    b.sound_tech_name = Some("Sonidista A".to_string());
+    schedule.rehearsal_blocks = vec![a.clone(), b.clone()];
+
+    let conflicts = audit_daily_schedule(&schedule, None);
+    assert!(
+        conflicts.iter().any(|c| matches!(c, ScheduleConflict::PersonDoubleBooked { role: PersonnelRole::SoundTech, .. })),
+        "el mismo sonidista no puede estar en dos salas a la vez: {conflicts:?}"
+    );
+
+    // Con otro sonidista en el segundo ensayo no hay conflicto
+    b.sound_tech_id = Some("PER_SOUND_B".to_string());
+    b.sound_tech_name = Some("Sonidista B".to_string());
+    schedule.rehearsal_blocks = vec![a, b];
+    let conflicts = audit_daily_schedule(&schedule, None);
+    assert!(!conflicts.iter().any(|c| matches!(c, ScheduleConflict::PersonDoubleBooked { role: PersonnelRole::SoundTech, .. })));
+}

@@ -222,8 +222,8 @@ pub fn upsert_rehearsal_block(
         "INSERT INTO rehearsal_blocks (
             id, schedule_id, room_id, start_time, end_time, activity_type,
             work_id, passage_id, custom_passage_label, confirmation_state,
-            sound_requirement, teatrocue_cue_ref, master_id, pianist_id, allow_shared_room, notes
-         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
+            sound_requirement, teatrocue_cue_ref, master_id, pianist_id, allow_shared_room, notes, sound_tech_id
+         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
          ON CONFLICT(id) DO UPDATE SET
             room_id = excluded.room_id,
             start_time = excluded.start_time,
@@ -238,7 +238,8 @@ pub fn upsert_rehearsal_block(
             master_id = excluded.master_id,
             pianist_id = excluded.pianist_id,
             allow_shared_room = excluded.allow_shared_room,
-            notes = excluded.notes;",
+            notes = excluded.notes,
+            sound_tech_id = excluded.sound_tech_id;",
         params![
             block_id,
             payload.schedule_id,
@@ -256,6 +257,7 @@ pub fn upsert_rehearsal_block(
             payload.pianist_id,
             if payload.allow_shared_room { 1 } else { 0 },
             payload.notes,
+            payload.sound_tech_id,
         ],
     )?;
 
@@ -417,10 +419,12 @@ pub fn load_daily_schedule_aggregate(
     let mut mc_stmt = conn.prepare(
         "SELECT mc.id, mc.room_id, mc.gender_division, mc.start_time, mc.end_time,
                 mc.master_id, COALESCE(m.last_name || ', ' || m.first_name, mc.master_id),
-                mc.pianist_id, COALESCE(p.last_name || ', ' || p.first_name, mc.pianist_id)
+                mc.pianist_id, COALESCE(p.last_name || ', ' || p.first_name, mc.pianist_id),
+                mc.sound_tech_id, (s.last_name || ', ' || s.first_name)
          FROM morning_classes mc
          LEFT JOIN personnel m ON m.id = mc.master_id
          LEFT JOIN personnel p ON p.id = mc.pianist_id
+         LEFT JOIN personnel s ON s.id = mc.sound_tech_id
          WHERE mc.schedule_id = ?1
          ORDER BY mc.start_time ASC, mc.room_id ASC;",
     )?;
@@ -450,6 +454,8 @@ pub fn load_daily_schedule_aggregate(
             master_name: r.get(6)?,
             pianist_id: r.get(7)?,
             pianist_name: r.get(8)?,
+            sound_tech_id: r.get(9)?,
+            sound_tech_name: r.get(10)?,
         })
     })?;
 
@@ -466,12 +472,14 @@ pub fn load_daily_schedule_aggregate(
                 rb.confirmation_state, rb.sound_requirement, rb.teatrocue_cue_ref,
                 rb.master_id, (m.last_name || ', ' || m.first_name),
                 rb.pianist_id, (p.last_name || ', ' || p.first_name),
-                rb.allow_shared_room
+                rb.allow_shared_room,
+                rb.sound_tech_id, (s.last_name || ', ' || s.first_name)
          FROM rehearsal_blocks rb
          LEFT JOIN works w ON w.id = rb.work_id
          LEFT JOIN work_passages wp ON wp.id = rb.passage_id
          LEFT JOIN personnel m ON m.id = rb.master_id
          LEFT JOIN personnel p ON p.id = rb.pianist_id
+         LEFT JOIN personnel s ON s.id = rb.sound_tech_id
          WHERE rb.schedule_id = ?1
          ORDER BY rb.start_time ASC, rb.room_id ASC;",
     )?;
@@ -527,6 +535,8 @@ pub fn load_daily_schedule_aggregate(
             pianist_id: r.get(15)?,
             pianist_name: r.get(16)?,
             allow_shared_room: r.get::<_, i32>(17)? == 1,
+            sound_tech_id: r.get(18)?,
+            sound_tech_name: r.get(19)?,
             cast_groups: Vec::new(),
         })
     })?;
@@ -639,15 +649,16 @@ pub fn upsert_morning_class(
 
     conn.execute(
         "INSERT INTO morning_classes (
-            id, schedule_id, room_id, gender_division, start_time, end_time, master_id, pianist_id
-         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+            id, schedule_id, room_id, gender_division, start_time, end_time, master_id, pianist_id, sound_tech_id
+         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
          ON CONFLICT(id) DO UPDATE SET
             room_id = excluded.room_id,
             gender_division = excluded.gender_division,
             start_time = excluded.start_time,
             end_time = excluded.end_time,
             master_id = excluded.master_id,
-            pianist_id = excluded.pianist_id;",
+            pianist_id = excluded.pianist_id,
+            sound_tech_id = excluded.sound_tech_id;",
         params![
             class_id,
             payload.schedule_id,
@@ -657,6 +668,7 @@ pub fn upsert_morning_class(
             payload.end_time,
             payload.master_id,
             payload.pianist_id,
+            payload.sound_tech_id,
         ],
     )?;
 

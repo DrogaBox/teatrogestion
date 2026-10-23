@@ -28,7 +28,7 @@ SI ALGO FALLA
 Mande una foto del mensaje o el archivo "actualizacion.log" que está en la
 carpeta de instalación (normalmente C:\TeatroGestion).
 
-NOVEDADES (version 1.2)
+NOVEDADES (version 1.3)
 -----------------------
 Al abrir el programa por primera vez aparece una ventana "Novedades" con todo
 lo que se agrego y se arreglo; despues se puede volver a ver en el menu

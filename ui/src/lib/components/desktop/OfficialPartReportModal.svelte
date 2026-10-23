@@ -255,6 +255,7 @@
                       <th class="border border-black py-1.5 px-2">DIVISIÓN</th>
                       <th class="border border-black py-1.5 px-2">MAESTRO/A</th>
                       <th class="border border-black py-1.5 px-2">ACOMPAÑAMIENTO</th>
+                      <th class="border border-black py-1.5 px-2">SONIDISTA</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -265,6 +266,7 @@
                         <td class="border border-black py-1.5 px-2">{c.gender_division === 'FEMALE' ? 'Mujeres' : c.gender_division === 'MALE' ? 'Varones' : 'General'}</td>
                         <td class="border border-black py-1.5 px-2 font-bold">{c.master_name}</td>
                         <td class="border border-black py-1.5 px-2">{c.pianist_name}</td>
+                        <td class="border border-black py-1.5 px-2">{c.sound_tech_name ? c.sound_tech_name.split(',')[0] : '—'}</td>
                       </tr>
                     {/each}
                   </tbody>
@@ -289,6 +291,7 @@
                       <th class="border border-black py-1.5 px-2 w-[28%]">REPARTO DE ESTUDIO</th>
                       <th class="border border-black py-1.5 px-2 w-[12%]">MAESTRO</th>
                       <th class="border border-black py-1.5 px-2 w-[10%]">SONIDO</th>
+                      <th class="border border-black py-1.5 px-2 w-[10%]">SONIDISTA</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -301,7 +304,7 @@
                           {#if b.cast_groups.length > 0 && b.cast_groups[0].formatted_line}
                             {b.cast_groups[0].formatted_line}
                           {:else}
-                            Álvarez/Marcato - Morchio C/Gil
+                            Reparto a confirmar
                           {/if}
                         </td>
                         <td class="border border-black py-1.5 px-2 text-xs font-semibold">
@@ -309,6 +312,9 @@
                         </td>
                         <td class="border border-black py-1.5 px-2 font-mono text-[11px] font-bold">
                           {b.sound_requirement}
+                        </td>
+                        <td class="border border-black py-1.5 px-2 text-xs font-semibold">
+                          {b.sound_tech_name ? b.sound_tech_name.split(',')[0] : '—'}
                         </td>
                       </tr>
                     {/each}

@@ -162,6 +162,8 @@ pub struct MorningClassSlot {
     pub master_name: String,
     pub pianist_id: String,           // Romero, Villegas, Brusutti
     pub pianist_name: String,
+    pub sound_tech_id: Option<String>,
+    pub sound_tech_name: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -204,6 +206,8 @@ pub struct RehearsalBlock {
     pub master_name: Option<String>,
     pub pianist_id: Option<String>,
     pub pianist_name: Option<String>,
+    pub sound_tech_id: Option<String>,
+    pub sound_tech_name: Option<String>,
     pub allow_shared_room: bool,
     pub cast_groups: Vec<RehearsalCastGroup>,
 }

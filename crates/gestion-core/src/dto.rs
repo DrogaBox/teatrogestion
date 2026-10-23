@@ -103,6 +103,8 @@ pub struct UpsertMorningClassPayload {
     pub end_time: String,
     pub master_id: String,
     pub pianist_id: String,
+    #[serde(default)]
+    pub sound_tech_id: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -121,6 +123,8 @@ pub struct UpsertRehearsalBlockPayload {
     pub teatrocue_cue_ref: Option<String>,
     pub master_id: Option<String>,
     pub pianist_id: Option<String>,
+    #[serde(default)]
+    pub sound_tech_id: Option<String>,
     pub allow_shared_room: bool,
     pub notes: Option<String>,
     pub cast_groups: Vec<UpsertCastGroupPayload>,
@@ -265,6 +269,9 @@ pub struct SyncBundle {
     pub physio_sessions: Vec<serde_json::Value>,
     pub daily_schedules: Vec<serde_json::Value>,
     pub rehearsal_blocks: Vec<serde_json::Value>,
+    /// Clases matutinas. Ausente en paquetes de versiones anteriores.
+    #[serde(default)]
+    pub morning_classes: Vec<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

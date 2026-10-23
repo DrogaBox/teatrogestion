@@ -294,6 +294,22 @@ pub fn audit_daily_schedule(
                     person_name: mc.pianist_name.clone(),
                     role: PersonnelRole::Pianist,
                 });
+
+            if let (Some(t_id), Some(t_name)) = (&mc.sound_tech_id, &mc.sound_tech_name) {
+                person_intervals
+                    .entry(t_id.clone())
+                    .or_default()
+                    .push(PersonIntervalEntry {
+                        block_id: mc.id.clone(),
+                        room: mc.room,
+                        passage_label: "Clase Técnica Matutina".to_string(),
+                        start_min: s,
+                        end_min: e,
+                        person_id: t_id.clone(),
+                        person_name: t_name.clone(),
+                        role: PersonnelRole::SoundTech,
+                    });
+            }
         }
     }
 
@@ -334,6 +350,22 @@ pub fn audit_daily_schedule(
                     person_id: p_id.clone(),
                     person_name: p_name.clone(),
                     role: PersonnelRole::Pianist,
+                });
+        }
+
+        if let (Some(t_id), Some(t_name)) = (&block.sound_tech_id, &block.sound_tech_name) {
+            person_intervals
+                .entry(t_id.clone())
+                .or_default()
+                .push(PersonIntervalEntry {
+                    block_id: block.id.clone(),
+                    room: block.room,
+                    passage_label: block.passage_name.clone(),
+                    start_min: s,
+                    end_min: e,
+                    person_id: t_id.clone(),
+                    person_name: t_name.clone(),
+                    role: PersonnelRole::SoundTech,
                 });
         }
 

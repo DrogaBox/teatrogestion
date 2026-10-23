@@ -98,6 +98,8 @@ export interface MorningClassSlot {
   master_name: string;
   pianist_id: string;
   pianist_name: string;
+  sound_tech_id: string | null;
+  sound_tech_name: string | null;
 }
 
 export interface CastMemberEntry {
@@ -137,6 +139,8 @@ export interface RehearsalBlock {
   master_name: string | null;
   pianist_id: string | null;
   pianist_name: string | null;
+  sound_tech_id: string | null;
+  sound_tech_name: string | null;
   allow_shared_room: boolean;
   cast_groups: RehearsalCastGroup[];
 }
@@ -251,6 +255,7 @@ export interface UpsertMorningClassPayload {
   end_time: string;
   master_id: string;
   pianist_id: string;
+  sound_tech_id?: string | null;
 }
 
 export interface UpsertRehearsalBlockPayload {
@@ -268,6 +273,7 @@ export interface UpsertRehearsalBlockPayload {
   teatrocue_cue_ref?: string | null;
   master_id?: string | null;
   pianist_id?: string | null;
+  sound_tech_id?: string | null;
   allow_shared_room: boolean;
   notes?: string | null;
   cast_groups: UpsertCastGroupPayload[];
@@ -839,12 +845,12 @@ export interface UpdateInfo {
 
 export interface UpdateStatus {
   version: string;
-  platform: 'windows' | 'android' | null;
+  platform: 'windows' | 'android' | 'linux' | null;
   has_token: boolean;
 }
 
 export interface InstallOutcome {
-  mode: 'windows' | 'android';
+  mode: 'windows' | 'android' | 'linux';
   path: string;
 }
 

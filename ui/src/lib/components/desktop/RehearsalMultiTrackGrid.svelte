@@ -54,6 +54,7 @@
   let worksWithCasts = $state<WorkWithPassagesAndCastsDto[]>([]);
   let dancers = $derived(personnelList.filter(p => p.role === 'DANCER' && p.is_active));
   let masters = $derived(personnelList.filter(p => p.role === 'MASTER' && p.is_active));
+  let soundTechs = $derived(personnelList.filter(p => p.role === 'SOUND_TECH' && p.is_active));
   let pianists = $derived(personnelList.filter(p => p.role === 'PIANIST' && p.is_active));
 
   async function loadPersonnelAndWorks() {
@@ -84,13 +85,17 @@
   let soundType = $state<'teatrocue' | 'pianist' | 'orchestra' | 'silence'>('teatrocue');
   let soundReq = $state('PISTA TeatroCue #04');
   let selectedPianistId = $state<string>('');
-  let masterId = $state<string>('PER_MASTER_ANANIEV');
+  let masterId = $state<string>('');
+  let soundTechId = $state<string>('');
+  // Se conservan al editar para no perder la obra vinculada
+  let editingWorkId = $state<string | null>(null);
+  let editingPassageId = $state<string | null>(null);
   let isToConfirm = $state(false);
   let allowSharedRoom = $state(false);
   let notes = $state('');
 
   // Reparto y Control de Bailarines Citados
-  let castLine = $state('Álvarez/Marcato - Morchio C/Gil');
+  let castLine = $state('');
   let selectedDancerIds = $state<string[]>([]);
   let dancerSearch = $state('');
 
@@ -185,16 +190,19 @@
     selectedRoom = initialRoom;
     startTime = '10:30';
     endTime = '11:30';
-    passageName = 'Princesas y Bufón';
+    passageName = '';
     soundType = 'teatrocue';
-    soundReq = 'PISTA TeatroCue #04';
+    soundReq = '';
     selectedPianistId = '';
-    masterId = masters.length > 0 ? masters[0].id : 'PER_MASTER_ANANIEV';
+    masterId = '';
+    soundTechId = '';
+    editingWorkId = null;
+    editingPassageId = null;
     isToConfirm = false;
     allowSharedRoom = false;
     notes = '';
-    selectedDancerIds = ['PER_DANCER_ALVAREZ', 'PER_DANCER_MARCATO', 'PER_DANCER_MORCHIO_C', 'PER_DANCER_GIL'];
-    updateCastLineFromDancers();
+    selectedDancerIds = [];
+    castLine = '';
     showModal = true;
   }
 
@@ -205,6 +213,9 @@
     endTime = block.end_time;
     passageName = block.passage_name;
     masterId = block.master_id || '';
+    soundTechId = block.sound_tech_id || '';
+    editingWorkId = block.work_id;
+    editingPassageId = block.passage_id;
     selectedPianistId = block.pianist_id || '';
     isToConfirm = block.confirmation_state === 'REHEARSAL_TO_CONFIRM';
     allowSharedRoom = block.allow_shared_room;
@@ -348,15 +359,17 @@
         group_order: 1,
         group_label: castLine || 'Reparto de Estudio',
         is_to_confirm: false,
-        members: members.length > 0 ? members : [
-          {
-            personnel_id: dancers.length > 0 ? dancers[0].id : 'PER_DANCER_ALVAREZ',
-            character_role: 'Reparto',
-            partner_personnel_id: null,
-            condition: 'TITULAR'
-          }
-        ]
+        members,
       };
+
+      // Obra y pasaje: los que ya tenía el ensayo, o los que coinciden con el nombre elegido
+      let linkedWork = editingWorkId;
+      let linkedPassage = editingPassageId;
+      const known = worksWithCasts.flatMap((w) => w.passages.map((p) => ({ w, p }))).find(({ p }) => p.name === passageName);
+      if (known) {
+        linkedWork = known.w.id;
+        linkedPassage = known.p.id;
+      }
 
       const payload: UpsertRehearsalBlockPayload = {
         id: editingBlockId || null,
@@ -365,17 +378,18 @@
         start_time: startTime,
         end_time: endTime,
         activity_type: actType,
-        work_id: 'WORK_LAGO_CISNES',
-        passage_id: null,
+        work_id: linkedWork,
+        passage_id: linkedPassage,
         custom_passage_label: passageName,
         confirmation_state: isToConfirm ? 'REHEARSAL_TO_CONFIRM' : 'CONFIRMED',
         sound_requirement: soundReq,
         teatrocue_cue_ref: soundType === 'teatrocue' ? soundReq : null,
         master_id: masterId || null,
         pianist_id: soundType === 'pianist' ? selectedPianistId || null : null,
+        sound_tech_id: soundTechId || null,
         allow_shared_room: allowSharedRoom,
         notes: notes || null,
-        cast_groups: [castGroup]
+        cast_groups: members.length > 0 ? [castGroup] : []
       };
 
       await api.upsertRehearsalBlock(payload);
@@ -534,7 +548,7 @@
                   {#if b.cast_groups.length > 0 && b.cast_groups[0].formatted_line}
                     <span class="text-amber-300 font-mono text-[11px] leading-tight block">{b.cast_groups[0].formatted_line}</span>
                   {:else}
-                    <span class="text-slate-400 text-[11px] block">Álvarez/Marcato - Morchio C/Gil</span>
+                    <span class="text-slate-400 text-[11px] block">Reparto a confirmar</span>
                   {/if}
                 </div>
 
@@ -559,6 +573,11 @@
                       </div>
                     {/if}
                   </div>
+                  {#if b.sound_tech_name}
+                    <div class="text-[10px] text-[#82828a]">
+                      Sonido: <span class="text-[#2ed6e8] font-semibold">{b.sound_tech_name.split(',')[0]}</span>
+                    </div>
+                  {/if}
                 </div>
 
                 <!-- Alerta Visual si hay Cruce / Colisión -->
@@ -768,6 +787,17 @@
               <input id="modal-block-mod-req" type="text" bind:value={soundReq} class="w-full h-8 px-2.5 bg-[#1a1a1e] border border-[#34343c] rounded text-xs font-bold text-[#d8d8dc]" />
             </div>
           {/if}
+        </div>
+
+        <!-- Responsable de sonido -->
+        <div>
+          <label for="modal-block-soundtech" class="block text-[10px] font-bold uppercase text-[#2ed6e8] mb-1">Sonidista a cargo</label>
+          <select id="modal-block-soundtech" bind:value={soundTechId} class="w-full h-9 px-2.5 bg-[#141416] border border-[#34343c] rounded text-xs font-bold text-[#d8d8dc]">
+            <option value="">Sin asignar</option>
+            {#each soundTechs as t}
+              <option value={t.id}>{t.last_name}, {t.first_name}</option>
+            {/each}
+          </select>
         </div>
 
         <!-- Fila 4: Maestro/a a Cargo -->

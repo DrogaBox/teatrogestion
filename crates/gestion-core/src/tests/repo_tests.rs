@@ -140,6 +140,7 @@ fn test_daily_schedule_workflow_and_conflict_engine() {
 
     // 2. Insertar bloque que excede las 13:45h en régimen Ordinary -> debe detectar conflicto ShiftLimitExceeded
     let block_payload = UpsertRehearsalBlockPayload {
+        sound_tech_id: None,
         id: None,
         schedule_id: sched_dto.schedule.id.clone(),
         room: RoomCode::Sala1,
@@ -501,6 +502,8 @@ fn test_expanded_inventory_and_dynamic_stock_creation() {
 #[test]
 fn test_export_and_import_sync_bundle_p2p_lan() {
     use crate::db::sync_repo::{export_sync_bundle, import_sync_bundle};
+    use crate::db::schedule_repo::upsert_morning_class;
+    use crate::dto::UpsertMorningClassPayload;
 
     let mut db_mobile = DatabaseManager::open_in_memory().expect("open mobile db");
     let mut db_pc = DatabaseManager::open_in_memory().expect("open pc db");
@@ -997,3 +1000,88 @@ fn test_inspection_vault_and_security_repository() {
 
 
 
+
+#[test]
+fn test_sound_technician_assignment_and_sync() {
+    use crate::db::sync_repo::{export_sync_bundle, import_sync_bundle};
+    use crate::db::schedule_repo::upsert_morning_class;
+    use crate::dto::UpsertMorningClassPayload;
+
+    let mut db = DatabaseManager::open_in_memory().expect("open memory db");
+    let conn = db.connection_mut();
+
+    // Sonidista de ejemplo: el personal con rol SOUND_TECH precargado
+    let tech_id: String = conn
+        .query_row("SELECT id FROM personnel WHERE role = 'SOUND_TECH' LIMIT 1", [], |r| r.get(0))
+        .expect("hay un sonidista precargado");
+
+    let sched = get_or_create_daily_schedule(conn, "2026-10-19").expect("schedule");
+    let sid = sched.schedule.id.clone();
+    assert!(sched.schedule.rehearsal_blocks.iter().all(|b| b.sound_tech_id.is_none()), "nada tiene sonidista de entrada");
+
+    // Ensayo con sonidista asignado
+    let payload = UpsertRehearsalBlockPayload {
+        sound_tech_id: Some(tech_id.clone()),
+        id: None,
+        schedule_id: sid.clone(),
+        room: RoomCode::Sala2,
+        start_time: "10:30".to_string(),
+        end_time: "11:30".to_string(),
+        activity_type: ActivityType::StudioRehearsal,
+        work_id: None,
+        passage_id: None,
+        custom_passage_label: Some("Prueba de sonido".to_string()),
+        confirmation_state: ConfirmationState::Confirmed,
+        sound_requirement: "PISTA".to_string(),
+        teatrocue_cue_ref: None,
+        master_id: None,
+        pianist_id: None,
+        allow_shared_room: false,
+        notes: None,
+        cast_groups: vec![],
+    };
+    let saved = upsert_rehearsal_block(conn, payload).expect("upsert");
+    let block = saved.schedule.rehearsal_blocks.iter().find(|b| b.passage_name == "Prueba de sonido").expect("ensayo nuevo");
+    assert_eq!(block.sound_tech_id.as_deref(), Some(tech_id.as_str()));
+    assert!(block.sound_tech_name.as_deref().is_some_and(|n| !n.is_empty()));
+
+    // Clase con sonidista
+    let class = &sched.schedule.morning_classes[0];
+    let saved = upsert_morning_class(
+        conn,
+        UpsertMorningClassPayload {
+            id: Some(class.id.clone()),
+            schedule_id: sid.clone(),
+            room: class.room,
+            gender_division: class.gender_division,
+            start_time: class.start_time.clone(),
+            end_time: class.end_time.clone(),
+            master_id: class.master_id.clone(),
+            pianist_id: class.pianist_id.clone(),
+            sound_tech_id: Some(tech_id.clone()),
+        },
+    )
+    .expect("upsert class");
+    let c = saved.schedule.morning_classes.iter().find(|c| c.id == class.id).unwrap();
+    assert_eq!(c.sound_tech_id.as_deref(), Some(tech_id.as_str()));
+
+    // El paquete de sincronización lleva el sonidista y las clases
+    let bundle = export_sync_bundle(conn, "PC", "NODO-1").expect("export");
+    assert!(bundle.rehearsal_blocks.iter().any(|b| b["sound_tech_id"] == tech_id.as_str()));
+    assert!(bundle.morning_classes.iter().any(|b| b["sound_tech_id"] == tech_id.as_str()));
+
+    // Se importa en otra base que ya tiene el mismo parte: el sonidista llega
+    let mut other = DatabaseManager::open_in_memory().expect("otra base");
+    let oc = other.connection_mut();
+    import_sync_bundle(oc, &bundle).expect("import");
+    let n: i64 = oc
+        .query_row("SELECT COUNT(*) FROM rehearsal_blocks WHERE sound_tech_id = ?1", [&tech_id], |r| r.get(0))
+        .unwrap();
+    assert_eq!(n, 1);
+
+    // Un paquete de una versión anterior (sin clases) sigue siendo válido
+    let mut old = serde_json::to_value(&bundle).unwrap();
+    old.as_object_mut().unwrap().remove("morning_classes");
+    let parsed: crate::dto::SyncBundle = serde_json::from_value(old).expect("paquete viejo");
+    assert!(parsed.morning_classes.is_empty());
+}

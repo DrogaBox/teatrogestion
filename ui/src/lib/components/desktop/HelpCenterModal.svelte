@@ -227,6 +227,13 @@
             </div>
           {/if}
 
+          {#if activeTopic === 'regime' && matchesSearch('sonido sonidista cabina clases ensayos funciones planillas')}
+            <div class="p-3 bg-[#14202a] border border-[#2ed6e8]/30 rounded-lg space-y-1 text-xs">
+              <p class="font-bold text-[#2ed6e8]">Sonidista a cargo</p>
+              <p class="text-[#b8d4ee]">Al crear o editar una clase, un ensayo o una función se puede elegir el <strong>sonidista a cargo</strong> (lista de personal con rol «Sonido» del padrón; si no hay ninguno, se da de alta en el Padrón). Se muestra en la tarjeta, en el parte oficial, en el plan semanal impreso y en la agenda de Inicio. Si el mismo sonidista queda en dos lugares a la vez, el cronograma lo avisa como conflicto.</p>
+            </div>
+          {/if}
+
           <!-- CAPÍTULO 4 -->
           {#if activeTopic === 'attendance' && matchesSearch('ausentismo sin parte sp fisioterapia matriz bop')}
             <div class="space-y-4">

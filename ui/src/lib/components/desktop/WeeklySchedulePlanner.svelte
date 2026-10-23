@@ -139,7 +139,8 @@
           start_time: mc.start_time,
           end_time: mc.end_time,
           master_id: mc.master_id,
-          pianist_id: mc.pianist_id
+          pianist_id: mc.pianist_id,
+          sound_tech_id: mc.sound_tech_id
         });
       }
 
@@ -159,6 +160,7 @@
           teatrocue_cue_ref: rb.teatrocue_cue_ref,
           master_id: rb.master_id,
           pianist_id: rb.pianist_id,
+          sound_tech_id: rb.sound_tech_id,
           allow_shared_room: rb.allow_shared_room,
           cast_groups: rb.cast_groups.map(g => ({
             group_order: g.group_order,
@@ -474,7 +476,7 @@
                 <div class="text-[9px] border-b border-slate-300 pb-1 mb-1">
                   <span class="font-bold block">CLASES 09:00:</span>
                   {#each d.schedule.morning_classes as c}
-                    <div>{c.room === 'SALA_1' ? 'Sala 1' : 'Sala 3'}: {c.master_name?.split(',')[0]}</div>
+                    <div>{roomLabel(c.room)}: {c.master_name?.split(',')[0]}{c.sound_tech_name ? ` · Sonido: ${c.sound_tech_name.split(',')[0]}` : ''}</div>
                   {/each}
                 </div>
               {/if}
@@ -488,6 +490,9 @@
                       <div class="font-bold">{b.passage_name}</div>
                       {#if b.cast_groups.length > 0 && b.cast_groups[0].formatted_line}
                         <div class="text-[8px] text-slate-700 italic">{b.cast_groups[0].formatted_line}</div>
+                      {/if}
+                      {#if b.sound_tech_name}
+                        <div class="text-[8px]">Sonido: {b.sound_tech_name.split(',')[0]}</div>
                       {/if}
                     </div>
                   {/each}
