@@ -1,5 +1,40 @@
 @import "tailwindcss";
 
+/* =============================================================================
+   TOKENS DE DISEÑO — lenguaje visual compartido con TeatroCue (crates/qlab-ui)
+   Referencia: qlab-ui/src/theme.rs (paleta de teatro, Pro Tools sobrio)
+   - Fondos neutros escalonados: void → alt → panel → raised → grid
+   - Un solo acento (ámbar) + colores funcionales de estado (verde/cian/rojo)
+   - Plano: sin degradados, sin sombras pesadas, radios de 4 px, divisor de 1 px
+   - Números tabulares en tablas y relojes; etiquetas pequeñas en mayúsculas
+============================================================================= */
+@theme {
+  --color-void: #121214;          /* fondo extremo (app, cajas hundidas) */
+  --color-alt: #17171b;           /* fila alternativa */
+  --color-panel: #1a1a1e;         /* panel estándar */
+  --color-raised: #24242a;        /* panel elevado / botón reposo */
+  --color-raised-hover: #34343e;  /* botón con hover */
+  --color-raised-active: #4a4a58; /* botón presionado */
+  --color-grid: #34343c;          /* divisor y borde de 1 px */
+  --color-ink: #d8d8dc;           /* texto principal */
+  --color-dim: #82828a;           /* texto secundario / etiquetas */
+  --color-amber: #ffb31a;         /* ACENTO único: foco, selección, primario */
+  --color-amber-bright: #ffc94d;  /* acento con hover */
+  --color-amber-dim: #8a6214;     /* acento apagado (pausa) */
+  --color-green: #3de06a;         /* estado: en curso / OK */
+  --color-green-dark: #0f5a28;
+  --color-cyan: #2ed6e8;          /* estado: en espera / informativo */
+  --color-blue: #5fa8ff;          /* estado: adecuación de tareas / IJ (planilla BOP) */
+  --color-violet: #b388ff;        /* estado: sin parte / licencia (planilla BOP) */
+  --color-red: #ff4a4a;           /* estado: error / ausente */
+  --color-red-dark: #6a1616;
+  --color-playhead: #3a2a08;      /* fila marcada (ámbar hundido) */
+  --color-selrow: #1e2c4a;        /* fila seleccionada */
+  --color-running: #0e2e1a;       /* fila en curso */
+  --color-waiting: #0c2a30;       /* fila en espera */
+  --color-bluesel: #2a4a8a;       /* selección de texto */
+}
+
 :root {
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -54,6 +89,175 @@ input, textarea {
 input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(0.8);
   cursor: pointer;
+}
+
+/* Números tabulares: relojes, conteos y montos alineados como en Pro Tools */
+table {
+  font-variant-numeric: tabular-nums;
+}
+.tg-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Barras de desplazamiento finas y oscuras, como el resto del sistema */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #34343c #121214;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: #121214; }
+*::-webkit-scrollbar-thumb { background: #34343c; border-radius: 0; border: 2px solid #121214; }
+*::-webkit-scrollbar-thumb:hover { background: #4a4a58; }
+
+/* Foco visible único (teclado) con el acento ámbar */
+:focus-visible {
+  outline: 1px solid #ffb31a;
+  outline-offset: 1px;
+}
+
+/* =============================================================================
+   VENTANAS Y DIÁLOGOS — UN SOLO PATRÓN PARA TODA LA APP
+   Cabecera: título a la izquierda + botón de cierre de 28×28 arriba a la derecha.
+   Pie: acciones alineadas a la derecha con la acción primaria al final.
+   El Escape, el clic en el fondo y la devolución del foco los maneja la acción
+   `modalBehavior` (ui/src/lib/actions/modalBehavior.ts).
+   Van en @layer components para que las utilidades de Tailwind puedan ajustarlas.
+============================================================================= */
+@layer components {
+.tg-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 92vh;
+  overflow: hidden;
+  background-color: #1a1a1e;
+  border: 1px solid #34343c;
+  border-radius: 4px;
+}
+
+.tg-modal-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  border-bottom: 1px solid #34343c;
+}
+
+.tg-modal-title {
+  font-size: 13px;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #d8d8dc;
+}
+
+.tg-modal-sub {
+  margin-top: 1px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #82828a;
+}
+
+/* Botón de cierre: mismo lugar, mismo tamaño (28×28), mismo icono y hover en todas las ventanas */
+.tg-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  color: #82828a;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+.tg-modal-close:hover {
+  color: #d8d8dc;
+  background-color: #34343e;
+  border-color: #34343c;
+}
+.tg-modal-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+.tg-modal-body {
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.tg-modal-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #34343c;
+}
+
+/* Botones del sistema: barra compacta, borde de 1 px, estados planos */
+.tg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  height: 28px;
+  padding: 0 0.625rem;
+  border-radius: 4px;
+  border: 1px solid #34343c;
+  background-color: #24242a;
+  color: #d8d8dc;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.tg-btn:hover { background-color: #34343e; }
+.tg-btn:active { background-color: #4a4a58; }
+.tg-btn:disabled { opacity: 0.5; pointer-events: none; }
+
+.tg-btn-primary {
+  background-color: #ffb31a;
+  border-color: #ffb31a;
+  color: #121214;
+  font-weight: 700;
+}
+.tg-btn-primary:hover { background-color: #ffc94d; border-color: #ffc94d; }
+.tg-btn-primary:active { background-color: #e6a117; }
+
+.tg-btn-danger {
+  background-color: rgba(255, 74, 74, 0.1);
+  border-color: rgba(255, 74, 74, 0.4);
+  color: #ff4a4a;
+}
+.tg-btn-danger:hover { background-color: rgba(255, 74, 74, 0.2); }
+
+/* Etiqueta micro en mayúsculas para formularios y barras de herramientas */
+.tg-label {
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #82828a;
+}
+
+@media print {
+  .tg-modal-head,
+  .tg-modal-foot,
+  .tg-modal-close { display: none !important; }
+  .tg-modal {
+    background-color: #ffffff !important;
+    border: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
 }
 
 /* =============================================================================
@@ -180,6 +384,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 @media screen and (max-width: 767px) {
   button.tg-close { min-width: 44px; min-height: 44px; font-size: 20px !important; line-height: 1 !important; }
+  /* El cierre unificado de ventanas también es tocable con el dedo */
+  .tg-modal-close { min-width: 44px; min-height: 44px; }
+  .tg-modal-close svg { width: 18px; height: 18px; }
+  .tg-modal-head { min-height: 52px; }
+  /* La cabecera de las ventanas se acomoda en varias líneas en vez de desbordar */
+  .tg-modal-head { flex-wrap: wrap; padding-top: calc(0.5rem + env(safe-area-inset-top, 0px)); }
+  .tg-modal-head > div:first-child { flex: 1 1 100%; }
+  .tg-btn { height: 40px; }
 }
 
 /* Escritorio: tamaños de letra mínimos más cómodos (la pantalla, no el papel) */

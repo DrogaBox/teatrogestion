@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api, type LanSyncInfo, type SyncReportDto } from '../ipc/client';
+  import ModalHeader from './shared/ModalHeader.svelte';
+  import { modalBehavior } from '../actions/modalBehavior';
 
   let {
     isOpen,
@@ -140,56 +142,43 @@
   <div
     role="presentation"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-    onclick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    use:modalBehavior={{ onclose: onClose }}
   >
-    <div class="bg-[#1a1a1e] border border-[#34343c] rounded-md w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-[#d8d8dc]">
-      
+    <div class="tg-modal max-w-lg text-ink]">
+
       <!-- Encabezado -->
-      <div class="p-4 border-b border-[#34343c] bg-[#121214] flex items-center justify-between">
-        <div>
-          <h2 class="text-sm font-semibold text-[#d8d8dc] tracking-wide uppercase">Sincronización P2P Wi-Fi</h2>
-          <p class="text-xs text-[#82828a]">Ballet Oficial de Córdoba — Red Local Sin Nube</p>
-        </div>
-        <button
-          type="button"
-          onclick={(e) => { e.stopPropagation(); onClose(); }}
-          class="w-8 h-8 rounded flex items-center justify-center hover:bg-[#24242a] text-[#82828a] hover:text-white font-mono text-base transition-colors shrink-0"
-          title="Cerrar modal"
-        >
-          ✕
-        </button>
-      </div>
+      <ModalHeader title="Sincronización P2P Wi-Fi" subtitle="Ballet Oficial de Córdoba — Red Local Sin Nube" onclose={onClose} />
 
       <!-- Contenido Principal -->
       <div class="p-5 space-y-4 overflow-y-auto">
         
         <!-- Estado de este equipo -->
-        <div class="bg-[#121214] rounded p-3.5 border border-[#34343c] space-y-2">
+        <div class="bg-void] rounded p-3.5 border border-grid] space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wider text-[#82828a]">Este Dispositivo:</span>
-            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-[#3de06a]/15 text-[#3de06a] border border-[#3de06a]/30">
-              <span class="w-1.5 h-1.5 rounded-full bg-[#3de06a]"></span>
+            <span class="text-xs font-semibold uppercase tracking-wider text-dim]">Este Dispositivo:</span>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-green]/15 text-green] border border-green]/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-green]"></span>
               Servidor Activo (Puerto {syncInfo.port})
             </span>
           </div>
-          <div class="text-sm font-bold text-[#d8d8dc]">{syncInfo.device_name}</div>
-          <div class="flex items-center justify-between text-xs text-[#ffb31a] bg-[#1a1a1e] px-3 py-1.5 rounded border border-[#34343c]">
-            <span class="text-[#82828a]">IP Local:</span>
+          <div class="text-sm font-bold text-ink]">{syncInfo.device_name}</div>
+          <div class="flex items-center justify-between text-xs text-amber] bg-panel] px-3 py-1.5 rounded border border-grid]">
+            <span class="text-dim]">IP Local:</span>
             <span class="font-mono font-bold tracking-wider">{syncInfo.local_ip}</span>
           </div>
         </div>
 
         <!-- Clave de sincronización -->
-        <div class="bg-[#121214] rounded p-3.5 border border-[#34343c] space-y-2">
+        <div class="bg-void] rounded p-3.5 border border-grid] space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wider text-[#82828a]">Clave de sincronización</span>
+            <span class="text-xs font-semibold uppercase tracking-wider text-dim]">Clave de sincronización</span>
             <button
               onclick={copyKey}
-              class="px-2 py-1 bg-[#24242a] hover:bg-[#34343c] border border-[#34343c] text-[#82828a] hover:text-[#d8d8dc] rounded text-[11px] transition-colors"
+              class="px-2 py-1 bg-raised] hover:bg-grid] border border-grid] text-dim] hover:text-ink] rounded text-[11px] transition-colors"
             >Copiar</button>
           </div>
-          <div class="font-mono text-[11px] text-[#ffb31a] bg-[#1a1a1e] px-3 py-1.5 rounded border border-[#34343c] break-all select-all" data-testid="lan-sync-key">{syncKey || '...'}</div>
-          <p class="text-[11px] text-[#82828a]">
+          <div class="font-mono text-[11px] text-amber] bg-panel] px-3 py-1.5 rounded border border-grid] break-all select-all" data-testid="lan-sync-key">{syncKey || '...'}</div>
+          <p class="text-[11px] text-dim]">
             Sin esta clave nadie más en la red puede pedir ni enviar datos. En el <b>otro equipo</b> escriba esta misma clave acá abajo (una sola vez).
           </p>
           <div class="flex gap-2">
@@ -199,22 +188,22 @@
               placeholder="Clave del otro equipo"
               autocomplete="off"
               spellcheck="false"
-              class="flex-1 bg-[#1a1a1e] border border-[#34343c] rounded px-3 py-1.5 text-[11px] text-[#d8d8dc] font-mono focus:outline-none focus:border-[#ffb31a] transition-colors"
+              class="flex-1 bg-panel] border border-grid] rounded px-3 py-1.5 text-[11px] text-ink] font-mono focus:outline-none focus:border-amber] transition-colors"
             />
             <button
               onclick={useNewKey}
               disabled={newKey.trim().length < 8}
-              class="px-3 py-1.5 bg-[#ffb31a] hover:bg-[#e6a117] disabled:opacity-50 text-black font-semibold text-[11px] rounded transition-colors shrink-0"
+              class="px-3 py-1.5 bg-amber] hover:bg-amber] disabled:opacity-50 text-black font-semibold text-[11px] rounded transition-colors shrink-0"
             >Usar esta clave</button>
           </div>
           {#if keyMessage}
-            <div class="text-[11px] {keyIsError ? 'text-[#ff4a4a]' : 'text-[#3de06a]'}">{keyMessage}</div>
+            <div class="text-[11px] {keyIsError ? 'text-red]' : 'text-green]'}">{keyMessage}</div>
           {/if}
         </div>
 
         <!-- Conectar con el otro equipo -->
         <div class="space-y-2">
-          <label for="peer-ip-input" class="block text-xs font-semibold uppercase tracking-wider text-[#82828a]">
+          <label for="peer-ip-input" class="block text-xs font-semibold uppercase tracking-wider text-dim]">
             IP del Otro Equipo (PC o Celular en la misma red)
           </label>
           <div class="flex gap-2">
@@ -223,12 +212,12 @@
               type="text"
               bind:value={peerIp}
               placeholder="ej. 192.168.100.32"
-              class="flex-1 bg-[#121214] border border-[#34343c] rounded px-3 py-2 text-xs text-[#d8d8dc] font-mono focus:outline-none focus:border-[#ffb31a] transition-colors"
+              class="flex-1 bg-void] border border-grid] rounded px-3 py-2 text-xs text-ink] font-mono focus:outline-none focus:border-amber] transition-colors"
             />
             <button
               onclick={handleSync}
               disabled={isLoading || !peerIp.trim()}
-              class="px-4 py-2 bg-[#ffb31a] hover:bg-[#e6a117] disabled:opacity-50 text-black font-semibold text-xs rounded transition-colors shrink-0"
+              class="px-4 py-2 bg-amber] hover:bg-amber] disabled:opacity-50 text-black font-semibold text-xs rounded transition-colors shrink-0"
             >
               {#if isLoading}
                 <span>Sincronizando...</span>
@@ -237,36 +226,36 @@
               {/if}
             </button>
           </div>
-          <p class="text-[11px] text-[#82828a]">
+          <p class="text-[11px] text-dim]">
             Conecta ambos dispositivos a la misma red Wi-Fi del teatro o comparte zona Wi-Fi desde el móvil.
           </p>
         </div>
 
         <!-- Mensajes de Reporte o Error -->
         {#if errorMessage}
-          <div class="p-3 bg-[#ff4a4a]/10 border border-[#ff4a4a]/40 rounded text-[#ff4a4a] text-xs">
+          <div class="p-3 bg-red]/10 border border-red]/40 rounded text-red] text-xs">
             <div>{errorMessage}</div>
           </div>
         {/if}
 
         {#if syncReport}
-          <div class="p-3 bg-[#3de06a]/10 border border-[#3de06a]/40 rounded text-[#3de06a] text-xs space-y-1">
+          <div class="p-3 bg-green]/10 border border-green]/40 rounded text-green] text-xs space-y-1">
             <div class="font-semibold text-sm">
               Sincronización Exitosa
             </div>
             <div>{syncReport.message}</div>
-            <div class="text-[11px] text-[#3de06a]/80 pt-1 border-t border-[#3de06a]/20">
+            <div class="text-[11px] text-green]/80 pt-1 border-t border-green]/20">
               Registros procesados: <b>{syncReport.records_received}</b> | Modificados: <b>{syncReport.records_applied}</b>
             </div>
           </div>
         {/if}
 
         <!-- Respaldo alternativo -->
-        <div class="pt-3 border-t border-[#34343c] flex items-center justify-between">
-          <span class="text-xs text-[#82828a]">¿Sin red Wi-Fi disponible?</span>
+        <div class="pt-3 border-t border-grid] flex items-center justify-between">
+          <span class="text-xs text-dim]">¿Sin red Wi-Fi disponible?</span>
           <button
             onclick={handleExportJson}
-            class="px-3 py-1.5 bg-[#24242a] hover:bg-[#34343c] border border-[#34343c] text-[#82828a] hover:text-[#d8d8dc] rounded text-xs font-medium transition-colors"
+            class="px-3 py-1.5 bg-raised] hover:bg-grid] border border-grid] text-dim] hover:text-ink] rounded text-xs font-medium transition-colors"
           >
             Exportar Respaldo JSON
           </button>

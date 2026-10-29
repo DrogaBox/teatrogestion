@@ -120,22 +120,22 @@
     return out;
   });
 
-  const tone = { red: 'border-[#ff4a4a]/50 bg-[#2a1a1a] text-[#ff9a9a]', amber: 'border-[#ffb31a]/40 bg-[#2a2314] text-[#ffd27a]', cyan: 'border-[#2ed6e8]/40 bg-[#122428] text-[#8fe9f3]' };
+  const tone = { red: 'border-red]/50 bg-void] text-red]', amber: 'border-amber]/40 bg-raised] text-amber]', cyan: 'border-cyan]/40 bg-void] text-cyan]' };
   const longDate = $derived(new Date(currentDate + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
   const short = (n: string) => n.split(',')[0];
 </script>
 
 <div class="space-y-3 md:space-y-4">
   <!-- Encabezado del día -->
-  <section class="bg-[#1a1a1e] border border-[#34343c] rounded p-4">
-    <p class="text-xs font-mono uppercase text-[#82828a]">{isToday ? 'Hoy' : 'Día seleccionado'}</p>
-    <h2 class="text-lg md:text-xl font-bold text-[#d8d8dc] leading-tight first-letter:uppercase">{longDate}</h2>
+  <section class="bg-panel] border border-grid] rounded p-4">
+    <p class="text-xs font-mono uppercase text-dim]">{isToday ? 'Hoy' : 'Día seleccionado'}</p>
+    <h2 class="text-lg md:text-xl font-bold text-ink] leading-tight first-letter:uppercase">{longDate}</h2>
     <div class="mt-2 flex flex-wrap gap-2 text-xs font-mono">
-      <span class="px-2 py-1 rounded bg-[#24242a] border border-[#34343c] text-[#ffb31a]">{REGIMES[schedule.regime] ?? schedule.regime}</span>
-      <span class="px-2 py-1 rounded bg-[#24242a] border border-[#34343c] text-[#3de06a]">Fichaje {schedule.mandatory_checkin_time}</span>
-      <span class="px-2 py-1 rounded bg-[#24242a] border border-[#34343c] text-[#d8d8dc]">Fin {schedule.nominal_end_time}</span>
+      <span class="px-2 py-1 rounded bg-raised] border border-grid] text-amber]">{REGIMES[schedule.regime] ?? schedule.regime}</span>
+      <span class="px-2 py-1 rounded bg-raised] border border-grid] text-green]">Fichaje {schedule.mandatory_checkin_time}</span>
+      <span class="px-2 py-1 rounded bg-raised] border border-grid] text-ink]">Fin {schedule.nominal_end_time}</span>
       {#if schedule.is_compensatory_rest_day}
-        <span class="px-2 py-1 rounded bg-[#2a2314] border border-[#ffb31a]/40 text-[#ffb31a]">Día de descanso compensatorio</span>
+        <span class="px-2 py-1 rounded bg-raised] border border-amber]/40 text-amber]">Día de descanso compensatorio</span>
       {/if}
     </div>
   </section>
@@ -156,65 +156,65 @@
 
   <div class="grid gap-3 md:gap-4 lg:grid-cols-2">
     <!-- Asistencia -->
-    <section class="bg-[#1a1a1e] border border-[#34343c] rounded p-4 space-y-3">
+    <section class="bg-panel] border border-grid] rounded p-4 space-y-3">
       <div class="flex items-baseline justify-between">
-        <h3 class="text-sm font-bold uppercase tracking-wide text-[#d8d8dc]">Asistencia</h3>
-        <button onclick={onGoAttendance} class="text-xs font-bold text-[#ffb31a] py-1">Abrir planilla →</button>
+        <h3 class="text-sm font-bold uppercase tracking-wide text-ink]">Asistencia</h3>
+        <button onclick={onGoAttendance} class="text-xs font-bold text-amber] py-1">Abrir planilla →</button>
       </div>
       {#if !loaded}
-        <p class="text-sm text-[#82828a]">Cargando…</p>
+        <p class="text-sm text-dim]">Cargando…</p>
       {:else if total === 0}
-        <p class="text-sm text-[#82828a]">Todavía no hay asistencia cargada para este día.</p>
+        <p class="text-sm text-dim]">Todavía no hay asistencia cargada para este día.</p>
       {:else}
         <div>
           <div class="flex items-end justify-between">
-            <div class="text-3xl font-bold font-mono text-[#3de06a]">{arrived}<span class="text-lg text-[#82828a]"> / {expected}</span></div>
-            <div class="text-sm text-[#82828a]">{pct}% presentes</div>
+            <div class="text-3xl font-bold font-mono text-green]">{arrived}<span class="text-lg text-dim]"> / {expected}</span></div>
+            <div class="text-sm text-dim]">{pct}% presentes</div>
           </div>
-          <div class="mt-2 h-2.5 rounded bg-[#121214] overflow-hidden flex">
-            <div class="bg-[#3de06a]" style="width:{expected ? (present / expected) * 100 : 0}%"></div>
-            <div class="bg-[#ffb31a]" style="width:{expected ? (late.length / expected) * 100 : 0}%"></div>
+          <div class="mt-2 h-2.5 rounded bg-void] overflow-hidden flex">
+            <div class="bg-green]" style="width:{expected ? (present / expected) * 100 : 0}%"></div>
+            <div class="bg-amber]" style="width:{expected ? (late.length / expected) * 100 : 0}%"></div>
           </div>
         </div>
         <div class="grid grid-cols-4 gap-2 text-center">
-          <div class="rounded bg-[#24242a] py-2"><div class="text-lg font-bold font-mono text-[#ffb31a]">{late.length}</div><div class="text-[11px] text-[#82828a]">Tarde</div></div>
-          <div class="rounded bg-[#24242a] py-2"><div class="text-lg font-bold font-mono text-[#b388ff]">{medical.length}</div><div class="text-[11px] text-[#82828a]">Licencia</div></div>
-          <div class="rounded bg-[#24242a] py-2"><div class="text-lg font-bold font-mono text-[#ff4a4a]">{absent.length}</div><div class="text-[11px] text-[#82828a]">No está</div></div>
-          <div class="rounded bg-[#24242a] py-2"><div class="text-lg font-bold font-mono text-[#2ed6e8]">{physioToday}</div><div class="text-[11px] text-[#82828a]">Fisio</div></div>
+          <div class="rounded bg-raised] py-2"><div class="text-lg font-bold font-mono text-amber]">{late.length}</div><div class="text-[11px] text-dim]">Tarde</div></div>
+          <div class="rounded bg-raised] py-2"><div class="text-lg font-bold font-mono text-violet]">{medical.length}</div><div class="text-[11px] text-dim]">Licencia</div></div>
+          <div class="rounded bg-raised] py-2"><div class="text-lg font-bold font-mono text-red]">{absent.length}</div><div class="text-[11px] text-dim]">No está</div></div>
+          <div class="rounded bg-raised] py-2"><div class="text-lg font-bold font-mono text-cyan]">{physioToday}</div><div class="text-[11px] text-dim]">Fisio</div></div>
         </div>
         {#if late.length || medical.length || absent.length}
           <ul class="text-sm space-y-1">
-            {#each absent as a}<li><span class="text-[#ff4a4a] font-bold">No está</span> · {a.dancer_name}</li>{/each}
-            {#each medical as a}<li><span class="text-[#b388ff] font-bold">Licencia</span> · {a.dancer_name}{a.leave_end_date ? ` (hasta ${a.leave_end_date})` : ''}</li>{/each}
-            {#each late as a}<li><span class="text-[#ffb31a] font-bold">Tarde</span> · {a.dancer_name}{a.minutes_late ? ` (${a.minutes_late} min)` : ''}</li>{/each}
+            {#each absent as a}<li><span class="text-red] font-bold">No está</span> · {a.dancer_name}</li>{/each}
+            {#each medical as a}<li><span class="text-violet] font-bold">Licencia</span> · {a.dancer_name}{a.leave_end_date ? ` (hasta ${a.leave_end_date})` : ''}</li>{/each}
+            {#each late as a}<li><span class="text-amber] font-bold">Tarde</span> · {a.dancer_name}{a.minutes_late ? ` (${a.minutes_late} min)` : ''}</li>{/each}
           </ul>
         {/if}
       {/if}
     </section>
 
     <!-- Agenda -->
-    <section class="bg-[#1a1a1e] border border-[#34343c] rounded p-4 space-y-3">
+    <section class="bg-panel] border border-grid] rounded p-4 space-y-3">
       <div class="flex items-baseline justify-between">
-        <h3 class="text-sm font-bold uppercase tracking-wide text-[#d8d8dc]">Agenda del día</h3>
-        <button onclick={onGoSchedule} class="text-xs font-bold text-[#ffb31a] py-1">Ver parte →</button>
+        <h3 class="text-sm font-bold uppercase tracking-wide text-ink]">Agenda del día</h3>
+        <button onclick={onGoSchedule} class="text-xs font-bold text-amber] py-1">Ver parte →</button>
       </div>
       {#if agenda.length === 0}
-        <p class="text-sm text-[#82828a]">No hay clases ni ensayos cargados para este día.</p>
+        <p class="text-sm text-dim]">No hay clases ni ensayos cargados para este día.</p>
       {:else}
         <ol class="space-y-2">
           {#each agenda as it}
             {@const isNow = it === nowItem}
             {@const isNext = it === nextItem}
-            <li class="flex gap-3 rounded border px-3 py-2 {isNow ? 'border-[#3de06a] bg-[#16261c]' : isNext ? 'border-[#ffb31a]/50 bg-[#24242a]' : 'border-[#34343c] bg-[#1d1d22]'}">
-              <div class="font-mono text-sm shrink-0 w-[3.2rem] {it.kind === 'clase' ? 'text-[#2ed6e8]' : 'text-[#ffb31a]'}">
-                <div class="font-bold">{it.start}</div><div class="text-[#82828a] text-xs">{it.end}</div>
+            <li class="flex gap-3 rounded border px-3 py-2 {isNow ? 'border-green] bg-void]' : isNext ? 'border-amber]/50 bg-raised]' : 'border-grid] bg-void]'}">
+              <div class="font-mono text-sm shrink-0 w-[3.2rem] {it.kind === 'clase' ? 'text-cyan]' : 'text-amber]'}">
+                <div class="font-bold">{it.start}</div><div class="text-dim] text-xs">{it.end}</div>
               </div>
               <div class="min-w-0">
-                <div class="text-sm font-semibold text-[#d8d8dc] leading-snug">{it.title}
-                  {#if isNow}<span class="ml-1 text-[10px] font-mono font-bold text-[#3de06a]">AHORA</span>{/if}
-                  {#if isNext}<span class="ml-1 text-[10px] font-mono font-bold text-[#ffb31a]">PRÓXIMO</span>{/if}
+                <div class="text-sm font-semibold text-ink] leading-snug">{it.title}
+                  {#if isNow}<span class="ml-1 text-[10px] font-mono font-bold text-green]">AHORA</span>{/if}
+                  {#if isNext}<span class="ml-1 text-[10px] font-mono font-bold text-amber]">PRÓXIMO</span>{/if}
                 </div>
-                {#if it.detail}<div class="text-xs text-[#82828a] leading-snug">{it.detail}</div>{/if}
+                {#if it.detail}<div class="text-xs text-dim] leading-snug">{it.detail}</div>{/if}
               </div>
             </li>
           {/each}
@@ -225,9 +225,9 @@
 
   <!-- Accesos -->
   <section class="grid grid-cols-2 md:grid-cols-4 gap-2">
-    <button onclick={onGoAttendance} class="min-h-14 px-3 py-3 rounded bg-[#24242a] border border-[#34343c] text-sm font-bold text-[#3de06a] text-left">Tomar asistencia</button>
-    <button onclick={onOpenBop} class="min-h-14 px-3 py-3 rounded bg-[#24242a] border border-[#2ed6e8]/40 text-sm font-bold text-[#2ed6e8] text-left">Planilla BOP</button>
-    <button onclick={onOpenParts} class="min-h-14 px-3 py-3 rounded bg-[#24242a] border border-[#ffb31a]/40 text-sm font-bold text-[#ffb31a] text-left">Parte oficial</button>
-    <button onclick={onOpenInventory} class="min-h-14 px-3 py-3 rounded bg-[#24242a] border border-[#34343c] text-sm font-bold text-[#d8d8dc] text-left">Inventario</button>
+    <button onclick={onGoAttendance} class="min-h-14 px-3 py-3 rounded bg-raised] border border-grid] text-sm font-bold text-green] text-left">Tomar asistencia</button>
+    <button onclick={onOpenBop} class="min-h-14 px-3 py-3 rounded bg-raised] border border-cyan]/40 text-sm font-bold text-cyan] text-left">Planilla BOP</button>
+    <button onclick={onOpenParts} class="min-h-14 px-3 py-3 rounded bg-raised] border border-amber]/40 text-sm font-bold text-amber] text-left">Parte oficial</button>
+    <button onclick={onOpenInventory} class="min-h-14 px-3 py-3 rounded bg-raised] border border-grid] text-sm font-bold text-ink] text-left">Inventario</button>
   </section>
 </div>

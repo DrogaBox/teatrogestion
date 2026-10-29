@@ -5,6 +5,8 @@
     type StockItemAvailabilityDto,
     type UpsertStockItemPayload
   } from '../../ipc/client';
+  import ModalHeader from '../shared/ModalHeader.svelte';
+  import { modalBehavior } from '../../actions/modalBehavior';
 
   let {
     isOpen,
@@ -127,49 +129,36 @@
   <div
     role="presentation"
     class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 md:p-6 overflow-y-auto"
-    onclick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    use:modalBehavior={{ onclose: onClose, backdrop: false }}
   >
-    <div class="bg-[#1a1a1e] border border-[#34343c] rounded-md w-full max-w-xl max-h-[92vh] overflow-y-auto p-5 md:p-6 shadow-2xl relative text-[#d8d8dc]">
-      
+    <div class="tg-modal max-w-xl text-ink]">
+
       <!-- Encabezado del Modal -->
-      <div class="flex items-center justify-between pb-3 mb-4 border-b border-[#34343c]">
-        <div>
-          <h3 class="text-sm font-semibold text-[#d8d8dc] uppercase tracking-wide">
-            {initialItem ? 'Modificar Ítem de Inventario' : 'Alta de Nuevo Ítem de Inventario'}
-          </h3>
-          <p class="text-xs text-[#82828a] mt-0.5">
-            Ballet Oficial de Córdoba • Depósito de Calzado e Indumentaria
-          </p>
-        </div>
-        <button
-          type="button"
-          onclick={(e) => { e.stopPropagation(); onClose(); }}
-          class="w-9 h-9 rounded flex items-center justify-center hover:bg-[#24242a] text-[#82828a] hover:text-white font-mono text-base transition-colors shrink-0"
-          title="Cerrar modal"
-        >
-          ✕
-        </button>
-      </div>
+      <ModalHeader
+        title={initialItem ? 'Modificar Ítem de Inventario' : 'Alta de Nuevo Ítem de Inventario'}
+        subtitle="Ballet Oficial de Córdoba • Depósito de Calzado e Indumentaria"
+        onclose={onClose}
+      />
 
       {#if errorMessage}
-        <div class="mb-4 p-3 rounded bg-[#ff4a4a]/10 border border-[#ff4a4a]/40 text-[#ff4a4a] text-xs font-medium">
+        <div class="mb-4 p-3 rounded bg-red]/10 border border-red]/40 text-red] text-xs font-medium">
           {errorMessage}
         </div>
       {/if}
 
       <!-- Formulario de Alta / Edición -->
-      <form onsubmit={handleSubmit} class="space-y-4 text-xs">
+      <form onsubmit={handleSubmit} class="tg-modal-body space-y-4 text-xs">
         
         <!-- Rubro / Subcategoría -->
         <div>
-          <label class="block text-[#82828a] font-semibold mb-1 uppercase tracking-wider text-[10px]" for="subcategory-select">
+          <label class="block text-dim] font-semibold mb-1 uppercase tracking-wider text-[10px]" for="subcategory-select">
             Rubro / Subcategoría *
           </label>
           <select
             id="subcategory-select"
             value={subcategory}
             onchange={(e) => onSubcategoryChange((e.target as HTMLSelectElement).value)}
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] focus:border-[#ffb31a] rounded font-medium text-[#d8d8dc] outline-none"
+            class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded font-medium text-ink] outline-none"
           >
             <option value="CALZA_MASCULINA">Calzas de Varón (Con/Sin Pie)</option>
             <option value="SUSPENSOR_MASCULINO">Suspensores de Varón (Dance Belts)</option>
@@ -188,24 +177,24 @@
         <!-- Marca y Modelo -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-[#82828a] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="brand-input">Marca *</label>
+            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="brand-input">Marca *</label>
             <input
               id="brand-input"
               type="text"
               bind:value={brand}
               placeholder="Capezio, Bloch, Sansha, So Danca..."
-              class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] focus:border-[#ffb31a] rounded text-[#d8d8dc] font-medium outline-none"
+              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-ink] font-medium outline-none"
               required
             />
           </div>
           <div>
-            <label class="block text-[#82828a] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="model-input">Modelo / Descripción *</label>
+            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="model-input">Modelo / Descripción *</label>
             <input
               id="model-input"
               type="text"
               bind:value={modelName}
               placeholder="Ej: M9000, Pro 1C, Neo-Flex, Ultra Soft..."
-              class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] focus:border-[#ffb31a] rounded text-[#d8d8dc] font-medium outline-none"
+              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-ink] font-medium outline-none"
               required
             />
           </div>
@@ -214,22 +203,22 @@
         <!-- Color y Material -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-[#82828a] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="color-input">Color *</label>
+            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="color-input">Color *</label>
             <input
               id="color-input"
               type="text"
               bind:value={color}
               placeholder="Blanco, Negro, Piel, Rosa, Gris, Marrón..."
-              class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] focus:border-[#ffb31a] rounded text-[#d8d8dc] font-medium outline-none"
+              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-ink] font-medium outline-none"
               required
             />
           </div>
           <div>
-            <label class="block text-[#82828a] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="material-select">Material *</label>
+            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="material-select">Material *</label>
             <select
               id="material-select"
               bind:value={material}
-              class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] focus:border-[#ffb31a] rounded font-medium text-[#d8d8dc] outline-none"
+              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded font-medium text-ink] outline-none"
             >
               <option value="ALGODON_LYCRA">Algodón con Lycra</option>
               <option value="MICROFIBRA">Microfibra</option>
@@ -247,11 +236,11 @@
         <!-- Sistema de Talle, Talle y Ancho -->
         <div class="grid grid-cols-3 gap-2">
           <div>
-            <label class="block text-[#82828a] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="size-system-select">Sistema</label>
+            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="size-system-select">Sistema</label>
             <select
               id="size-system-select"
               bind:value={sizeSystem}
-              class="w-full h-10 px-2 bg-[#121214] border border-[#34343c] focus:border-[#ffb31a] rounded font-medium text-[#d8d8dc] outline-none text-xs"
+              class="w-full h-10 px-2 bg-void] border border-grid] focus:border-amber] rounded font-medium text-ink] outline-none text-xs"
             >
               <option value="ALPHA">ALPHA (S, M, L)</option>
               <option value="US">US (Calzado USA)</option>
@@ -260,24 +249,24 @@
             </select>
           </div>
           <div>
-            <label class="block text-[#82828a] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="size-value-input">Talle *</label>
+            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="size-value-input">Talle *</label>
             <input
               id="size-value-input"
               type="text"
               bind:value={sizeValue}
               placeholder="M, 8, 39, L/XL..."
-              class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] focus:border-[#ffb31a] rounded text-[#d8d8dc] font-mono outline-none"
+              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-ink] font-mono outline-none"
               required
             />
           </div>
           <div>
-            <label class="block text-[#82828a] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="width-value-input">Ancho</label>
+            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="width-value-input">Ancho</label>
             <input
               id="width-value-input"
               type="text"
               bind:value={widthValue}
               placeholder="M, W, C, X..."
-              class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] focus:border-[#ffb31a] rounded text-[#d8d8dc] font-mono outline-none"
+              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-ink] font-mono outline-none"
             />
           </div>
         </div>
@@ -285,52 +274,52 @@
         <!-- Cantidades y Ubicación -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
           <div>
-            <label class="block text-[#82828a] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="physical-qty-input">Stock Físico</label>
+            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="physical-qty-input">Stock Físico</label>
             <input
               id="physical-qty-input"
               type="number"
               min="0"
               bind:value={physicalQty}
-              class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] focus:border-[#ffb31a] rounded text-[#ffb31a] font-mono font-bold outline-none text-sm"
+              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-amber] font-mono font-bold outline-none text-sm"
               required
             />
           </div>
           <div>
-            <label class="block text-[#82828a] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="min-alert-qty-input">Alerta Mínima</label>
+            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="min-alert-qty-input">Alerta Mínima</label>
             <input
               id="min-alert-qty-input"
               type="number"
               min="0"
               bind:value={minAlertQty}
-              class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] focus:border-[#ffb31a] rounded text-[#d8d8dc] font-mono outline-none"
+              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-ink] font-mono outline-none"
               required
             />
           </div>
           <div>
-            <label class="block text-[#82828a] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="storage-bin-input">Estante / Gaveta</label>
+            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="storage-bin-input">Estante / Gaveta</label>
             <input
               id="storage-bin-input"
               type="text"
               bind:value={storageBinLocation}
               placeholder="Ej: Gaveta Calzas 01..."
-              class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] focus:border-[#ffb31a] rounded text-[#d8d8dc] outline-none text-xs"
+              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-ink] outline-none text-xs"
             />
           </div>
         </div>
 
         <!-- Botones de Acción -->
-        <div class="flex items-center justify-end gap-3 pt-4 border-t border-[#34343c]">
+        <div class="tg-modal-foot">
           <button
             type="button"
             onclick={onClose}
-            class="px-4 py-2 rounded bg-[#24242a] hover:bg-[#34343c] text-[#82828a] hover:text-[#d8d8dc] font-medium text-xs transition-colors"
+            class="tg-btn"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            class="px-5 py-2 rounded bg-[#ffb31a] hover:bg-[#e6a117] text-black font-semibold text-xs uppercase tracking-wider transition-colors disabled:opacity-50"
+            class="tg-btn tg-btn-primary uppercase tracking-wider disabled:opacity-50"
           >
             {isSubmitting ? 'Guardando...' : 'Guardar en Depósito'}
           </button>

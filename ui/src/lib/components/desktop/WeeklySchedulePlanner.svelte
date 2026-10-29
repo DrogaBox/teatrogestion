@@ -8,6 +8,8 @@
     type WorkRegime,
     type UpsertRehearsalBlockPayload
   } from '../../ipc/client';
+  import ModalHeader from '../shared/ModalHeader.svelte';
+  import { modalBehavior } from '../../actions/modalBehavior';
 
   let {
     currentDate,
@@ -189,15 +191,15 @@
   function getRoomBadge(room: string): { label: string; bg: string; text: string } {
     switch (room) {
       case 'SALA_1':
-        return { label: 'Sala 1', bg: 'bg-[#1e2a22]', text: 'text-[#3de06a]' };
+        return { label: 'Sala 1', bg: 'bg-void]', text: 'text-green]' };
       case 'SALA_2':
-        return { label: 'Sala 2', bg: 'bg-[#18262a]', text: 'text-[#2ed6e8]' };
+        return { label: 'Sala 2', bg: 'bg-void]', text: 'text-cyan]' };
       case 'SALA_3':
-        return { label: 'Sala 3', bg: 'bg-[#2a2218]', text: 'text-[#ffb31a]' };
+        return { label: 'Sala 3', bg: 'bg-raised]', text: 'text-amber]' };
       case 'ESCENARIO':
-        return { label: 'Escenario', bg: 'bg-[#2a1a1e]', text: 'text-[#ff7070]' };
+        return { label: 'Escenario', bg: 'bg-void]', text: 'text-red]' };
       default:
-        return { label: 'Gira', bg: 'bg-[#202026]', text: 'text-[#82828a]' };
+        return { label: 'Gira', bg: 'bg-raised]', text: 'text-dim]' };
     }
   }
 
@@ -218,31 +220,31 @@
 
 <div class="space-y-3">
   <!-- Barra de Herramientas de Planificación Semanal (Estilo TeatroCue) -->
-  <div class="bg-[#1a1a1e] border border-[#34343c] rounded p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+  <div class="bg-panel] border border-grid] rounded p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
     
     <!-- Navegación de Semana -->
     <div class="flex items-center gap-1">
       <button
         onclick={() => shiftWeek(-1)}
-        class="h-8 px-2.5 bg-[#24242a] hover:bg-[#34343e] text-[#d8d8dc] border border-[#34343c] rounded font-mono active:scale-95"
+        class="h-8 px-2.5 bg-raised] hover:bg-raised-hover] text-ink] border border-grid] rounded font-mono active:scale-95"
         title="Semana anterior"
       >
         ◀
       </button>
       <button
         onclick={goToCurrentWeek}
-        class="h-8 px-3 bg-[#24242a] hover:bg-[#34343e] text-[#ffb31a] border border-[#34343c] rounded font-bold"
+        class="h-8 px-3 bg-raised] hover:bg-raised-hover] text-amber] border border-grid] rounded font-bold"
       >
         Esta Semana
       </button>
       <button
         onclick={() => shiftWeek(1)}
-        class="h-8 px-2.5 bg-[#24242a] hover:bg-[#34343e] text-[#d8d8dc] border border-[#34343c] rounded font-mono active:scale-95"
+        class="h-8 px-2.5 bg-raised] hover:bg-raised-hover] text-ink] border border-grid] rounded font-mono active:scale-95"
         title="Semana siguiente"
       >
         ▶
       </button>
-      <span class="ml-2 font-mono text-[#d8d8dc] font-bold">
+      <span class="ml-2 font-mono text-ink] font-bold">
         {weekStartStr} al {weekEndStr}
       </span>
     </div>
@@ -251,14 +253,14 @@
     <div class="flex items-center gap-2">
       <button
         onclick={() => showCopyModal = true}
-        class="h-8 px-3 bg-[#24242a] hover:bg-[#34343e] text-[#2ed6e8] border border-[#34343c] rounded font-medium flex items-center gap-1.5"
+        class="h-8 px-3 bg-raised] hover:bg-raised-hover] text-cyan] border border-grid] rounded font-medium flex items-center gap-1.5"
       >
         <span>Duplicar Día</span>
       </button>
 
       <button
         onclick={() => showPrintWeekly = true}
-        class="h-8 px-3 bg-[#24242a] hover:bg-[#34343e] text-[#ffb31a] border border-[#34343c] rounded font-bold flex items-center gap-1.5"
+        class="h-8 px-3 bg-raised] hover:bg-raised-hover] text-amber] border border-grid] rounded font-bold flex items-center gap-1.5"
       >
         <span>Imprimir Plan Semanal</span>
       </button>
@@ -268,25 +270,25 @@
   <!-- Grilla Semanal: 6 Columnas (Lunes a Sábado) -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2">
     {#each weekDays as day}
-      <div class="bg-[#1a1a1e] border {day.isSelected ? 'border-[#ffb31a]' : 'border-[#34343c]'} rounded flex flex-col min-h-[580px] shadow-sm">
+      <div class="bg-panel] border {day.isSelected ? 'border-amber]' : 'border-grid]'} rounded flex flex-col min-h-[580px] shadow-sm">
         
         <!-- Cabecera del Día -->
-        <div class="p-2 border-b border-[#34343c] {day.isToday ? 'bg-[#24242a]' : 'bg-[#17171b]'} flex items-center justify-between">
+        <div class="p-2 border-b border-grid] {day.isToday ? 'bg-raised]' : 'bg-alt]'} flex items-center justify-between">
           <div>
             <div class="flex items-center gap-1.5">
-              <span class="text-xs font-black tracking-wider text-[#d8d8dc]">{day.dayName}</span>
-              <span class="text-xs font-mono font-bold {day.isToday ? 'text-[#ffb31a]' : 'text-[#82828a]'}">
+              <span class="text-xs font-black tracking-wider text-ink]">{day.dayName}</span>
+              <span class="text-xs font-mono font-bold {day.isToday ? 'text-amber]' : 'text-dim]'}">
                 {day.dayNumber} {day.monthName}
               </span>
             </div>
-            <div class="text-[10px] text-[#82828a] font-mono mt-0.5">
+            <div class="text-[10px] text-dim] font-mono mt-0.5">
               {getRegimeLabel(day.schedule?.regime)}
             </div>
           </div>
 
           <button
             onclick={() => onSwitchToDailyView(day.date)}
-            class="text-[10px] px-1.5 py-0.5 bg-[#24242a] hover:bg-[#34343e] text-[#2ed6e8] border border-[#34343c] rounded font-mono"
+            class="text-[10px] px-1.5 py-0.5 bg-raised] hover:bg-raised-hover] text-cyan] border border-grid] rounded font-mono"
             title="Abrir en vista diaria detallada"
           >
             Ver día ➔
@@ -295,11 +297,11 @@
 
         <!-- Clases Matutinas Resumen -->
         {#if day.schedule && day.schedule.morning_classes.length > 0}
-          <div class="p-1.5 bg-[#141416] border-b border-[#34343c] text-[10px] space-y-1">
-            <span class="text-[#82828a] font-mono uppercase block font-bold text-[9px]">Clases 09:00 - 10:15:</span>
+          <div class="p-1.5 bg-void] border-b border-grid] text-[10px] space-y-1">
+            <span class="text-dim] font-mono uppercase block font-bold text-[9px]">Clases 09:00 - 10:15:</span>
             {#each day.schedule.morning_classes as mc}
-              <div class="text-[#d8d8dc] truncate">
-                <span class="text-[#3de06a] font-mono font-bold">{mc.room === 'SALA_1' ? 'S1' : 'S3'}:</span>
+              <div class="text-ink] truncate">
+                <span class="text-green] font-mono font-bold">{mc.room === 'SALA_1' ? 'S1' : 'S3'}:</span>
                 <span>{mc.master_name?.split(',')[0]}</span>
               </div>
             {/each}
@@ -309,11 +311,11 @@
         <!-- Lista de Bloques de Ensayo -->
         <div class="flex-1 p-1.5 overflow-y-auto space-y-1.5">
           {#if day.isLoading}
-            <div class="p-6 text-center text-[#82828a] text-[11px] font-mono">
+            <div class="p-6 text-center text-dim] text-[11px] font-mono">
               Cargando...
             </div>
           {:else if !day.schedule || day.schedule.rehearsal_blocks.length === 0}
-            <div class="p-6 text-center text-[#82828a] text-[11px] font-mono italic">
+            <div class="p-6 text-center text-dim] text-[11px] font-mono italic">
               Sin ensayos citados
             </div>
           {:else}
@@ -322,11 +324,11 @@
               <button
                 type="button"
                 onclick={() => onOpenCitationModal(day.date, block)}
-                class="w-full text-left p-2 bg-[#24242a] hover:bg-[#34343e] border border-[#34343c] rounded transition-colors group"
+                class="w-full text-left p-2 bg-raised] hover:bg-raised-hover] border border-grid] rounded transition-colors group"
               >
                 <!-- Horario y Sala -->
                 <div class="flex items-center justify-between gap-1 mb-1">
-                  <span class="text-[10px] font-mono font-bold text-[#ffb31a]">
+                  <span class="text-[10px] font-mono font-bold text-amber]">
                     {block.start_time} - {block.end_time}
                   </span>
                   <span class="text-[9px] px-1 py-0.2 rounded font-mono font-bold {badge.bg} {badge.text}">
@@ -335,21 +337,21 @@
                 </div>
 
                 <!-- Obra / Pasaje -->
-                <div class="text-[11px] font-bold text-[#d8d8dc] truncate group-hover:text-white">
+                <div class="text-[11px] font-bold text-ink] truncate group-hover:text-white">
                   {block.passage_name}
                 </div>
 
                 <!-- Reparto / Bailarines -->
                 {#if block.cast_groups.length > 0 && block.cast_groups[0].formatted_line}
-                  <div class="text-[10px] text-[#82828a] truncate mt-0.5 font-mono">
+                  <div class="text-[10px] text-dim] truncate mt-0.5 font-mono">
                     {block.cast_groups[0].formatted_line}
                   </div>
                 {/if}
 
                 <!-- Maestro / Pianista / Pista -->
-                <div class="text-[9px] text-[#82828a] truncate mt-1 flex items-center justify-between">
+                <div class="text-[9px] text-dim] truncate mt-1 flex items-center justify-between">
                   <span>{block.master_name ? block.master_name.split(',')[0] : 'Sin maestro'}</span>
-                  <span class="font-mono text-[#2ed6e8]">
+                  <span class="font-mono text-cyan]">
                     {block.teatrocue_cue_ref ? `Cue: ${block.teatrocue_cue_ref}` : block.pianist_name ? 'Piano' : ''}
                   </span>
                 </div>
@@ -359,11 +361,11 @@
         </div>
 
         <!-- Botón para Citar en este Día -->
-        <div class="p-1.5 border-t border-[#34343c] bg-[#17171b]">
+        <div class="p-1.5 border-t border-grid] bg-alt]">
           <button
             type="button"
             onclick={() => onOpenCitationModal(day.date)}
-            class="w-full py-1.5 bg-[#24242a] hover:bg-[#34343e] text-[#d8d8dc] hover:text-[#ffb31a] border border-[#34343c] rounded text-xs font-bold font-mono transition-colors"
+            class="w-full py-1.5 bg-raised] hover:bg-raised-hover] text-ink] hover:text-amber] border border-grid] rounded text-xs font-bold font-mono transition-colors"
           >
             + Citar Ensayo
           </button>
@@ -376,23 +378,20 @@
 
 <!-- MODAL PARA DUPLICAR/COPIAR DÍA -->
 {#if showCopyModal}
-  <div class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3">
-    <div class="w-full max-w-md bg-[#1a1a1e] border border-[#34343c] rounded-lg p-5 shadow-2xl text-xs space-y-4">
-      <div class="flex items-center justify-between pb-3 border-b border-[#34343c]">
-        <h3 class="text-sm font-bold text-[#d8d8dc] uppercase tracking-wide">
-          Duplicar Cronograma de Ensayo
-        </h3>
-        <button onclick={() => showCopyModal = false} class="text-[#82828a] hover:text-white">✕</button>
-      </div>
+  <div class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3" use:modalBehavior={{ onclose: () => showCopyModal = false, backdrop: false }}>
+    <div class="tg-modal max-w-md text-xs">
+      <ModalHeader title="Duplicar Cronograma de Ensayo" onclose={() => showCopyModal = false} />
 
-      <p class="text-[#82828a]">
+      <div class="tg-modal-body space-y-4">
+
+      <p class="text-dim]">
         Copia todas las clases matutinas, requerimientos de sonido, maestros y bloques de ensayo desde el día origen al día destino.
       </p>
 
       <div class="space-y-3">
         <div>
-          <label for="weekly-copy-source" class="block text-[10px] uppercase font-bold text-[#82828a] mb-1">Día Origen (Fuente)</label>
-          <select id="weekly-copy-source" bind:value={copySourceDate} class="w-full h-10 px-3 bg-[#141416] border border-[#34343c] rounded text-xs text-[#d8d8dc] font-mono">
+          <label for="weekly-copy-source" class="block text-[10px] uppercase font-bold text-dim] mb-1">Día Origen (Fuente)</label>
+          <select id="weekly-copy-source" bind:value={copySourceDate} class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs text-ink] font-mono">
             {#each weekDays as d}
               <option value={d.date}>{d.dayName} {d.date} ({d.schedule?.rehearsal_blocks.length || 0} ensayos)</option>
             {/each}
@@ -400,8 +399,8 @@
         </div>
 
         <div>
-          <label for="weekly-copy-target" class="block text-[10px] uppercase font-bold text-[#82828a] mb-1">Día Destino</label>
-          <select id="weekly-copy-target" bind:value={copyTargetDate} class="w-full h-10 px-3 bg-[#141416] border border-[#34343c] rounded text-xs text-[#d8d8dc] font-mono">
+          <label for="weekly-copy-target" class="block text-[10px] uppercase font-bold text-dim] mb-1">Día Destino</label>
+          <select id="weekly-copy-target" bind:value={copyTargetDate} class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs text-ink] font-mono">
             {#each weekDays as d}
               <option value={d.date}>{d.dayName} {d.date}</option>
             {/each}
@@ -409,17 +408,19 @@
         </div>
       </div>
 
-      <div class="pt-3 border-t border-[#34343c] flex gap-2">
+      </div>
+
+      <div class="tg-modal-foot gap-2">
         <button
           onclick={() => showCopyModal = false}
-          class="flex-1 h-9 bg-[#24242a] hover:bg-[#34343e] text-[#82828a] rounded font-bold"
+          class="tg-btn flex-1"
         >
           Cancelar
         </button>
         <button
           disabled={isCloning}
           onclick={executeCopyDay}
-          class="flex-1 h-9 bg-[#ffb31a] hover:bg-[#ffb31a]/90 text-[#121214] font-black rounded uppercase tracking-wide"
+          class="tg-btn tg-btn-primary flex-1 uppercase tracking-wide disabled:opacity-50"
         >
           {isCloning ? 'Duplicando...' : 'Copiar Día'}
         </button>
@@ -430,29 +431,21 @@
 
 <!-- MODAL DE IMPRESIÓN DEL PLAN SEMANAL -->
 {#if showPrintWeekly}
-  <div class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 print:p-0 print:bg-white print:fixed print:inset-0">
-    <div class="w-full max-w-5xl max-h-[92vh] flex flex-col bg-[#1a1a1e] print:bg-white border border-[#34343c] print:border-none rounded-lg shadow-2xl overflow-hidden print:w-full print:h-auto print:max-h-none">
-      
+  <div class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3 print:p-0 print:bg-white print:fixed print:inset-0" use:modalBehavior={{ onclose: () => showPrintWeekly = false }}>
+    <div class="tg-modal max-w-5xl print:w-full print:h-auto print:max-h-none">
+
       <!-- Barra superior no imprimible -->
-      <div class="p-3 border-b border-[#34343c] flex items-center justify-between print:hidden bg-[#17171b]">
-        <span class="text-xs font-bold text-[#d8d8dc] uppercase font-mono">
-          Plan Semanal de Ensayos — {weekStartStr} al {weekEndStr}
-        </span>
-        <div class="flex items-center gap-2">
-          <button
-            onclick={() => window.print()}
-            class="px-4 py-1.5 bg-[#ffb31a] hover:bg-[#ffb31a]/90 text-[#121214] font-bold text-xs rounded"
-          >
-            Imprimir (A4 Horizontal)
-          </button>
-          <button
-            onclick={() => showPrintWeekly = false}
-            class="px-3 py-1.5 bg-[#24242a] hover:bg-[#34343e] text-[#d8d8dc] text-xs rounded"
-          >
-            Cerrar
-          </button>
-        </div>
-      </div>
+      <ModalHeader
+        title="Plan Semanal de Ensayos — {weekStartStr} al {weekEndStr}"
+        onclose={() => showPrintWeekly = false}
+      >
+        <button
+          onclick={() => window.print()}
+          class="tg-btn"
+        >
+          Imprimir (A4 Horizontal)
+        </button>
+      </ModalHeader>
 
       <!-- Contenido Imprimible -->
       <div class="flex-1 overflow-y-auto p-6 bg-white text-black font-sans text-xs print:p-0">

@@ -6,6 +6,8 @@
     type PersonnelWithQuotaDto,
     type QuotaBucket
   } from '../../ipc/client';
+  import ModalHeader from '../shared/ModalHeader.svelte';
+  import { modalBehavior } from '../../actions/modalBehavior';
   import NewStockItemModal from './NewStockItemModal.svelte';
 
   let {
@@ -183,21 +185,21 @@
 </script>
 
 {#if isOpen}
-  <div class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 md:p-6 print:p-0 print:bg-white print:fixed print:inset-0">
-    <div class="bg-[#1a1a1e] border border-[#34343c] rounded-md w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl relative print:bg-white print:border-none print:shadow-none print:p-0 print:max-h-none print:overflow-visible">
+  <div class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-2 md:p-6 print:p-0 print:bg-white print:fixed print:inset-0" use:modalBehavior={{ onclose: onClose }}>
+    <div class="tg-modal max-w-6xl relative print:bg-white print:border-none print:shadow-none print:p-0 print:max-h-none print:overflow-visible">
       
       <!-- Barra Superior (Oculta en Impresión) -->
-      <div class="bg-[#24242a] border-b border-[#34343c] px-4 py-2.5 shrink-0 flex items-center justify-between print:hidden">
+      <div class="bg-raised] border-b border-grid] px-4 py-2.5 shrink-0 flex items-center justify-between print:hidden">
         <div class="flex items-center gap-2.5">
-          <span class="text-[10px] font-mono font-bold text-[#ffb31a] bg-[#121214] px-2 py-0.5 rounded border border-[#34343c]">INVENTARIO</span>
+          <span class="text-[10px] font-mono font-bold text-amber] bg-void] px-2 py-0.5 rounded border border-grid]">INVENTARIO</span>
           <div>
-            <h2 class="text-xs font-bold text-[#d8d8dc] uppercase tracking-wider flex items-center gap-2">
+            <h2 class="text-xs font-bold text-ink] uppercase tracking-wider flex items-center gap-2">
               Inventario Oficial & Control de Depósito
-              <span class="text-[10px] font-mono text-[#82828a]">
+              <span class="text-[10px] font-mono text-dim]">
                 ({stockItems.length} ítems)
               </span>
             </h2>
-            <p class="text-[11px] text-[#82828a]">
+            <p class="text-[11px] text-dim]">
               Ballet Oficial de Córdoba • Teatro del Libertador San Martín
             </p>
           </div>
@@ -207,14 +209,14 @@
         <div class="flex items-center gap-2 flex-wrap">
           <button
             onclick={openNewItem}
-            class="px-2.5 py-1 bg-[#ffb31a] hover:bg-[#e69f14] text-[#121214] rounded text-xs font-bold transition-colors"
+            class="px-2.5 py-1 bg-amber] hover:bg-amber] text-void] rounded text-xs font-bold transition-colors"
           >
             + Nuevo Ítem
           </button>
 
           <button
             onclick={exportExcel}
-            class="px-2.5 py-1 bg-[#24242a] hover:bg-[#2e2e36] text-[#3de06a] border border-[#3de06a]/40 rounded text-xs font-bold transition-colors"
+            class="px-2.5 py-1 bg-raised] hover:bg-raised-hover] text-green] border border-green]/40 rounded text-xs font-bold transition-colors"
             title="Exportar a Microsoft Excel con acentos legibles (BOM UTF-8)"
           >
             Exportar Excel
@@ -222,7 +224,7 @@
 
           <button
             onclick={() => window.print()}
-            class="px-2.5 py-1 bg-[#24242a] hover:bg-[#2e2e36] text-[#d8d8dc] border border-[#34343c] rounded text-xs font-bold transition-colors"
+            class="px-2.5 py-1 bg-raised] hover:bg-raised-hover] text-ink] border border-grid] rounded text-xs font-bold transition-colors"
             title="Imprimir o Guardar en PDF con formato oficial"
           >
             Exportar PDF / Imprimir
@@ -230,15 +232,19 @@
 
           <button
             onclick={onClose}
-            class="text-[#82828a] hover:text-white px-2 py-0.5 rounded hover:bg-[#34343c] text-sm font-mono"
+            class="tg-modal-close"
+            aria-label="Cerrar"
+            title="Cerrar"
           >
-            ✕
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M2 2l10 10M12 2L2 12" />
+            </svg>
           </button>
         </div>
       </div>
 
       <!-- Filtros Rápidos (Ocultos en Impresión) -->
-      <div class="bg-[#17171b] px-4 py-2 border-b border-[#34343c] print:hidden space-y-2">
+      <div class="bg-alt] px-4 py-2 border-b border-grid] print:hidden space-y-2">
         <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
           
           <!-- Buscador por texto -->
@@ -248,12 +254,12 @@
               bind:value={searchQuery}
               oninput={handleFilterChange}
               placeholder="Buscar por SKU, modelo, marca, color o talle..."
-              class="w-full h-8 pl-3 pr-8 bg-[#121214] border border-[#34343c] focus:border-[#ffb31a] rounded text-xs font-bold text-[#d8d8dc] outline-none placeholder-[#82828a]"
+              class="w-full h-8 pl-3 pr-8 bg-void] border border-grid] focus:border-amber] rounded text-xs font-bold text-ink] outline-none placeholder-dim]"
             />
             {#if searchQuery}
               <button
                 onclick={() => { searchQuery = ''; handleFilterChange(); }}
-                class="absolute right-2 top-1.5 text-[#82828a] hover:text-white text-xs"
+                class="absolute right-2 top-1.5 text-dim] hover:text-white text-xs"
               >
                 ✕
               </button>
@@ -265,7 +271,7 @@
             <select
               bind:value={selectedCategory}
               onchange={handleFilterChange}
-              class="w-full h-8 px-2.5 bg-[#121214] border border-[#34343c] focus:border-[#ffb31a] rounded text-xs font-bold text-[#d8d8dc] outline-none"
+              class="w-full h-8 px-2.5 bg-void] border border-grid] focus:border-amber] rounded text-xs font-bold text-ink] outline-none"
             >
               {#each categoryOptions as opt}
                 <option value={opt.value}>{opt.label}</option>
@@ -275,14 +281,14 @@
 
           <!-- Filtro de Stock Bajo / Alerta -->
           <div class="md:col-span-3 flex items-center">
-            <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-[#d8d8dc]">
+            <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-ink]">
               <input
                 type="checkbox"
                 bind:checked={lowStockOnly}
                 onchange={handleFilterChange}
-                class="w-4 h-4 text-[#ffb31a] rounded bg-[#121214] border-[#34343c]"
+                class="w-4 h-4 text-amber] rounded bg-void] border-grid]"
               />
-              <span class="text-[#ff4a4a] font-bold">
+              <span class="text-red] font-bold">
                 Solo Alerta de Stock Bajo
               </span>
             </label>
@@ -290,22 +296,22 @@
         </div>
 
         <!-- Tarjetas de Resumen Rápido -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-[#34343c] text-center">
-          <div class="bg-[#121214] p-1.5 rounded border border-[#34343c]">
-            <span class="text-[9px] text-[#82828a] uppercase font-bold block">Stock Físico Total</span>
-            <span class="text-xs font-bold font-mono text-[#d8d8dc]">{totalFisico} un.</span>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-grid] text-center">
+          <div class="bg-void] p-1.5 rounded border border-grid]">
+            <span class="text-[9px] text-dim] uppercase font-bold block">Stock Físico Total</span>
+            <span class="text-xs font-bold font-mono text-ink]">{totalFisico} un.</span>
           </div>
-          <div class="bg-[#121214] p-1.5 rounded border border-[#34343c]">
-            <span class="text-[9px] text-[#82828a] uppercase font-bold block">Reservas Nominativas</span>
-            <span class="text-xs font-bold font-mono text-[#ffb31a]">{totalReservado} un.</span>
+          <div class="bg-void] p-1.5 rounded border border-grid]">
+            <span class="text-[9px] text-dim] uppercase font-bold block">Reservas Nominativas</span>
+            <span class="text-xs font-bold font-mono text-amber]">{totalReservado} un.</span>
           </div>
-          <div class="bg-[#121214] p-1.5 rounded border border-[#34343c]">
-            <span class="text-[9px] text-[#82828a] uppercase font-bold block">Libre Disponible</span>
-            <span class="text-xs font-bold font-mono text-[#3de06a]">{totalDisponible} un.</span>
+          <div class="bg-void] p-1.5 rounded border border-grid]">
+            <span class="text-[9px] text-dim] uppercase font-bold block">Libre Disponible</span>
+            <span class="text-xs font-bold font-mono text-green]">{totalDisponible} un.</span>
           </div>
-          <div class="bg-[#121214] p-1.5 rounded border border-[#34343c]">
-            <span class="text-[9px] text-[#82828a] uppercase font-bold block">Líneas en Alerta</span>
-            <span class="text-xs font-bold font-mono text-[#ff4a4a]">{totalCritico} ítems</span>
+          <div class="bg-void] p-1.5 rounded border border-grid]">
+            <span class="text-[9px] text-dim] uppercase font-bold block">Líneas en Alerta</span>
+            <span class="text-xs font-bold font-mono text-red]">{totalCritico} ítems</span>
           </div>
         </div>
       </div>
@@ -313,7 +319,7 @@
       <!-- ================================================================= -->
       <!-- DOCUMENTO IMPRIMIBLE A4 / TABLA DE GESTIÓN OFICIAL                 -->
       <!-- ================================================================= -->
-      <div class="flex-1 overflow-y-auto p-4 text-[#d8d8dc] print:text-black print:overflow-visible">
+      <div class="flex-1 overflow-y-auto p-4 text-ink] print:text-black print:overflow-visible">
         
         <!-- Encabezado Institucional Exclusivo de Impresión (PDF / Papel) -->
         <div class="hidden print:block text-center pb-4 mb-4 border-b-2 border-black">
@@ -330,18 +336,18 @@
         </div>
 
         {#if isLoading}
-          <div class="py-12 text-center text-[#82828a] font-mono text-xs flex items-center justify-center gap-2">
+          <div class="py-12 text-center text-dim] font-mono text-xs flex items-center justify-center gap-2">
             Cargando catálogo de depósito desde SQLite local...
           </div>
         {:else if stockItems.length === 0}
-          <div class="py-12 text-center bg-[#17171b] rounded border border-[#34343c] text-[#82828a] text-xs">
+          <div class="py-12 text-center bg-alt] rounded border border-grid] text-dim] text-xs">
             No se encontraron ítems de inventario para el criterio seleccionado.
           </div>
         {:else}
           <div class="overflow-x-auto print:overflow-visible">
             <table class="w-full text-left border-collapse text-xs print:text-[10px] print:border print:border-black">
               <thead class="print:table-header-group">
-                <tr class="bg-[#17171b] border-b border-[#34343c] text-[#82828a] uppercase tracking-wider font-mono text-[10px] print:bg-slate-200 print:text-black print:border-black">
+                <tr class="bg-alt] border-b border-grid] text-dim] uppercase tracking-wider font-mono text-[10px] print:bg-slate-200 print:text-black print:border-black">
                   <th class="py-2 px-3">Rubro</th>
                   <th class="py-2 px-3">Marca / Modelo</th>
                   <th class="py-2 px-3">Color / Mat.</th>
@@ -353,14 +359,14 @@
                   <th class="py-2 px-2 text-center print:hidden">Acción</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-[#34343c]/60 print:divide-black">
+              <tbody class="divide-y divide-grid]/60 print:divide-black">
                 {#each stockItems as it}
-                  <tr class="hover:bg-[#24242a] transition-colors print:hover:bg-transparent print:break-inside-avoid {it.is_low_stock ? 'bg-[#ff4a4a]/5 print:bg-slate-100' : 'print:bg-white'}">
+                  <tr class="hover:bg-raised] transition-colors print:hover:bg-transparent print:break-inside-avoid {it.is_low_stock ? 'bg-red]/5 print:bg-slate-100' : 'print:bg-white'}">
                     <!-- Rubro / Subcategoría -->
-                    <td class="py-2 px-3 font-bold text-[#d8d8dc] print:text-black">
+                    <td class="py-2 px-3 font-bold text-ink] print:text-black">
                       <div class="flex items-center gap-1.5">
                         {#if it.is_low_stock}
-                          <span class="text-[#ff4a4a] text-[10px] font-mono font-bold print:hidden">[ALERTA]</span>
+                          <span class="text-red] text-[10px] font-mono font-bold print:hidden">[ALERTA]</span>
                           <span class="hidden print:inline-block font-mono font-black text-[8px] border border-black px-1 rounded bg-white">ALERTA</span>
                         {/if}
                         <span class="text-[11px] font-mono">{it.subcategory}</span>
@@ -369,46 +375,46 @@
 
                     <!-- Marca y Modelo -->
                     <td class="py-2 px-3">
-                      <div class="font-bold text-[#d8d8dc] print:text-black">{it.brand} {it.model_name}</div>
+                      <div class="font-bold text-ink] print:text-black">{it.brand} {it.model_name}</div>
                       {#if it.raw_factory_code}
-                        <div class="text-[10px] font-mono text-[#ffb31a] print:text-slate-700">{it.raw_factory_code}</div>
+                        <div class="text-[10px] font-mono text-amber] print:text-slate-700">{it.raw_factory_code}</div>
                       {:else}
-                        <div class="text-[10px] font-mono text-[#82828a] print:text-slate-600">{it.sku_code}</div>
+                        <div class="text-[10px] font-mono text-dim] print:text-slate-600">{it.sku_code}</div>
                       {/if}
                     </td>
 
                     <!-- Color y Material -->
-                    <td class="py-2 px-3 text-[#82828a] print:text-black">
+                    <td class="py-2 px-3 text-dim] print:text-black">
                       <div>{it.color}</div>
-                      <div class="text-[10px] text-[#82828a] print:text-slate-600">{it.material}</div>
+                      <div class="text-[10px] text-dim] print:text-slate-600">{it.material}</div>
                     </td>
 
                     <!-- Talle y Ancho -->
-                    <td class="py-2 px-3 font-mono font-bold text-[#d8d8dc] print:text-black">
+                    <td class="py-2 px-3 font-mono font-bold text-ink] print:text-black">
                       <span>{it.size_value}</span>
                       {#if it.width_value}
-                        <span class="text-[#ffb31a] print:text-black">/{it.width_value}</span>
+                        <span class="text-amber] print:text-black">/{it.width_value}</span>
                       {/if}
-                      <span class="text-[10px] text-[#82828a] block font-normal">({it.size_system})</span>
+                      <span class="text-[10px] text-dim] block font-normal">({it.size_system})</span>
                     </td>
 
                     <!-- Stock Físico -->
-                    <td class="py-2 px-2 text-center font-mono font-bold text-[#d8d8dc] print:text-black">
+                    <td class="py-2 px-2 text-center font-mono font-bold text-ink] print:text-black">
                       {it.physical_qty}
                     </td>
 
                     <!-- Stock Reservado -->
-                    <td class="py-2 px-2 text-center font-mono font-bold {it.reserved_qty > 0 ? 'text-[#ffb31a]' : 'text-[#82828a]'} print:text-black">
+                    <td class="py-2 px-2 text-center font-mono font-bold {it.reserved_qty > 0 ? 'text-amber]' : 'text-dim]'} print:text-black">
                       {it.reserved_qty}
                     </td>
 
                     <!-- Libre Disponible -->
-                    <td class="py-2 px-2 text-center font-mono font-bold {it.free_available_qty > 0 ? 'text-[#3de06a]' : 'text-[#ff4a4a]'} print:text-black">
+                    <td class="py-2 px-2 text-center font-mono font-bold {it.free_available_qty > 0 ? 'text-green]' : 'text-red]'} print:text-black">
                       {it.free_available_qty}
                     </td>
 
                     <!-- Ubicación en Estante / Gaveta -->
-                    <td class="py-2 px-3 text-[11px] text-[#82828a] font-mono print:text-black">
+                    <td class="py-2 px-3 text-[11px] text-dim] font-mono print:text-black">
                       {it.storage_bin_location || '—'}
                     </td>
 
@@ -417,14 +423,14 @@
                       <div class="flex items-center justify-center gap-1">
                         <button
                           onclick={() => openDirectDeliver(it)}
-                          class="px-2 py-0.5 rounded bg-[#24242a] hover:bg-[#3de06a]/20 text-[#3de06a] text-xs font-mono border border-[#34343c]"
+                          class="px-2 py-0.5 rounded bg-raised] hover:bg-green]/20 text-green] text-xs font-mono border border-grid]"
                           title="Entregar o asignar este ítem a un bailarín o agente"
                         >
                           Entregar
                         </button>
                         <button
                           onclick={() => openEditItem(it)}
-                          class="px-2 py-0.5 rounded bg-[#24242a] hover:bg-[#34343c] text-[#d8d8dc] text-xs font-mono border border-[#34343c]"
+                          class="px-2 py-0.5 rounded bg-raised] hover:bg-grid] text-ink] text-xs font-mono border border-grid]"
                           title="Modificar stock o ubicación"
                         >
                           Editar
@@ -477,40 +483,32 @@
 
 <!-- Sub-Modal para Entrega Directa de Cualquier Ítem de Inventario -->
 {#if showDeliverModal && deliverItem}
-  <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-    <div class="bg-[#1a1a1e] border border-[#34343c] rounded-md w-full max-w-md p-5 shadow-2xl space-y-4">
-      <div class="flex items-center justify-between pb-3 border-b border-[#34343c]">
-        <div>
-          <h3 class="text-sm font-semibold text-[#d8d8dc] uppercase tracking-wide">
-            Entregar / Asignar Ítem
-          </h3>
-          <p class="text-xs text-[#ffb31a] font-mono mt-0.5">{deliverItem.brand} {deliverItem.model_name}</p>
-        </div>
-        <button onclick={() => showDeliverModal = false} class="text-[#82828a] hover:text-white text-sm font-bold font-mono">✕</button>
-      </div>
+  <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" use:modalBehavior={{ onclose: () => showDeliverModal = false, backdrop: false }}>
+    <div class="tg-modal max-w-md">
+      <ModalHeader title="Entregar / Asignar Ítem" subtitle="{deliverItem.brand} {deliverItem.model_name}" onclose={() => showDeliverModal = false} />
 
-      <div class="space-y-3">
-        <div class="bg-[#121214] p-3 rounded border border-[#34343c] text-xs space-y-1">
+      <div class="tg-modal-body space-y-3">
+        <div class="bg-void] p-3 rounded border border-grid] text-xs space-y-1">
           <div class="flex justify-between">
-            <span class="text-[#82828a]">Rubro:</span>
-            <span class="font-medium text-[#d8d8dc]">{deliverItem.subcategory}</span>
+            <span class="text-dim]">Rubro:</span>
+            <span class="font-medium text-ink]">{deliverItem.subcategory}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-[#82828a]">Talle / Ancho:</span>
-            <span class="font-mono text-[#d8d8dc]">{deliverItem.size_value} {deliverItem.width_value || ''}</span>
+            <span class="text-dim]">Talle / Ancho:</span>
+            <span class="font-mono text-ink]">{deliverItem.size_value} {deliverItem.width_value || ''}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-[#82828a]">Libres en depósito:</span>
-            <span class="font-mono font-bold text-[#3de06a]">{deliverItem.free_available_qty} unidades</span>
+            <span class="text-dim]">Libres en depósito:</span>
+            <span class="font-mono font-bold text-green]">{deliverItem.free_available_qty} unidades</span>
           </div>
         </div>
 
         <div>
-          <label for="deliver-dest-select" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Destinatario (Bailarín / Agente)</label>
+          <label for="deliver-dest-select" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Destinatario (Bailarín / Agente)</label>
           <select
             id="deliver-dest-select"
             bind:value={deliverPersonnelId}
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-medium text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-medium text-ink] outline-none focus:border-amber]"
           >
             {#each personnelList as p}
               <option value={p.id}>
@@ -521,34 +519,34 @@
         </div>
 
         <div>
-          <label for="deliver-qty-input" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Cantidad a Entregar</label>
+          <label for="deliver-qty-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Cantidad a Entregar</label>
           <input
             id="deliver-qty-input"
             type="number"
             min="1"
             max={deliverItem.free_available_qty || 1}
             bind:value={deliverQty}
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-bold text-[#d8d8dc] font-mono text-center outline-none focus:border-[#ffb31a]"
+            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-bold text-ink] font-mono text-center outline-none focus:border-amber]"
           />
         </div>
 
         <div>
-          <label for="deliver-notes-input" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Observaciones / Destino</label>
+          <label for="deliver-notes-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Observaciones / Destino</label>
           <input
             id="deliver-notes-input"
             type="text"
             bind:value={deliverNotes}
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber]"
           />
         </div>
       </div>
 
-      <div class="flex justify-end gap-2 pt-3 border-t border-[#34343c]">
-        <button onclick={() => showDeliverModal = false} class="px-4 py-2 bg-[#24242a] hover:bg-[#34343c] text-[#82828a] hover:text-[#d8d8dc] rounded text-xs font-medium transition-colors">Cancelar</button>
+      <div class="tg-modal-foot">
+        <button onclick={() => showDeliverModal = false} class="tg-btn">Cancelar</button>
         <button
           disabled={isDelivering || deliverItem.free_available_qty < 1}
           onclick={submitDirectDeliver}
-          class="px-5 py-2 bg-[#3de06a] hover:bg-[#34c45c] disabled:opacity-40 text-black rounded text-xs font-bold transition-colors"
+          class="tg-btn tg-btn-primary disabled:opacity-40"
         >
           {isDelivering ? 'Registrando...' : 'Confirmar Entrega'}
         </button>

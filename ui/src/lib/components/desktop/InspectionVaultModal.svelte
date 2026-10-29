@@ -9,6 +9,8 @@
     type VaultMonthlyTotalsDto,
     type PersonnelDto,
   } from '../../ipc/client';
+  import ModalHeader from '../shared/ModalHeader.svelte';
+  import { modalBehavior } from '../../actions/modalBehavior';
 
   let {
     isOpen,
@@ -72,11 +74,11 @@
   let viewingDocument = $state<InspectionVaultDocumentDto | null>(null);
 
   const CATEGORIES = [
-    { key: 'ALL', label: 'Todos los Documentos', badge: 'bg-[#24242a] text-[#d8d8dc] border-[#34343c]' },
-    { key: 'RECIBO_COMPRA', label: 'Recibos Caja Chica', badge: 'bg-[#ffb31a]/15 text-[#ffb31a] border-[#ffb31a]/30' },
-    { key: 'CERTIFICADO_MEDICO', label: 'Certificados Médicos', badge: 'bg-[#2ed6e8]/15 text-[#2ed6e8] border-[#2ed6e8]/30' },
-    { key: 'ACUERDO_DIRECCION', label: 'Acuerdos Francos / Dirección', badge: 'bg-[#3de06a]/15 text-[#3de06a] border-[#3de06a]/30' },
-    { key: 'MEMO_DISPOSICION', label: 'Memos y Disposiciones', badge: 'bg-[#b388ff]/15 text-[#b388ff] border-[#b388ff]/30' },
+    { key: 'ALL', label: 'Todos los Documentos', badge: 'bg-raised] text-ink] border-grid]' },
+    { key: 'RECIBO_COMPRA', label: 'Recibos Caja Chica', badge: 'bg-amber]/15 text-amber] border-amber]/30' },
+    { key: 'CERTIFICADO_MEDICO', label: 'Certificados Médicos', badge: 'bg-cyan]/15 text-cyan] border-cyan]/30' },
+    { key: 'ACUERDO_DIRECCION', label: 'Acuerdos Francos / Dirección', badge: 'bg-green]/15 text-green] border-green]/30' },
+    { key: 'MEMO_DISPOSICION', label: 'Memos y Disposiciones', badge: 'bg-violet]/15 text-violet] border-violet]/30' },
     { key: 'SOLISTICO_FIRMA', label: 'Solísticos Firmados', badge: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
     { key: 'OTRO', label: 'Otros / Notas', badge: 'bg-zinc-700/20 text-zinc-300 border-zinc-600/30' },
   ];
@@ -315,15 +317,15 @@
 </script>
 
 {#if isOpen}
-  <div class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3">
-    <div class="bg-[#1a1a1e] border border-[#34343c] rounded-lg shadow-2xl w-full max-w-6xl max-h-[94vh] flex flex-col overflow-hidden text-[#d8d8dc]">
+  <div class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3" use:modalBehavior={{ onclose: onClose }}>
+    <div class="tg-modal max-w-6xl text-ink]">
       
       <!-- ===================================================================== -->
       <!-- CABECERA DE LA BÓVEDA DOCUMENTAL                                      -->
       <!-- ===================================================================== -->
-      <div class="bg-[#141416] border-b border-[#34343c] px-4 py-3 flex items-center justify-between shrink-0">
+      <div class="bg-void] border-b border-grid] px-4 py-3 flex items-center justify-between shrink-0">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded bg-[#ffb31a]/15 border border-[#ffb31a]/30 flex items-center justify-center text-[#ffb31a]">
+          <div class="w-8 h-8 rounded bg-amber]/15 border border-amber]/30 flex items-center justify-center text-amber]">
             <!-- Icono Caja Fuerte / Blindaje -->
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
@@ -334,20 +336,20 @@
               <h2 class="text-sm font-black tracking-wide uppercase font-sans text-white">
                 Bóveda de Documentación de Inspección
               </h2>
-              <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#ffb31a]/15 text-[#ffb31a] border border-[#ffb31a]/30">
+              <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber]/15 text-amber] border border-amber]/30">
                 CARINA LION
               </span>
               {#if isUnlocked}
-                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#3de06a]/15 text-[#3de06a] border border-[#3de06a]/30">
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-green]/15 text-green] border border-green]/30">
                   DESBLOQUEADA ({securityStatus.lock_timeout_minutes > 0 ? `${securityStatus.lock_timeout_minutes}m inactividad` : 'Sin límite'})
                 </span>
               {:else}
-                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#ff4a4a]/15 text-[#ff4a4a] border border-[#ff4a4a]/30">
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-red]/15 text-red] border border-red]/30">
                   BLOQUEADA
                 </span>
               {/if}
             </div>
-            <p class="text-[11px] text-[#82828a] mt-0.5">
+            <p class="text-[11px] text-dim] mt-0.5">
               Certificados médicos, facturas de caja chica (colofonia, botiquín), memos de dirección y acuerdos.
             </p>
           </div>
@@ -357,14 +359,14 @@
           {#if isUnlocked}
             <button
               onclick={() => showSecurityConfigModal = true}
-              class="h-8 px-2.5 bg-[#24242a] hover:bg-[#34343c] text-[#d8d8dc] hover:text-[#ffb31a] border border-[#34343c] rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              class="h-8 px-2.5 bg-raised] hover:bg-grid] text-ink] hover:text-amber] border border-grid] rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
               title="Cambiar contraseña de inspectora o tiempo de bloqueo automático"
             >
               <span>Seguridad</span>
             </button>
             <button
               onclick={lockVault}
-              class="h-8 px-2.5 bg-[#2a1616] hover:bg-[#3d1e1e] text-[#ff4a4a] border border-[#ff4a4a]/30 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              class="h-8 px-2.5 bg-void] hover:bg-void] text-red] border border-red]/30 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
               title="Bloquear la bóveda inmediatamente"
             >
               <span>Bloquear</span>
@@ -373,9 +375,13 @@
 
           <button
             onclick={onClose}
-            class="w-8 h-8 rounded bg-[#24242a] hover:bg-[#34343c] text-[#82828a] hover:text-white flex items-center justify-center font-mono text-sm border border-[#34343c] transition-colors"
+            class="tg-modal-close"
+            aria-label="Cerrar"
+            title="Cerrar"
           >
-            ✕
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M2 2l10 10M12 2L2 12" />
+            </svg>
           </button>
         </div>
       </div>
@@ -384,8 +390,8 @@
       <!-- PANTALLA DE BLOQUEO / AUTENTICACIÓN                                    -->
       <!-- ===================================================================== -->
       {#if !isUnlocked}
-        <div class="flex-1 flex flex-col items-center justify-center p-8 bg-[#121214] text-center">
-          <div class="w-16 h-16 rounded-full bg-[#1a1a1e] border-2 border-[#ffb31a]/40 flex items-center justify-center text-[#ffb31a] mb-4 shadow-xl">
+        <div class="flex-1 flex flex-col items-center justify-center p-8 bg-void] text-center">
+          <div class="w-16 h-16 rounded-full bg-panel] border-2 border-amber]/40 flex items-center justify-center text-amber] mb-4">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
             </svg>
@@ -394,7 +400,7 @@
           <h3 class="text-base font-bold text-white uppercase tracking-wide">
             Bóveda de Inspección Protegida
           </h3>
-          <p class="text-xs text-[#82828a] max-w-md mt-1 mb-6">
+          <p class="text-xs text-dim] max-w-md mt-1 mb-6">
             Para ver o modificar certificados médicos, facturas de caja chica y memos reservados, ingrese la contraseña de la inspectora Carina Lion.
           </p>
 
@@ -404,19 +410,19 @@
                 type={showPasswordEye ? "text" : "password"}
                 bind:value={unlockPassword}
                 placeholder="Ingrese contraseña de inspectora..."
-                class="w-full h-11 px-3.5 pr-10 bg-[#1a1a1e] border border-[#34343c] rounded-md text-sm text-[#d8d8dc] outline-none focus:border-[#ffb31a] font-mono"
+                class="w-full h-11 px-3.5 pr-10 bg-panel] border border-grid] rounded-md text-sm text-ink] outline-none focus:border-amber] font-mono"
               />
               <button
                 type="button"
                 onclick={() => showPasswordEye = !showPasswordEye}
-                class="absolute right-3 top-3 text-[#82828a] hover:text-[#d8d8dc] text-xs font-mono"
+                class="absolute right-3 top-3 text-dim] hover:text-ink] text-xs font-mono"
               >
                 {showPasswordEye ? 'Ocultar' : 'Ver'}
               </button>
             </div>
 
             {#if unlockError}
-              <div class="p-2.5 rounded bg-[#ff4a4a]/15 border border-[#ff4a4a]/30 text-xs text-[#ff4a4a] text-left font-sans">
+              <div class="p-2.5 rounded bg-red]/15 border border-red]/30 text-xs text-red] text-left font-sans">
                 {unlockError}
               </div>
             {/if}
@@ -425,21 +431,21 @@
               <button
                 type="submit"
                 disabled={isAuthenticating || !unlockPassword}
-                class="flex-1 h-11 bg-[#ffb31a] hover:bg-[#e69f14] disabled:opacity-40 text-[#121214] font-bold rounded-md text-sm transition-colors flex items-center justify-center gap-2"
+                class="flex-1 h-11 bg-amber] hover:bg-amber] disabled:opacity-40 text-void] font-bold rounded-md text-sm transition-colors flex items-center justify-center gap-2"
               >
                 <span>{isAuthenticating ? 'Verificando...' : 'Desbloquear Bóveda'}</span>
               </button>
               <button
                 type="button"
                 onclick={onClose}
-                class="h-11 px-4 bg-[#24242a] hover:bg-[#34343c] text-[#82828a] hover:text-white rounded-md text-xs font-semibold transition-colors"
+                class="h-11 px-4 bg-raised] hover:bg-grid] text-dim] hover:text-white rounded-md text-xs font-semibold transition-colors"
               >
                 Cancelar
               </button>
             </div>
 
             {#if !securityStatus.has_password}
-              <p class="text-[11px] text-[#ffb31a] mt-3">
+              <p class="text-[11px] text-amber] mt-3">
                 ★ No hay contraseña creada aún. Haga clic en desbloquear para acceder y configurar su clave de inspectora.
               </p>
             {/if}
@@ -451,53 +457,53 @@
         <!-- =================================================================== -->
         <!-- PANEL DE TOTALES / KPIS Y CAJA CHICA                                 -->
         <!-- =================================================================== -->
-        <div class="bg-[#18181c] border-b border-[#34343c] px-4 py-3 shrink-0">
+        <div class="bg-void] border-b border-grid] px-4 py-3 shrink-0">
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
             
             <!-- KPI 1: Total Gastos Caja Chica -->
-            <div class="bg-[#121214] p-3 rounded border border-[#ffb31a]/30">
-              <div class="text-[10px] font-bold uppercase tracking-wider text-[#ffb31a] font-mono">
+            <div class="bg-void] p-3 rounded border border-amber]/30">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-amber] font-mono">
                 Gastos Caja Chica ({selectedMonth}/{selectedYear})
               </div>
               <div class="text-lg md:text-xl font-mono font-bold text-white mt-0.5">
                 {formatArs(monthlyTotals?.total_amount_ars)}
               </div>
-              <div class="text-[10px] text-[#82828a] mt-0.5 font-mono">
+              <div class="text-[10px] text-dim] mt-0.5 font-mono">
                 {monthlyTotals?.receipts_count || 0} recibos de compra
               </div>
             </div>
 
             <!-- KPI 2: Certificados Médicos -->
-            <div class="bg-[#121214] p-3 rounded border border-[#2ed6e8]/30">
-              <div class="text-[10px] font-bold uppercase tracking-wider text-[#2ed6e8] font-mono">
+            <div class="bg-void] p-3 rounded border border-cyan]/30">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-cyan] font-mono">
                 Certificados Médicos
               </div>
               <div class="text-lg md:text-xl font-mono font-bold text-white mt-0.5">
                 {monthlyTotals?.certificates_count || 0}
               </div>
-              <div class="text-[10px] text-[#82828a] mt-0.5 font-mono">
+              <div class="text-[10px] text-dim] mt-0.5 font-mono">
                 Carpetas y partes médicos
               </div>
             </div>
 
             <!-- KPI 3: Total Documentos -->
-            <div class="bg-[#121214] p-3 rounded border border-[#34343c]">
-              <div class="text-[10px] font-bold uppercase tracking-wider text-[#d8d8dc] font-mono">
+            <div class="bg-void] p-3 rounded border border-grid]">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-ink] font-mono">
                 Documentos en Bóveda
               </div>
               <div class="text-lg md:text-xl font-mono font-bold text-white mt-0.5">
                 {documents.length}
               </div>
-              <div class="text-[10px] text-[#82828a] mt-0.5 font-mono">
+              <div class="text-[10px] text-dim] mt-0.5 font-mono">
                 Mostrados en filtro actual
               </div>
             </div>
 
             <!-- Botón de Alta Rápida de Documento / Recibo -->
-            <div class="bg-[#121214] p-3 rounded border border-[#34343c] flex flex-col justify-center">
+            <div class="bg-void] p-3 rounded border border-grid] flex flex-col justify-center">
               <button
                 onclick={() => { resetUploadForm(); showUploadModal = true; }}
-                class="h-full py-2 px-3 bg-[#ffb31a] hover:bg-[#e69f14] text-[#121214] font-bold rounded text-xs transition-colors flex items-center justify-center gap-1.5 shadow"
+                class="h-full py-2 px-3 bg-amber] hover:bg-amber] text-void] font-bold rounded text-xs transition-colors flex items-center justify-center gap-1.5 shadow"
               >
                 <span>+ Cargar Documento / Recibo</span>
               </button>
@@ -508,7 +514,7 @@
         <!-- =================================================================== -->
         <!-- BARRA DE FILTROS & BÚSQUEDA                                         -->
         <!-- =================================================================== -->
-        <div class="bg-[#16161a] border-b border-[#34343c] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
+        <div class="bg-void] border-b border-grid] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
           
           <!-- Filtro de Categorías -->
           <div class="flex items-center gap-1 flex-wrap">
@@ -516,7 +522,7 @@
               <button
                 type="button"
                 onclick={() => { selectedCategory = cat.key; loadVaultData(); }}
-                class="px-2.5 py-1 rounded text-xs font-semibold border transition-colors {selectedCategory === cat.key ? 'bg-[#ffb31a] text-[#121214] border-[#ffb31a]' : 'bg-[#24242a] text-[#82828a] border-[#34343c] hover:text-[#d8d8dc]'}"
+                class="px-2.5 py-1 rounded text-xs font-semibold border transition-colors {selectedCategory === cat.key ? 'bg-amber] text-void] border-amber]' : 'bg-raised] text-dim] border-grid] hover:text-ink]'}"
               >
                 {cat.label}
               </button>
@@ -530,14 +536,14 @@
               bind:value={searchQuery}
               oninput={() => loadVaultData()}
               placeholder="Buscar título, comercio, notas..."
-              class="h-8 px-2.5 bg-[#121214] border border-[#34343c] rounded text-xs text-[#d8d8dc] outline-none focus:border-[#ffb31a] w-48 sm:w-64"
+              class="h-8 px-2.5 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber] w-48 sm:w-64"
             />
 
             <!-- Selector de Bailarín / Personal -->
             <select
               bind:value={selectedPersonnelId}
               onchange={() => loadVaultData()}
-              class="h-8 px-2 bg-[#121214] border border-[#34343c] rounded text-xs font-semibold text-[#d8d8dc] outline-none focus:border-[#ffb31a] max-w-[160px]"
+              class="h-8 px-2 bg-void] border border-grid] rounded text-xs font-semibold text-ink] outline-none focus:border-amber] max-w-[160px]"
             >
               <option value="">Personal: Todos</option>
               {#each personnelList as p}
@@ -550,33 +556,33 @@
         <!-- =================================================================== -->
         <!-- GRILLA DE DOCUMENTOS                                                -->
         <!-- =================================================================== -->
-        <div class="flex-1 overflow-auto p-4 bg-[#121214]">
+        <div class="flex-1 overflow-auto p-4 bg-void]">
           {#if isLoading}
-            <div class="py-20 text-center text-xs font-mono text-[#82828a]">
+            <div class="py-20 text-center text-xs font-mono text-dim]">
               Cargando documentación de la bóveda...
             </div>
           {:else if documents.length === 0}
-            <div class="py-16 text-center text-[#82828a]">
-              <div class="w-12 h-12 rounded-full bg-[#1a1a1e] border border-[#34343c] flex items-center justify-center mx-auto mb-2 text-[#82828a]">
+            <div class="py-16 text-center text-dim]">
+              <div class="w-12 h-12 rounded-full bg-panel] border border-grid] flex items-center justify-center mx-auto mb-2 text-dim]">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
               </div>
-              <p class="text-xs font-semibold text-[#d8d8dc]">No hay documentos que coincidan con el filtro.</p>
-              <p class="text-[11px] text-[#82828a] mt-0.5">Haga clic en "+ Cargar Documento / Recibo" para subir comprobantes o certificados.</p>
+              <p class="text-xs font-semibold text-ink]">No hay documentos que coincidan con el filtro.</p>
+              <p class="text-[11px] text-dim] mt-0.5">Haga clic en "+ Cargar Documento / Recibo" para subir comprobantes o certificados.</p>
             </div>
           {:else}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {#each documents as doc}
                 {@const catMeta = CATEGORIES.find(c => c.key === doc.category) || CATEGORIES[CATEGORIES.length - 1]}
-                <div class="bg-[#1a1a1e] border border-[#34343c] hover:border-[#ffb31a]/50 rounded-lg p-3.5 flex flex-col justify-between transition-colors shadow-sm">
+                <div class="bg-panel] border border-grid] hover:border-amber]/50 rounded-lg p-3.5 flex flex-col justify-between transition-colors shadow-sm">
                   
                   <div>
                     <div class="flex items-start justify-between gap-2 mb-2">
                       <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono border {catMeta.badge}">
                         {catMeta.label}
                       </span>
-                      <span class="text-[10px] font-mono text-[#82828a]">
+                      <span class="text-[10px] font-mono text-dim]">
                         {doc.document_date}
                       </span>
                     </div>
@@ -586,50 +592,50 @@
                     </h4>
 
                     {#if doc.personnel_name}
-                      <div class="text-[11px] font-semibold text-[#2ed6e8] mt-1 flex items-center gap-1">
+                      <div class="text-[11px] font-semibold text-cyan] mt-1 flex items-center gap-1">
                         <span>Bailarín/a:</span>
                         <span>{doc.personnel_name}</span>
                       </div>
                     {/if}
 
                     {#if doc.category === 'RECIBO_COMPRA' && doc.amount_ars !== null}
-                      <div class="mt-2 p-2 rounded bg-[#121214] border border-[#34343c] flex items-center justify-between">
-                        <span class="text-[10px] font-mono text-[#82828a]">Importe Pagado:</span>
-                        <span class="text-sm font-mono font-bold text-[#ffb31a]">
+                      <div class="mt-2 p-2 rounded bg-void] border border-grid] flex items-center justify-between">
+                        <span class="text-[10px] font-mono text-dim]">Importe Pagado:</span>
+                        <span class="text-sm font-mono font-bold text-amber]">
                           {formatArs(doc.amount_ars)}
                         </span>
                       </div>
                       {#if doc.supplier_vendor}
-                        <div class="text-[11px] text-[#d8d8dc] mt-1 font-mono">
+                        <div class="text-[11px] text-ink] mt-1 font-mono">
                           Comercio: <span class="font-bold">{doc.supplier_vendor}</span>
                         </div>
                       {/if}
                     {/if}
 
                     {#if doc.notes}
-                      <p class="text-[11px] text-[#82828a] mt-2 line-clamp-2 italic bg-[#141416] p-1.5 rounded border border-[#24242a]">
+                      <p class="text-[11px] text-dim] mt-2 line-clamp-2 italic bg-void] p-1.5 rounded border border-raised]">
                         "{doc.notes}"
                       </p>
                     {/if}
                   </div>
 
                   <!-- Miniatura / Datos de Archivo & Acciones -->
-                  <div class="mt-3 pt-2.5 border-t border-[#34343c] flex items-center justify-between">
-                    <div class="text-[10px] font-mono text-[#82828a] truncate max-w-[140px]" title={doc.file_name}>
+                  <div class="mt-3 pt-2.5 border-t border-grid] flex items-center justify-between">
+                    <div class="text-[10px] font-mono text-dim] truncate max-w-[140px]" title={doc.file_name}>
                       {doc.file_name} ({formatBytes(doc.file_size_bytes)})
                     </div>
 
                     <div class="flex items-center gap-1.5">
                       <button
                         onclick={() => viewingDocument = doc}
-                        class="px-2.5 py-1 bg-[#24242a] hover:bg-[#ffb31a] hover:text-[#121214] text-[#d8d8dc] rounded text-[10px] font-bold transition-colors"
+                        class="px-2.5 py-1 bg-raised] hover:bg-amber] hover:text-void] text-ink] rounded text-[10px] font-bold transition-colors"
                         title="Ver documento completo en alta resolución"
                       >
                         Ver
                       </button>
                       <button
                         onclick={() => handleDeleteDocument(doc)}
-                        class="px-2 py-1 bg-[#2a1616] hover:bg-[#ff4a4a] text-[#ff4a4a] hover:text-white rounded text-[10px] font-bold transition-colors"
+                        class="px-2 py-1 bg-void] hover:bg-red] text-red] hover:text-white rounded text-[10px] font-bold transition-colors"
                         title="Eliminar documento"
                       >
                         ✕
@@ -651,39 +657,35 @@
 <!-- MODAL DE CARGA DE DOCUMENTO / FOTO DE COMPRA O CERTIFICADO               -->
 <!-- ========================================================================= -->
 {#if showUploadModal}
-  <div class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3">
-    <div class="bg-[#1a1a1e] border border-[#34343c] rounded-lg shadow-2xl w-full max-w-lg p-5 flex flex-col max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-[#34343c]">
-        <div>
-          <h3 class="text-xs font-bold uppercase tracking-wider text-white">
-            Cargar Documento / Recibo en Bóveda
-          </h3>
-          <p class="text-[10px] text-[#82828a]">Inspección del Ballet Oficial de Córdoba</p>
-        </div>
-        <button onclick={() => showUploadModal = false} class="text-[#82828a] hover:text-white text-sm font-mono">✕</button>
-      </div>
+  <div class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3" use:modalBehavior={{ onclose: () => showUploadModal = false, backdrop: false }}>
+    <div class="tg-modal max-w-lg">
+      <ModalHeader
+        title="Cargar Documento / Recibo en Bóveda"
+        subtitle="Inspección del Ballet Oficial de Córdoba"
+        onclose={() => showUploadModal = false}
+      />
 
-      <div class="py-3 space-y-3">
+      <div class="tg-modal-body space-y-3">
         <!-- Título -->
         <div>
-          <label for="vault-doc-title" class="block text-[10px] font-bold uppercase tracking-wider text-[#82828a] mb-1 font-mono">Título del Documento *</label>
+          <label for="vault-doc-title" class="block text-[10px] font-bold uppercase tracking-wider text-dim] mb-1 font-mono">Título del Documento *</label>
           <input
             id="vault-doc-title"
             type="text"
             bind:value={uploadTitle}
             placeholder="Ej: Factura Pez Rubia, Certificado Popi Gómez, Acuerdo Francos..."
-            class="w-full h-9 px-2.5 bg-[#121214] border border-[#34343c] rounded text-xs text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+            class="w-full h-9 px-2.5 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber]"
           />
         </div>
 
         <div class="grid grid-cols-2 gap-2.5">
           <!-- Categoría -->
           <div>
-            <label for="vault-doc-cat" class="block text-[10px] font-bold uppercase tracking-wider text-[#82828a] mb-1 font-mono">Categoría</label>
+            <label for="vault-doc-cat" class="block text-[10px] font-bold uppercase tracking-wider text-dim] mb-1 font-mono">Categoría</label>
             <select
               id="vault-doc-cat"
               bind:value={uploadCategory}
-              class="w-full h-9 px-2 bg-[#121214] border border-[#34343c] rounded text-xs font-semibold text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+              class="w-full h-9 px-2 bg-void] border border-grid] rounded text-xs font-semibold text-ink] outline-none focus:border-amber]"
             >
               <option value="RECIBO_COMPRA">Recibo de Compra (Caja Chica)</option>
               <option value="CERTIFICADO_MEDICO">Certificado Médico</option>
@@ -696,42 +698,42 @@
 
           <!-- Fecha -->
           <div>
-            <label for="vault-doc-date" class="block text-[10px] font-bold uppercase tracking-wider text-[#82828a] mb-1 font-mono">Fecha del Comprobante</label>
+            <label for="vault-doc-date" class="block text-[10px] font-bold uppercase tracking-wider text-dim] mb-1 font-mono">Fecha del Comprobante</label>
             <input
               id="vault-doc-date"
               type="date"
               bind:value={uploadDate}
-              class="w-full h-9 px-2 bg-[#121214] border border-[#34343c] rounded text-xs font-mono font-semibold text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+              class="w-full h-9 px-2 bg-void] border border-grid] rounded text-xs font-mono font-semibold text-ink] outline-none focus:border-amber]"
             />
           </div>
         </div>
 
         <!-- Campos Específicos para Recibo de Compra -->
         {#if uploadCategory === 'RECIBO_COMPRA'}
-          <div class="p-3 rounded bg-[#16161a] border border-[#ffb31a]/30 space-y-2.5">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-[#ffb31a] font-mono block">
+          <div class="p-3 rounded bg-void] border border-amber]/30 space-y-2.5">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-amber] font-mono block">
               Datos de Caja Chica / Compra
             </span>
             <div class="grid grid-cols-2 gap-2.5">
               <div>
-                <label for="vault-doc-amount" class="block text-[10px] font-bold uppercase text-[#82828a] mb-1 font-mono">Monto ($ ARS)</label>
+                <label for="vault-doc-amount" class="block text-[10px] font-bold uppercase text-dim] mb-1 font-mono">Monto ($ ARS)</label>
                 <input
                   id="vault-doc-amount"
                   type="number"
                   step="0.01"
                   bind:value={uploadAmountArs}
                   placeholder="Ej: 45000.00"
-                  class="w-full h-9 px-2.5 bg-[#121214] border border-[#34343c] rounded text-xs font-mono font-bold text-[#ffb31a] outline-none focus:border-[#ffb31a]"
+                  class="w-full h-9 px-2.5 bg-void] border border-grid] rounded text-xs font-mono font-bold text-amber] outline-none focus:border-amber]"
                 />
               </div>
               <div>
-                <label for="vault-doc-vendor" class="block text-[10px] font-bold uppercase text-[#82828a] mb-1 font-mono">Proveedor / Comercio</label>
+                <label for="vault-doc-vendor" class="block text-[10px] font-bold uppercase text-dim] mb-1 font-mono">Proveedor / Comercio</label>
                 <input
                   id="vault-doc-vendor"
                   type="text"
                   bind:value={uploadSupplier}
                   placeholder="Ej: Danza Córdoba, Farmacia..."
-                  class="w-full h-9 px-2.5 bg-[#121214] border border-[#34343c] rounded text-xs text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+                  class="w-full h-9 px-2.5 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber]"
                 />
               </div>
             </div>
@@ -740,13 +742,13 @@
 
         <!-- Bailarín Asociado (Opcional) -->
         <div>
-          <label for="vault-doc-personnel" class="block text-[10px] font-bold uppercase tracking-wider text-[#82828a] mb-1 font-mono">
+          <label for="vault-doc-personnel" class="block text-[10px] font-bold uppercase tracking-wider text-dim] mb-1 font-mono">
             Bailarín / Agente Asociado (Opcional)
           </label>
           <select
             id="vault-doc-personnel"
             bind:value={uploadPersonnelId}
-            class="w-full h-9 px-2 bg-[#121214] border border-[#34343c] rounded text-xs text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+            class="w-full h-9 px-2 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber]"
           >
             <option value="">Ninguno / Documento General</option>
             {#each personnelList as p}
@@ -757,7 +759,7 @@
 
         <!-- Archivo / Cámara -->
         <div>
-          <label for="vault-file-input" class="block text-[10px] font-bold uppercase tracking-wider text-[#82828a] mb-1 font-mono">
+          <label for="vault-file-input" class="block text-[10px] font-bold uppercase tracking-wider text-dim] mb-1 font-mono">
             Foto del Comprobante o Archivo PDF *
           </label>
           <input
@@ -766,10 +768,10 @@
             accept="image/*,application/pdf"
             capture="environment"
             onchange={handleFileSelected}
-            class="w-full text-xs text-[#82828a] file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#ffb31a] file:text-[#121214] hover:file:bg-[#e69f14] cursor-pointer"
+            class="w-full text-xs text-dim] file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber] file:text-void] hover:file:bg-amber] cursor-pointer"
           />
           {#if uploadFileName}
-            <div class="mt-1 text-[11px] font-mono text-[#3de06a]">
+            <div class="mt-1 text-[11px] font-mono text-green]">
               Archivo seleccionado: {uploadFileName} ({formatBytes(uploadFileSize)})
             </div>
           {/if}
@@ -777,34 +779,34 @@
 
         <!-- Notas -->
         <div>
-          <label for="vault-doc-notes" class="block text-[10px] font-bold uppercase tracking-wider text-[#82828a] mb-1 font-mono">Observaciones / Detalle</label>
+          <label for="vault-doc-notes" class="block text-[10px] font-bold uppercase tracking-wider text-dim] mb-1 font-mono">Observaciones / Detalle</label>
           <textarea
             id="vault-doc-notes"
             bind:value={uploadNotes}
             rows="2"
             placeholder="Detalle de elementos comprados, motivo del certificado..."
-            class="w-full p-2 bg-[#121214] border border-[#34343c] rounded text-xs text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+            class="w-full p-2 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber]"
           ></textarea>
         </div>
 
         {#if uploadError}
-          <div class="p-2 rounded bg-[#ff4a4a]/15 border border-[#ff4a4a]/30 text-xs text-[#ff4a4a]">
+          <div class="p-2 rounded bg-red]/15 border border-red]/30 text-xs text-red]">
             {uploadError}
           </div>
         {/if}
       </div>
 
-      <div class="pt-3 border-t border-[#34343c] flex items-center justify-end gap-2">
+      <div class="tg-modal-foot">
         <button
           onclick={() => showUploadModal = false}
-          class="h-8 px-3 bg-[#24242a] hover:bg-[#34343c] text-[#82828a] hover:text-white rounded text-xs font-semibold transition-colors"
+          class="tg-btn"
         >
           Cancelar
         </button>
         <button
           onclick={submitDocument}
           disabled={isSavingDocument}
-          class="h-8 px-4 bg-[#ffb31a] hover:bg-[#e69f14] text-[#121214] font-bold rounded text-xs transition-colors disabled:opacity-50"
+          class="tg-btn tg-btn-primary disabled:opacity-50"
         >
           {isSavingDocument ? 'Guardando...' : 'Guardar en Bóveda'}
         </button>
@@ -817,37 +819,41 @@
 <!-- MODAL DE VISOR DE DOCUMENTO A PANTALLA COMPLETA                           -->
 <!-- ========================================================================= -->
 {#if viewingDocument}
-  <div class="fixed inset-0 z-50 bg-black/95 flex flex-col p-4">
-    <div class="flex items-center justify-between pb-3 border-b border-[#34343c] shrink-0">
+  <div class="fixed inset-0 z-50 bg-black/95 flex flex-col p-4" use:modalBehavior={{ onclose: () => viewingDocument = null }}>
+    <div class="flex items-center justify-between pb-3 border-b border-grid] shrink-0">
       <div class="flex items-center gap-3">
-        <span class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-[#ffb31a]/15 text-[#ffb31a] border border-[#ffb31a]/30">
+        <span class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-amber]/15 text-amber] border border-amber]/30">
           {viewingDocument.category}
         </span>
         <h3 class="text-sm font-bold text-white truncate max-w-xl">
           {viewingDocument.title}
         </h3>
-        <span class="text-xs font-mono text-[#82828a]">({viewingDocument.document_date})</span>
+        <span class="text-xs font-mono text-dim]">({viewingDocument.document_date})</span>
       </div>
 
       <div class="flex items-center gap-2">
         <a
           href={viewingDocument.file_data}
           download={viewingDocument.file_name}
-          class="h-8 px-3 bg-[#24242a] hover:bg-[#34343c] text-[#3de06a] border border-[#34343c] rounded text-xs font-semibold flex items-center gap-1 transition-colors"
+          class="h-8 px-3 bg-raised] hover:bg-grid] text-green] border border-grid] rounded text-xs font-semibold flex items-center gap-1 transition-colors"
         >
           Descargar
         </a>
         <button
           onclick={() => window.print()}
-          class="h-8 px-3 bg-[#24242a] hover:bg-[#34343c] text-[#d8d8dc] border border-[#34343c] rounded text-xs font-semibold transition-colors"
+          class="h-8 px-3 bg-raised] hover:bg-grid] text-ink] border border-grid] rounded text-xs font-semibold transition-colors"
         >
           Imprimir
         </button>
         <button
           onclick={() => viewingDocument = null}
-          class="w-8 h-8 rounded bg-[#24242a] hover:bg-[#ff4a4a] text-[#82828a] hover:text-white flex items-center justify-center font-mono text-sm transition-colors"
+          class="tg-modal-close"
+          aria-label="Cerrar"
+          title="Cerrar"
         >
-          ✕
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+            <path d="M2 2l10 10M12 2L2 12" />
+          </svg>
         </button>
       </div>
     </div>
@@ -856,14 +862,14 @@
       {#if viewingDocument.file_type.includes('pdf')}
         <iframe
           src={viewingDocument.file_data}
-          class="w-full h-full rounded border border-[#34343c] bg-white"
+          class="w-full h-full rounded border border-grid] bg-white"
           title={viewingDocument.title}
         ></iframe>
       {:else}
         <img
           src={viewingDocument.file_data}
           alt={viewingDocument.title}
-          class="max-w-full max-h-[85vh] object-contain rounded shadow-2xl border border-[#34343c]"
+          class="max-w-full max-h-[85vh] object-contain rounded  border border-grid]"
         />
       {/if}
     </div>
@@ -874,54 +880,52 @@
 <!-- MODAL DE CONFIGURACIÓN DE SEGURIDAD Y CAMBIO DE CLAVE                    -->
 <!-- ========================================================================= -->
 {#if showSecurityConfigModal}
-  <div class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3">
-    <div class="bg-[#1a1a1e] border border-[#34343c] rounded-lg shadow-2xl w-full max-w-sm p-5 space-y-3">
-      <div class="flex items-center justify-between pb-2.5 border-b border-[#34343c]">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-white">
-          Seguridad de la Bóveda de Inspección
-        </h3>
-        <button onclick={() => showSecurityConfigModal = false} class="text-[#82828a] hover:text-white text-sm font-mono">✕</button>
-      </div>
+  <div class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3" use:modalBehavior={{ onclose: () => showSecurityConfigModal = false, backdrop: false }}>
+    <div class="tg-modal max-w-sm">
+      <ModalHeader
+        title="Seguridad de la Bóveda de Inspección"
+        onclose={() => showSecurityConfigModal = false}
+      />
 
-      <div class="space-y-3">
+      <div class="tg-modal-body space-y-3">
         {#if securityStatus.has_password}
           <div>
-            <label for="sec-old-pass" class="block text-[10px] font-bold uppercase text-[#82828a] mb-1 font-mono">Contraseña Actual</label>
+            <label for="sec-old-pass" class="block text-[10px] font-bold uppercase text-dim] mb-1 font-mono">Contraseña Actual</label>
             <input
               id="sec-old-pass"
               type="password"
               bind:value={oldPasswordInput}
-              class="w-full h-9 px-2.5 bg-[#121214] border border-[#34343c] rounded text-xs text-[#d8d8dc] outline-none focus:border-[#ffb31a] font-mono"
+              class="w-full h-9 px-2.5 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber] font-mono"
             />
           </div>
         {/if}
 
         <div>
-          <label for="sec-new-pass" class="block text-[10px] font-bold uppercase text-[#82828a] mb-1 font-mono">Nueva Contraseña</label>
+          <label for="sec-new-pass" class="block text-[10px] font-bold uppercase text-dim] mb-1 font-mono">Nueva Contraseña</label>
           <input
             id="sec-new-pass"
             type="password"
             bind:value={newPasswordInput}
-            class="w-full h-9 px-2.5 bg-[#121214] border border-[#34343c] rounded text-xs text-[#d8d8dc] outline-none focus:border-[#ffb31a] font-mono"
+            class="w-full h-9 px-2.5 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber] font-mono"
           />
         </div>
 
         <div>
-          <label for="sec-conf-pass" class="block text-[10px] font-bold uppercase text-[#82828a] mb-1 font-mono">Confirmar Nueva Contraseña</label>
+          <label for="sec-conf-pass" class="block text-[10px] font-bold uppercase text-dim] mb-1 font-mono">Confirmar Nueva Contraseña</label>
           <input
             id="sec-conf-pass"
             type="password"
             bind:value={confirmPasswordInput}
-            class="w-full h-9 px-2.5 bg-[#121214] border border-[#34343c] rounded text-xs text-[#d8d8dc] outline-none focus:border-[#ffb31a] font-mono"
+            class="w-full h-9 px-2.5 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber] font-mono"
           />
         </div>
 
         <div>
-          <label for="sec-timeout-select" class="block text-[10px] font-bold uppercase text-[#82828a] mb-1 font-mono">Tiempo de Bloqueo por Inactividad</label>
+          <label for="sec-timeout-select" class="block text-[10px] font-bold uppercase text-dim] mb-1 font-mono">Tiempo de Bloqueo por Inactividad</label>
           <select
             id="sec-timeout-select"
             bind:value={timeoutMinutesInput}
-            class="w-full h-9 px-2 bg-[#121214] border border-[#34343c] rounded text-xs font-semibold text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+            class="w-full h-9 px-2 bg-void] border border-grid] rounded text-xs font-semibold text-ink] outline-none focus:border-amber]"
           >
             <option value={1}>1 minuto</option>
             <option value={5}>5 minutos (Recomendado)</option>
@@ -932,23 +936,23 @@
         </div>
 
         {#if securityConfigError}
-          <div class="p-2 rounded bg-[#ff4a4a]/15 border border-[#ff4a4a]/30 text-xs text-[#ff4a4a]">
+          <div class="p-2 rounded bg-red]/15 border border-red]/30 text-xs text-red]">
             {securityConfigError}
           </div>
         {/if}
       </div>
 
-      <div class="pt-3 border-t border-[#34343c] flex items-center justify-end gap-2">
+      <div class="tg-modal-foot">
         <button
           onclick={() => showSecurityConfigModal = false}
-          class="h-8 px-3 bg-[#24242a] hover:bg-[#34343c] text-[#82828a] hover:text-white rounded text-xs font-semibold transition-colors"
+          class="tg-btn"
         >
           Cancelar
         </button>
         <button
           onclick={saveSecurityConfig}
           disabled={isSavingSecurityConfig}
-          class="h-8 px-4 bg-[#ffb31a] hover:bg-[#e69f14] text-[#121214] font-bold rounded text-xs transition-colors disabled:opacity-50"
+          class="tg-btn tg-btn-primary disabled:opacity-50"
         >
           {isSavingSecurityConfig ? 'Guardando...' : 'Guardar Clave'}
         </button>

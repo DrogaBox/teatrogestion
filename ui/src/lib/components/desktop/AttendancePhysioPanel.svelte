@@ -11,6 +11,8 @@
   } from '../../ipc/client';
   import AgentMonthlyAttendanceModal from './AgentMonthlyAttendanceModal.svelte';
   import BopAttendanceMatrixModal from './BopAttendanceMatrixModal.svelte';
+  import ModalHeader from '../shared/ModalHeader.svelte';
+  import { modalBehavior } from '../../actions/modalBehavior';
 
   let { scheduleDate, onDateChange } = $props<{ scheduleDate: string; onDateChange?: (date: string) => void }>();
 
@@ -346,17 +348,17 @@
   );
 </script>
 
-<div class="bg-[#1a1a1e] border border-[#34343c] rounded-md p-4 shadow-xl mb-6">
+<div class="bg-panel] border border-grid] rounded-md p-4 mb-6">
   <!-- Banner Formal del Día y Detalles Técnicos de Inspección -->
-  <div class="bg-[#121214] border border-[#34343c] rounded p-4 mb-4">
+  <div class="bg-void] border border-grid] rounded p-4 mb-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="text-base md:text-lg font-bold text-[#ffb31a] tracking-wide uppercase font-mono">
+          <h1 class="text-base md:text-lg font-bold text-amber] tracking-wide uppercase font-mono">
             {formatFullDate(activeDate)}
           </h1>
         </div>
-        <p class="text-xs text-[#82828a] mt-1 flex items-center gap-2 font-mono">
+        <p class="text-xs text-dim] mt-1 flex items-center gap-2 font-mono">
           <span>Ballet Oficial de Córdoba</span>
           <span>•</span>
           <span>Teatro del Libertador San Martín</span>
@@ -366,7 +368,7 @@
         <div class="flex items-center gap-1.5 mt-2 flex-wrap">
           <button
             onclick={() => shiftDay(-1)}
-            class="px-2.5 py-1 bg-[#24242a] hover:bg-[#34343c] text-[#82828a] hover:text-[#d8d8dc] rounded text-xs font-medium transition-colors border border-[#34343c]"
+            class="px-2.5 py-1 bg-raised] hover:bg-grid] text-dim] hover:text-ink] rounded text-xs font-medium transition-colors border border-grid]"
             title="Día Anterior"
           >
             ◀ Anterior
@@ -375,18 +377,18 @@
             type="date"
             value={activeDate}
             onchange={(e) => selectDate(e.currentTarget.value)}
-            class="h-8 px-2 bg-[#121214] border border-[#34343c] rounded text-xs font-semibold text-[#ffb31a] font-mono outline-none focus:border-[#ffb31a] cursor-pointer"
+            class="h-8 px-2 bg-void] border border-grid] rounded text-xs font-semibold text-amber] font-mono outline-none focus:border-amber] cursor-pointer"
           />
           <button
             onclick={() => shiftDay(1)}
-            class="px-2.5 py-1 bg-[#24242a] hover:bg-[#34343c] text-[#82828a] hover:text-[#d8d8dc] rounded text-xs font-medium transition-colors border border-[#34343c]"
+            class="px-2.5 py-1 bg-raised] hover:bg-grid] text-dim] hover:text-ink] rounded text-xs font-medium transition-colors border border-grid]"
             title="Día Siguiente"
           >
             Siguiente ▶
           </button>
           <button
             onclick={goToToday}
-            class="px-2.5 py-1 bg-[#ffb31a] hover:bg-[#e6a117] text-black rounded text-xs font-semibold transition-colors"
+            class="px-2.5 py-1 bg-amber] hover:bg-amber] text-black rounded text-xs font-semibold transition-colors"
           >
             Hoy
           </button>
@@ -395,31 +397,31 @@
 
       <!-- Fichas Técnicas -->
       <div class="flex flex-wrap items-center gap-2 font-mono text-xs">
-        <div class="bg-[#1a1a1e] border border-[#34343c] px-3 py-1.5 rounded">
-          <span class="text-[#82828a] uppercase text-[10px] block font-semibold">Fichaje Reglamentario</span>
-          <span class="text-[#3de06a] font-semibold">08:45 h L-V</span>
+        <div class="bg-panel] border border-grid] px-3 py-1.5 rounded">
+          <span class="text-dim] uppercase text-[10px] block font-semibold">Fichaje Reglamentario</span>
+          <span class="text-green] font-semibold">08:45 h L-V</span>
         </div>
 
-        <div class="bg-[#1a1a1e] border border-[#34343c] px-3 py-1.5 rounded">
-          <span class="text-[#82828a] uppercase text-[10px] block font-semibold">Clases Técnicas</span>
-          <span class="text-[#2ed6e8] font-semibold">09:00 - 10:15 h (S1/S3)</span>
+        <div class="bg-panel] border border-grid] px-3 py-1.5 rounded">
+          <span class="text-dim] uppercase text-[10px] block font-semibold">Clases Técnicas</span>
+          <span class="text-cyan] font-semibold">09:00 - 10:15 h (S1/S3)</span>
         </div>
 
-        <div class="bg-[#1a1a1e] border border-[#34343c] px-3 py-1.5 rounded">
-          <span class="text-[#82828a] uppercase text-[10px] block font-semibold">Dotación Operativa</span>
-          <span class="text-[#ffb31a] font-semibold">{effectivePresenceCount}/{logs.length} ({operationalPercent}%)</span>
+        <div class="bg-panel] border border-grid] px-3 py-1.5 rounded">
+          <span class="text-dim] uppercase text-[10px] block font-semibold">Dotación Operativa</span>
+          <span class="text-amber] font-semibold">{effectivePresenceCount}/{logs.length} ({operationalPercent}%)</span>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Encabezado y Métricas Rápidas -->
-  <div class="flex flex-wrap items-center justify-between gap-4 pb-3 mb-4 border-b border-[#34343c]">
+  <div class="flex flex-wrap items-center justify-between gap-4 pb-3 mb-4 border-b border-grid]">
     <div>
-      <h2 class="text-sm font-semibold text-[#d8d8dc] uppercase tracking-wide">
+      <h2 class="text-sm font-semibold text-ink] uppercase tracking-wide">
         Planilla Oficial de Asistencia Técnica, Tardanzas y Fisioterapia
       </h2>
-      <p class="text-xs text-[#82828a] mt-0.5">
+      <p class="text-xs text-dim] mt-0.5">
         Registro nominal oficial para inspección, carpetas médicas con adjuntos y seguimiento clínico kinesiológico
       </p>
     </div>
@@ -428,7 +430,7 @@
     <div class="flex items-center gap-2 flex-wrap">
       <button
         onclick={() => showBopMatrixModal = true}
-        class="px-3 py-1.5 bg-[#24242a] hover:bg-[#34343c] text-[#ffb31a] border border-[#34343c] rounded text-xs font-semibold font-mono transition-colors"
+        class="px-3 py-1.5 bg-raised] hover:bg-grid] text-amber] border border-grid] rounded text-xs font-semibold font-mono transition-colors"
         title="Planilla Matriz Mensual de Ausentismo Histórica (Carina Lion)"
       >
         Matriz Ausentismo BOP
@@ -438,20 +440,20 @@
           monthlyInitialPersonnelId = '';
           showMonthlyModal = true;
         }}
-        class="px-3 py-1.5 bg-[#24242a] hover:bg-[#34343c] text-[#2ed6e8] border border-[#34343c] rounded text-xs font-medium transition-colors"
+        class="px-3 py-1.5 bg-raised] hover:bg-grid] text-cyan] border border-grid] rounded text-xs font-medium transition-colors"
         title="Planillas Mensuales de 31 días y Resumen para Recursos Humanos"
       >
         Planillas Mensuales (RRHH)
       </button>
       <button
         onclick={exportExcel}
-        class="px-3 py-1.5 bg-[#24242a] hover:bg-[#34343c] text-[#3de06a] border border-[#34343c] rounded text-xs font-medium transition-colors"
+        class="px-3 py-1.5 bg-raised] hover:bg-grid] text-green] border border-grid] rounded text-xs font-medium transition-colors"
       >
         Exportar a Excel (.csv)
       </button>
       <button
         onclick={() => window.print()}
-        class="px-3 py-1.5 bg-[#24242a] hover:bg-[#34343c] text-[#d8d8dc] border border-[#34343c] rounded text-xs font-medium transition-colors"
+        class="px-3 py-1.5 bg-raised] hover:bg-grid] text-ink] border border-grid] rounded text-xs font-medium transition-colors"
       >
         Imprimir / PDF
       </button>
@@ -460,49 +462,49 @@
 
   <!-- Contadores / Resumen de Estado -->
   <div class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-11 gap-2 mb-4">
-    <div class="bg-[#121214] p-2 rounded border border-[#34343c] text-center">
-      <div class="text-[10px] font-semibold uppercase tracking-wider text-[#3de06a]">Está</div>
-      <div class="text-base font-bold text-[#d8d8dc] mt-0.5 font-mono">{countPresent}</div>
+    <div class="bg-void] p-2 rounded border border-grid] text-center">
+      <div class="text-[10px] font-semibold uppercase tracking-wider text-green]">Está</div>
+      <div class="text-base font-bold text-ink] mt-0.5 font-mono">{countPresent}</div>
     </div>
-    <div class="bg-[#121214] p-2 rounded border border-[#34343c] text-center">
-      <div class="text-[10px] font-semibold uppercase tracking-wider text-[#ffb31a]">No en clase</div>
-      <div class="text-base font-bold text-[#d8d8dc] mt-0.5 font-mono">{countNotInClass}</div>
+    <div class="bg-void] p-2 rounded border border-grid] text-center">
+      <div class="text-[10px] font-semibold uppercase tracking-wider text-amber]">No en clase</div>
+      <div class="text-base font-bold text-ink] mt-0.5 font-mono">{countNotInClass}</div>
     </div>
-    <div class="bg-[#121214] p-2 rounded border border-[#34343c] text-center">
-      <div class="text-[10px] font-semibold uppercase tracking-wider text-[#2ed6e8]">Fisio</div>
-      <div class="text-base font-bold text-[#d8d8dc] mt-0.5 font-mono">{countPhysio}</div>
+    <div class="bg-void] p-2 rounded border border-grid] text-center">
+      <div class="text-[10px] font-semibold uppercase tracking-wider text-cyan]">Fisio</div>
+      <div class="text-base font-bold text-ink] mt-0.5 font-mono">{countPhysio}</div>
     </div>
-    <div class="bg-[#121214] p-2 rounded border border-[#34343c] text-center">
+    <div class="bg-void] p-2 rounded border border-grid] text-center">
       <div class="text-[10px] font-semibold uppercase tracking-wider text-amber-400">Tarde</div>
-      <div class="text-base font-bold text-[#d8d8dc] mt-0.5 font-mono">{countLate}</div>
+      <div class="text-base font-bold text-ink] mt-0.5 font-mono">{countLate}</div>
     </div>
-    <div class="bg-[#121214] p-2 rounded border border-[#34343c] text-center">
+    <div class="bg-void] p-2 rounded border border-grid] text-center">
       <div class="text-[10px] font-semibold uppercase tracking-wider text-purple-400">Licencia</div>
-      <div class="text-base font-bold text-[#d8d8dc] mt-0.5 font-mono">{countMedical}</div>
+      <div class="text-base font-bold text-ink] mt-0.5 font-mono">{countMedical}</div>
     </div>
-    <div class="bg-[#121214] p-2 rounded border border-[#34343c] text-center">
-      <div class="text-[10px] font-semibold uppercase tracking-wider text-[#ff4a4a]">No está</div>
-      <div class="text-base font-bold text-[#d8d8dc] mt-0.5 font-mono">{countAbsent}</div>
+    <div class="bg-void] p-2 rounded border border-grid] text-center">
+      <div class="text-[10px] font-semibold uppercase tracking-wider text-red]">No está</div>
+      <div class="text-base font-bold text-ink] mt-0.5 font-mono">{countAbsent}</div>
     </div>
-    <div class="bg-[#121214] p-2 rounded border border-[#34343c] text-center">
+    <div class="bg-void] p-2 rounded border border-grid] text-center">
       <div class="text-[10px] font-semibold uppercase tracking-wider text-purple-300">Sin parte</div>
       <div class="text-base font-bold text-purple-300 mt-0.5 font-mono">{countNoPart}</div>
     </div>
-    <div class="bg-[#121214] p-2 rounded border border-[#34343c] text-center" title="Inasistencias justificadas del día (tope: 2 por mes y 10 por año)">
-      <div class="text-[10px] font-semibold uppercase tracking-wider text-[#8fc1ff]">Justificada</div>
-      <div class="text-base font-bold text-[#8fc1ff] mt-0.5 font-mono">{countJustified}</div>
+    <div class="bg-void] p-2 rounded border border-grid] text-center" title="Inasistencias justificadas del día (tope: 2 por mes y 10 por año)">
+      <div class="text-[10px] font-semibold uppercase tracking-wider text-blue]">Justificada</div>
+      <div class="text-base font-bold text-blue] mt-0.5 font-mono">{countJustified}</div>
     </div>
-    <div class="bg-[#121214] p-2 rounded border border-[#34343c] text-center">
-      <div class="text-[10px] font-semibold uppercase tracking-wider text-[#5fa8ff]">Adec. tareas</div>
-      <div class="text-base font-bold text-[#5fa8ff] mt-0.5 font-mono">{countTask}</div>
+    <div class="bg-void] p-2 rounded border border-grid] text-center">
+      <div class="text-[10px] font-semibold uppercase tracking-wider text-blue]">Adec. tareas</div>
+      <div class="text-base font-bold text-blue] mt-0.5 font-mono">{countTask}</div>
     </div>
-    <div class="bg-[#121214] p-2 rounded border border-[#34343c] text-center">
-      <div class="text-[10px] font-semibold uppercase tracking-wider text-[#ffb31a]">Jubilados</div>
-      <div class="text-base font-bold text-[#ffb31a] mt-0.5 font-mono">{countRetired}</div>
+    <div class="bg-void] p-2 rounded border border-grid] text-center">
+      <div class="text-[10px] font-semibold uppercase tracking-wider text-amber]">Jubilados</div>
+      <div class="text-base font-bold text-amber] mt-0.5 font-mono">{countRetired}</div>
     </div>
-    <div class="bg-[#121214] p-2 rounded border border-[#34343c] text-center">
-      <div class="text-[10px] font-semibold uppercase tracking-wider text-[#82828a]">Pendiente</div>
-      <div class="text-base font-bold text-[#82828a] mt-0.5 font-mono">{countPending}</div>
+    <div class="bg-void] p-2 rounded border border-grid] text-center">
+      <div class="text-[10px] font-semibold uppercase tracking-wider text-dim]">Pendiente</div>
+      <div class="text-base font-bold text-dim] mt-0.5 font-mono">{countPending}</div>
     </div>
   </div>
 
@@ -512,7 +514,7 @@
       type="text"
       bind:value={searchQuery}
       placeholder="Filtrar por nombre, apellido o DNI..."
-      class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] focus:border-[#ffb31a] rounded text-xs font-medium text-[#d8d8dc] outline-none"
+      class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-xs font-medium text-ink] outline-none"
     />
   </div>
 
@@ -520,7 +522,7 @@
   <div class="hidden md:block overflow-x-auto">
     <table class="w-full text-left text-xs border-collapse">
       <thead>
-        <tr class="bg-[#24242a] text-[10px] uppercase font-semibold tracking-wider text-[#82828a] border-b border-[#34343c]">
+        <tr class="bg-raised] text-[10px] uppercase font-semibold tracking-wider text-dim] border-b border-grid]">
           <th class="p-3">Bailarín / Agente</th>
           <th class="p-3">Rol / Cat.</th>
           <th class="p-3">Estado Operativo</th>
@@ -528,18 +530,18 @@
           <th class="p-3">Seguimiento Kinésico / Médico</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-[#34343c]/60 font-medium">
+      <tbody class="divide-y divide-grid]/60 font-medium">
         {#each filteredLogs as dancer}
-          <tr class="hover:bg-[#24242a]/40 transition-colors">
+          <tr class="hover:bg-raised]/40 transition-colors">
             <!-- Nombre y DNI -->
             <td class="p-3">
-              <div class="font-semibold text-[#d8d8dc] text-sm">{dancer.dancer_name}</div>
-              <div class="text-[10px] font-mono text-[#82828a]">DNI: {dancer.legajo || 'S/D'}</div>
+              <div class="font-semibold text-ink] text-sm">{dancer.dancer_name}</div>
+              <div class="text-[10px] font-mono text-dim]">DNI: {dancer.legajo || 'S/D'}</div>
             </td>
 
             <!-- Rol -->
             <td class="p-3">
-              <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-[#24242a] text-[#82828a] border border-[#34343c]">
+              <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-raised] text-dim] border border-grid]">
                 {dancer.category_name}
               </span>
             </td>
@@ -547,20 +549,20 @@
             <!-- Estado Operativo Actual con Badge -->
             <td class="p-3">
               {#if dancer.is_retired}
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ffb31a]/15 text-[#ffb31a] border border-[#ffb31a]/30" title={dancer.retirement_notes || 'Estado jubilatorio'}>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber]/15 text-amber] border border-amber]/30" title={dancer.retirement_notes || 'Estado jubilatorio'}>
                   Jubilatorio (No concurre)
                 </span>
               {:else if dancer.attendance_status === 'PRESENT'}
-                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#3de06a]/15 text-[#3de06a] border border-[#3de06a]/30">
-                  <span class="w-1.5 h-1.5 rounded-full bg-[#3de06a]"></span>
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-green]/15 text-green] border border-green]/30">
+                  <span class="w-1.5 h-1.5 rounded-full bg-green]"></span>
                   Está (Presente)
                 </span>
               {:else if dancer.attendance_status === 'NOT_IN_CLASS'}
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ffb31a]/15 text-[#ffb31a] border border-[#ffb31a]/30">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber]/15 text-amber] border border-amber]/30">
                   No está en clase
                 </span>
               {:else if dancer.attendance_status === 'IN_PHYSIOTHERAPY'}
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-[#2ed6e8]/15 text-[#2ed6e8] border border-[#2ed6e8]/30">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan]/15 text-cyan] border border-cyan]/30">
                   En Fisioterapia
                 </span>
               {:else if dancer.attendance_status === 'LATE'}
@@ -572,8 +574,8 @@
                   {leaveTypeLabel(dancer)}
                 </span>
               {:else if dancer.attendance_status === 'ABSENT'}
-                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ff4a4a]/15 text-[#ff4a4a] border border-[#ff4a4a]/30">
-                  <span class="w-1.5 h-1.5 rounded-full bg-[#ff4a4a]"></span>
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-red]/15 text-red] border border-red]/30">
+                  <span class="w-1.5 h-1.5 rounded-full bg-red]"></span>
                   No está
                 </span>
               {:else if dancer.attendance_status === 'NO_PART'}
@@ -581,15 +583,15 @@
                   Sin parte
                 </span>
               {:else if dancer.attendance_status === 'JUSTIFIED_ABSENCE'}
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-[#8fc1ff]/15 text-[#8fc1ff] border border-[#8fc1ff]/30">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-blue]/15 text-blue] border border-blue]/30">
                   Justificada (IJ)
                 </span>
               {:else if dancer.attendance_status === 'TASK_ADJUSTMENT'}
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-[#5fa8ff]/15 text-[#5fa8ff] border border-[#5fa8ff]/30">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-blue]/15 text-blue] border border-blue]/30">
                   Adecuación de tareas
                 </span>
               {:else}
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-[#24242a] text-[#82828a] border border-[#34343c]">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-raised] text-dim] border border-grid]">
                   ? (Pendiente)
                 </span>
               {/if}
@@ -601,14 +603,14 @@
                 <button
                   onclick={() => updateStatus(dancer, 'PRESENT')}
                   title="Marcar Presente en horario (08:45)"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-[#3de06a]/15 hover:bg-[#3de06a]/25 text-[#3de06a] border border-[#3de06a]/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold bg-green]/15 hover:bg-green]/25 text-green] border border-green]/30 transition-colors"
                 >
                   Está
                 </button>
                 <button
                   onclick={() => updateStatus(dancer, 'NOT_IN_CLASS', { remarks: 'Eximido/a de clase matutina' })}
                   title="Presente en el teatro pero no hace la barra/clase"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-[#ffb31a]/15 hover:bg-[#ffb31a]/25 text-[#ffb31a] border border-[#ffb31a]/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold bg-amber]/15 hover:bg-amber]/25 text-amber] border border-amber]/30 transition-colors"
                 >
                   No en clase
                 </button>
@@ -619,7 +621,7 @@
                     physEvolution = dancer.physio_notes || '';
                   }}
                   title="Registrar atención con la Dra. de Fisioterapia"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-[#2ed6e8]/15 hover:bg-[#2ed6e8]/25 text-[#2ed6e8] border border-[#2ed6e8]/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold bg-cyan]/15 hover:bg-cyan]/25 text-cyan] border border-cyan]/30 transition-colors"
                 >
                   Fisio
                 </button>
@@ -651,7 +653,7 @@
                 <button
                   onclick={() => updateStatus(dancer, 'ABSENT')}
                   title="Marcar Ausente"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-[#ff4a4a]/15 hover:bg-[#ff4a4a]/25 text-[#ff4a4a] border border-[#ff4a4a]/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold bg-red]/15 hover:bg-red]/25 text-red] border border-red]/30 transition-colors"
                 >
                   No está
                 </button>
@@ -665,35 +667,35 @@
                 <button
                   onclick={() => updateStatus(dancer, 'JUSTIFIED_ABSENCE', { remarks: 'Inasistencia justificada' })}
                   title="Inasistencia justificada (IJ): máximo 2 por mes y 10 por año"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-[#8fc1ff]/15 hover:bg-[#8fc1ff]/25 text-[#8fc1ff] border border-[#8fc1ff]/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold bg-blue]/15 hover:bg-blue]/25 text-blue] border border-blue]/30 transition-colors"
                 >
                   Justificada
                 </button>
                 <button
                   onclick={() => updateStatus(dancer, 'TASK_ADJUSTMENT', { remarks: 'Adecuación de tareas (trabaja en otra área)' })}
                   title="Adecuación de tareas: trabaja en otra área, no es falta"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-[#5fa8ff]/15 hover:bg-[#5fa8ff]/25 text-[#5fa8ff] border border-[#5fa8ff]/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold bg-blue]/15 hover:bg-blue]/25 text-blue] border border-blue]/30 transition-colors"
                 >
                   Adecuación
                 </button>
                 <button
                   onclick={() => updateStatus(dancer, 'PENDING')}
                   title="Restablecer a pendiente / ?"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-[#24242a] hover:bg-[#34343c] text-[#82828a] border border-[#34343c] transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold bg-raised] hover:bg-grid] text-dim] border border-grid] transition-colors"
                 >
                   ?
                 </button>
                 <button
                   onclick={() => openRectify(dancer)}
                   title="Rectificar fichada, hora real o minutos de tardanza computada"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-[#24242a] hover:bg-[#ffb31a] hover:text-black text-[#ffb31a] border border-[#ffb31a]/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold bg-raised] hover:bg-amber] hover:text-black text-amber] border border-amber]/30 transition-colors"
                 >
                   Rectificar
                 </button>
                 <button
                   onclick={() => openMonthlyForDancer(dancer.personnel_id)}
                   title="Ver planilla mensual individual de 31 días para RRHH"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-[#24242a] hover:bg-[#34343c] text-[#2ed6e8] border border-[#2ed6e8]/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold bg-raised] hover:bg-grid] text-cyan] border border-cyan]/30 transition-colors"
                 >
                   Mes
                 </button>
@@ -703,7 +705,7 @@
             <!-- Notas de Fisioterapia y Médicas -->
             <td class="p-3">
               {#if dancer.current_physio_diagnosis || dancer.physio_notes}
-                <div class="text-[11px] text-[#2ed6e8] flex items-start gap-1">
+                <div class="text-[11px] text-cyan] flex items-start gap-1">
                   <div>
                     <strong>Fisio:</strong> {dancer.current_physio_diagnosis || dancer.physio_notes}
                   </div>
@@ -716,7 +718,7 @@
                   class="text-[10px] text-purple-300 hover:text-purple-200 underline font-mono mt-0.5 flex items-center gap-1 transition-colors text-left"
                   title="Ver y ampliar certificado médico"
                 >
-                  Adjunto: {dancer.certificate_file_name} <span class="text-[9px] bg-[#24242a] border border-[#34343c] px-1 py-0.5 rounded font-sans">Ver</span>
+                  Adjunto: {dancer.certificate_file_name} <span class="text-[9px] bg-raised] border border-grid] px-1 py-0.5 rounded font-sans">Ver</span>
                 </button>
               {/if}
             </td>
@@ -729,16 +731,16 @@
   <!-- 2. VISTA MÓVIL TÁCTIL (TARJETAS OPTIMIZADAS PARA GALAXY A53 / 1-TOUCH) -->
   <div class="block md:hidden space-y-3">
     {#each filteredLogs as dancer}
-      <div class="bg-[#121214] border border-[#34343c] rounded-md p-3.5 space-y-2">
+      <div class="bg-void] border border-grid] rounded-md p-3.5 space-y-2">
         <!-- Encabezado de la Tarjeta Móvil -->
         <div class="flex items-start justify-between gap-2">
           <div>
-            <h4 class="font-bold text-[#d8d8dc] text-sm">{dancer.dancer_name}</h4>
+            <h4 class="font-bold text-ink] text-sm">{dancer.dancer_name}</h4>
             <div class="flex items-center gap-2 mt-0.5">
-              <span class="px-1.5 py-0.5 rounded text-[9px] font-medium bg-[#24242a] text-[#82828a] border border-[#34343c] uppercase">
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-medium bg-raised] text-dim] border border-grid] uppercase">
                 {dancer.category_name}
               </span>
-              <span class="text-[10px] font-mono text-[#82828a]">
+              <span class="text-[10px] font-mono text-dim]">
                 DNI: {dancer.legajo || 'S/D'}
               </span>
             </div>
@@ -747,20 +749,20 @@
           <!-- Badge de Estado Actual -->
           <div>
             {#if dancer.is_retired}
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ffb31a]/15 text-[#ffb31a] border border-[#ffb31a]/30" title={dancer.retirement_notes || 'Estado jubilatorio'}>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber]/15 text-amber] border border-amber]/30" title={dancer.retirement_notes || 'Estado jubilatorio'}>
                 Jubilatorio
               </span>
             {:else if dancer.attendance_status === 'PRESENT'}
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#3de06a]/15 text-[#3de06a] border border-[#3de06a]/30">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#3de06a]"></span>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-green]/15 text-green] border border-green]/30">
+                <span class="w-1.5 h-1.5 rounded-full bg-green]"></span>
                 Está
               </span>
             {:else if dancer.attendance_status === 'NOT_IN_CLASS'}
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ffb31a]/15 text-[#ffb31a] border border-[#ffb31a]/30">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber]/15 text-amber] border border-amber]/30">
                 No en clase
               </span>
             {:else if dancer.attendance_status === 'IN_PHYSIOTHERAPY'}
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-[#2ed6e8]/15 text-[#2ed6e8] border border-[#2ed6e8]/30">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan]/15 text-cyan] border border-cyan]/30">
                 Fisio
               </span>
             {:else if dancer.attendance_status === 'LATE'}
@@ -772,8 +774,8 @@
                 {leaveTypeLabel(dancer)}
               </span>
             {:else if dancer.attendance_status === 'ABSENT'}
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ff4a4a]/15 text-[#ff4a4a] border border-[#ff4a4a]/30">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#ff4a4a]"></span>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-red]/15 text-red] border border-red]/30">
+                <span class="w-1.5 h-1.5 rounded-full bg-red]"></span>
                 No está
               </span>
             {:else if dancer.attendance_status === 'NO_PART'}
@@ -781,15 +783,15 @@
                 Sin parte
               </span>
             {:else if dancer.attendance_status === 'JUSTIFIED_ABSENCE'}
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-[#8fc1ff]/15 text-[#8fc1ff] border border-[#8fc1ff]/30">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-blue]/15 text-blue] border border-blue]/30">
                 Justificada (IJ)
               </span>
             {:else if dancer.attendance_status === 'TASK_ADJUSTMENT'}
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-[#5fa8ff]/15 text-[#5fa8ff] border border-[#5fa8ff]/30">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-blue]/15 text-blue] border border-blue]/30">
                 Adec. de tareas
               </span>
             {:else}
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-[#24242a] text-[#82828a] border border-[#34343c]">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-raised] text-dim] border border-grid]">
                 ?
               </span>
             {/if}
@@ -798,9 +800,9 @@
 
         <!-- Banner de Fisioterapia o Certificado si existe -->
         {#if dancer.current_physio_diagnosis || dancer.physio_notes || dancer.certificate_file_name}
-          <div class="p-2 rounded bg-[#1a1a1e] border border-[#34343c] text-[11px] space-y-1">
+          <div class="p-2 rounded bg-panel] border border-grid] text-[11px] space-y-1">
             {#if dancer.current_physio_diagnosis || dancer.physio_notes}
-              <div class="text-[#2ed6e8] flex items-start gap-1">
+              <div class="text-cyan] flex items-start gap-1">
                 <div>
                   <strong>Fisio:</strong> {dancer.current_physio_diagnosis || dancer.physio_notes}
                 </div>
@@ -812,7 +814,7 @@
                 onclick={() => viewCertificate(dancer)}
                 class="text-purple-300 hover:text-purple-200 underline font-mono text-[10px] flex items-center gap-1 transition-colors text-left"
               >
-                Certificado: {dancer.certificate_file_name} <span class="text-[9px] bg-[#24242a] border border-[#34343c] px-1 py-0.5 rounded font-sans">Ver</span>
+                Certificado: {dancer.certificate_file_name} <span class="text-[9px] bg-raised] border border-grid] px-1 py-0.5 rounded font-sans">Ver</span>
               </button>
             {/if}
           </div>
@@ -822,13 +824,13 @@
         <div class="grid grid-cols-4 gap-1.5 mb-1.5">
           <button
             onclick={() => updateStatus(dancer, 'PRESENT')}
-            class="h-10 rounded text-[11px] font-semibold bg-[#3de06a]/15 hover:bg-[#3de06a]/25 text-[#3de06a] border border-[#3de06a]/30 transition-colors flex items-center justify-center"
+            class="h-10 rounded text-[11px] font-semibold bg-green]/15 hover:bg-green]/25 text-green] border border-green]/30 transition-colors flex items-center justify-center"
           >
             Está
           </button>
           <button
             onclick={() => updateStatus(dancer, 'NOT_IN_CLASS', { remarks: 'Eximido/a de clase matutina' })}
-            class="h-10 rounded text-[10px] font-semibold bg-[#ffb31a]/15 hover:bg-[#ffb31a]/25 text-[#ffb31a] border border-[#ffb31a]/30 transition-colors flex items-center justify-center"
+            class="h-10 rounded text-[10px] font-semibold bg-amber]/15 hover:bg-amber]/25 text-amber] border border-amber]/30 transition-colors flex items-center justify-center"
           >
             No clase
           </button>
@@ -838,7 +840,7 @@
               physDiagnosis = dancer.current_physio_diagnosis || '';
               physEvolution = dancer.physio_notes || '';
             }}
-            class="h-10 rounded text-[11px] font-semibold bg-[#2ed6e8]/15 hover:bg-[#2ed6e8]/25 text-[#2ed6e8] border border-[#2ed6e8]/30 transition-colors flex items-center justify-center"
+            class="h-10 rounded text-[11px] font-semibold bg-cyan]/15 hover:bg-cyan]/25 text-cyan] border border-cyan]/30 transition-colors flex items-center justify-center"
           >
             Fisio
           </button>
@@ -870,7 +872,7 @@
           </button>
           <button
             onclick={() => updateStatus(dancer, 'ABSENT')}
-            class="h-9 rounded text-[10px] font-semibold bg-[#ff4a4a]/15 hover:bg-[#ff4a4a]/25 text-[#ff4a4a] border border-[#ff4a4a]/30 transition-colors flex items-center justify-center"
+            class="h-9 rounded text-[10px] font-semibold bg-red]/15 hover:bg-red]/25 text-red] border border-red]/30 transition-colors flex items-center justify-center"
           >
             No está
           </button>
@@ -882,35 +884,35 @@
           </button>
           <button
             onclick={() => updateStatus(dancer, 'JUSTIFIED_ABSENCE', { remarks: 'Inasistencia justificada' })}
-            class="h-9 rounded text-[10px] font-semibold bg-[#8fc1ff]/15 hover:bg-[#8fc1ff]/25 text-[#8fc1ff] border border-[#8fc1ff]/30 transition-colors flex items-center justify-center"
+            class="h-9 rounded text-[10px] font-semibold bg-blue]/15 hover:bg-blue]/25 text-blue] border border-blue]/30 transition-colors flex items-center justify-center"
           >
             Justificada
           </button>
           <button
             onclick={() => updateStatus(dancer, 'TASK_ADJUSTMENT', { remarks: 'Adecuación de tareas (trabaja en otra área)' })}
-            class="h-9 rounded text-[10px] font-semibold bg-[#5fa8ff]/15 hover:bg-[#5fa8ff]/25 text-[#5fa8ff] border border-[#5fa8ff]/30 transition-colors flex items-center justify-center"
+            class="h-9 rounded text-[10px] font-semibold bg-blue]/15 hover:bg-blue]/25 text-blue] border border-blue]/30 transition-colors flex items-center justify-center"
           >
             Adecuación
           </button>
           <button
             onclick={() => updateStatus(dancer, 'PENDING')}
-            class="h-9 rounded text-[10px] font-semibold bg-[#24242a] hover:bg-[#34343c] text-[#82828a] border border-[#34343c] transition-colors flex items-center justify-center"
+            class="h-9 rounded text-[10px] font-semibold bg-raised] hover:bg-grid] text-dim] border border-grid] transition-colors flex items-center justify-center"
           >
             ?
           </button>
         </div>
 
         <!-- Acciones Administrativas Adicionales Móviles -->
-        <div class="grid grid-cols-2 gap-1.5 pt-1.5 border-t border-[#34343c]">
+        <div class="grid grid-cols-2 gap-1.5 pt-1.5 border-t border-grid]">
           <button
             onclick={() => openRectify(dancer)}
-            class="h-9 rounded text-[10px] font-semibold bg-[#24242a] hover:bg-[#ffb31a] hover:text-black text-[#ffb31a] border border-[#ffb31a]/30 transition-colors flex items-center justify-center"
+            class="h-9 rounded text-[10px] font-semibold bg-raised] hover:bg-amber] hover:text-black text-amber] border border-amber]/30 transition-colors flex items-center justify-center"
           >
             Rectificar
           </button>
           <button
             onclick={() => openMonthlyForDancer(dancer.personnel_id)}
-            class="h-9 rounded text-[10px] font-semibold bg-[#24242a] hover:bg-[#34343c] text-[#2ed6e8] border border-[#2ed6e8]/30 transition-colors flex items-center justify-center"
+            class="h-9 rounded text-[10px] font-semibold bg-raised] hover:bg-grid] text-cyan] border border-cyan]/30 transition-colors flex items-center justify-center"
           >
             Planilla Mes
           </button>
@@ -924,37 +926,29 @@
 <!-- MODAL DE CARPETA MÉDICA (CON ADJUNTO DE CERTIFICADO MÉDICO)             -->
 <!-- ======================================================================= -->
 {#if medicalModalDancer}
-  <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-    <div class="bg-[#1a1a1e] border border-[#34343c] rounded-md w-full max-w-lg p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-[#34343c]">
-        <div>
-          <h3 class="text-sm font-semibold text-[#d8d8dc] uppercase tracking-wide">
-            Cargar Carpeta Médica
-          </h3>
-          <p class="text-xs text-[#ffb31a] font-mono mt-0.5">{medicalModalDancer.dancer_name}</p>
-        </div>
-        <button onclick={() => medicalModalDancer = null} class="text-[#82828a] hover:text-white text-sm font-mono font-bold">✕</button>
-      </div>
+  <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" use:modalBehavior={{ onclose: () => medicalModalDancer = null, backdrop: false }}>
+    <div class="tg-modal max-w-lg">
+      <ModalHeader title="Cargar Carpeta Médica" subtitle={medicalModalDancer.dancer_name} onclose={() => medicalModalDancer = null} />
 
-      <div class="space-y-3">
+      <div class="tg-modal-body space-y-3">
         <div>
-          <label for="med-diagnosis-input" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Diagnóstico Médico</label>
+          <label for="med-diagnosis-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Diagnóstico Médico</label>
           <input
             id="med-diagnosis-input"
             type="text"
             bind:value={medDiagnosis}
             placeholder="Ej: Esguince de tobillo, desgarro miofascial, tendinopatía..."
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-medium text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-medium text-ink] outline-none focus:border-amber]"
           />
         </div>
 
         <!-- Tipo de Licencia -->
         <div>
-          <label for="med-leave-type" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Tipo de Licencia</label>
+          <label for="med-leave-type" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Tipo de Licencia</label>
           <select
             id="med-leave-type"
             bind:value={medLeaveType}
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-medium text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-medium text-ink] outline-none focus:border-amber]"
           >
             <option value="ENFERMEDAD">Licencia por enfermedad</option>
             <option value="ESTUDIO">Licencia por estudio</option>
@@ -966,65 +960,65 @@
         <!-- Rango de Fechas [Desde, Hasta] de la Licencia -->
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1" for="med-leave-start">Desde (Fecha Inicio)</label>
+            <label class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1" for="med-leave-start">Desde (Fecha Inicio)</label>
             <input
               id="med-leave-start"
               type="date"
               bind:value={medLeaveStartDate}
-              class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-semibold text-[#d8d8dc] font-mono outline-none focus:border-[#ffb31a]"
+              class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-semibold text-ink] font-mono outline-none focus:border-amber]"
             />
           </div>
           <div>
-            <label class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1" for="med-leave-end">Hasta (Fecha Fin / Alta)</label>
+            <label class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1" for="med-leave-end">Hasta (Fecha Fin / Alta)</label>
             <input
               id="med-leave-end"
               type="date"
               bind:value={medLeaveEndDate}
-              class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-semibold text-[#d8d8dc] font-mono outline-none focus:border-[#ffb31a]"
+              class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-semibold text-ink] font-mono outline-none focus:border-amber]"
             />
           </div>
         </div>
 
         <div>
-          <label class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1" for="med-doctor">Médico / Matrícula</label>
+          <label class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1" for="med-doctor">Médico / Matrícula</label>
           <input
             id="med-doctor"
             type="text"
             bind:value={medDoctor}
             placeholder="Dr/a. Nombre - MP..."
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-medium text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-medium text-ink] outline-none focus:border-amber]"
           />
         </div>
 
         <div>
-          <label for="med-file-upload" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Adjuntar Certificado Médico (Foto o PDF)</label>
+          <label for="med-file-upload" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Adjuntar Certificado Médico (Foto o PDF)</label>
           <input
             id="med-file-upload"
             type="file"
             accept="image/*,application/pdf"
             onchange={(e) => handleFileUpload(e, 'medical')}
-            class="w-full text-xs text-[#82828a] file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#24242a] file:text-[#d8d8dc] hover:file:bg-[#34343c] cursor-pointer"
+            class="w-full text-xs text-dim] file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-raised] file:text-ink] hover:file:bg-grid] cursor-pointer"
           />
           {#if medFileName}
-            <div class="text-[11px] font-mono text-[#3de06a] mt-1">Archivo cargado: {medFileName}</div>
+            <div class="text-[11px] font-mono text-green] mt-1">Archivo cargado: {medFileName}</div>
           {/if}
         </div>
 
         <div>
-          <label for="med-remarks-input" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Observaciones</label>
+          <label for="med-remarks-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Observaciones</label>
           <textarea
             id="med-remarks-input"
             bind:value={medRemarks}
             rows="2"
             placeholder="Indicaciones de reposo o tratamiento..."
-            class="w-full p-2.5 bg-[#121214] border border-[#34343c] rounded text-xs text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+            class="w-full p-2.5 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber]"
           ></textarea>
         </div>
       </div>
 
-      <div class="flex items-center justify-end gap-2 pt-3 border-t border-[#34343c]">
-        <button onclick={() => medicalModalDancer = null} class="px-4 py-2 bg-[#24242a] hover:bg-[#34343c] text-[#82828a] hover:text-[#d8d8dc] rounded text-xs font-medium transition-colors">Cancelar</button>
-        <button onclick={submitMedicalLeave} class="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-semibold transition-colors">
+      <div class="tg-modal-foot">
+        <button onclick={() => medicalModalDancer = null} class="tg-btn">Cancelar</button>
+        <button onclick={submitMedicalLeave} class="tg-btn tg-btn-primary">
           Guardar Carpeta Médica
         </button>
       </div>
@@ -1036,47 +1030,39 @@
 <!-- MODAL DE ATENCIÓN EN FISIOTERAPIA (OFICINA DE KINESIOLOGÍA)            -->
 <!-- ======================================================================= -->
 {#if physioModalDancer}
-  <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-    <div class="bg-[#1a1a1e] border border-[#34343c] rounded-md w-full max-w-lg p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-[#34343c]">
-        <div>
-          <h3 class="text-sm font-semibold text-[#d8d8dc] uppercase tracking-wide">
-            Atención en Fisioterapia
-          </h3>
-          <p class="text-xs text-[#2ed6e8] font-mono mt-0.5">{physioModalDancer.dancer_name}</p>
-        </div>
-        <button onclick={() => physioModalDancer = null} class="text-[#82828a] hover:text-white text-sm font-mono font-bold">✕</button>
-      </div>
+  <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" use:modalBehavior={{ onclose: () => physioModalDancer = null, backdrop: false }}>
+    <div class="tg-modal max-w-lg">
+      <ModalHeader title="Atención en Fisioterapia" subtitle={physioModalDancer.dancer_name} onclose={() => physioModalDancer = null} />
 
-      <div class="space-y-3">
+      <div class="tg-modal-body space-y-3">
         <div>
-          <label for="phys-diag-input" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Diagnóstico Kinésico</label>
+          <label for="phys-diag-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Diagnóstico Kinésico</label>
           <input
             id="phys-diag-input"
             type="text"
             bind:value={physDiagnosis}
             placeholder="Ej: Sobrecarga en sóleo, tendinopatía aquiliana, contractura lumbar..."
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-medium text-[#d8d8dc] outline-none focus:border-[#2ed6e8]"
+            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-medium text-ink] outline-none focus:border-cyan]"
           />
         </div>
 
         <div>
-          <label for="phys-treat-input" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Tratamiento Aplicado en la Sesión</label>
+          <label for="phys-treat-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Tratamiento Aplicado en la Sesión</label>
           <input
             id="phys-treat-input"
             type="text"
             bind:value={physTreatment}
             placeholder="Masoterapia, ultrasonido, magnetoterapia, vendaje..."
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-medium text-[#d8d8dc] outline-none focus:border-[#2ed6e8]"
+            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-medium text-ink] outline-none focus:border-cyan]"
           />
         </div>
 
         <div>
-          <label for="phys-restr-select" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Restricción para Ensayos y Clases</label>
+          <label for="phys-restr-select" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Restricción para Ensayos y Clases</label>
           <select
             id="phys-restr-select"
             bind:value={physRestriction}
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-medium text-[#d8d8dc] outline-none focus:border-[#2ed6e8]"
+            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-medium text-ink] outline-none focus:border-cyan]"
           >
             <option value="NORMAL">Apto sin restricciones</option>
             <option value="LIGHT_BARRE_ONLY">Solo barra suave</option>
@@ -1087,34 +1073,34 @@
         </div>
 
         <div>
-          <label for="phys-evol-textarea" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Notas de Evolución de la Dra.</label>
+          <label for="phys-evol-textarea" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Notas de Evolución de la Dra.</label>
           <textarea
             id="phys-evol-textarea"
             bind:value={physEvolution}
             rows="2"
             placeholder="Observaciones de la evolución clínica del bailarín..."
-            class="w-full p-2.5 bg-[#121214] border border-[#34343c] rounded text-xs text-[#d8d8dc] outline-none focus:border-[#2ed6e8]"
+            class="w-full p-2.5 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-cyan]"
           ></textarea>
         </div>
 
         <div>
-          <label for="phys-file-upload" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Adjuntar Estudio o Informe (Ecografía, Rx, Certificado)</label>
+          <label for="phys-file-upload" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Adjuntar Estudio o Informe (Ecografía, Rx, Certificado)</label>
           <input
             id="phys-file-upload"
             type="file"
             accept="image/*,application/pdf"
             onchange={(e) => handleFileUpload(e, 'physio')}
-            class="w-full text-xs text-[#82828a] file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#24242a] file:text-[#d8d8dc] hover:file:bg-[#34343c] cursor-pointer"
+            class="w-full text-xs text-dim] file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-raised] file:text-ink] hover:file:bg-grid] cursor-pointer"
           />
           {#if physAttachmentName}
-            <div class="text-[11px] font-mono text-[#3de06a] mt-1">Archivo cargado: {physAttachmentName}</div>
+            <div class="text-[11px] font-mono text-green] mt-1">Archivo cargado: {physAttachmentName}</div>
           {/if}
         </div>
       </div>
 
-      <div class="flex items-center justify-end gap-2 pt-3 border-t border-[#34343c]">
-        <button onclick={() => physioModalDancer = null} class="px-4 py-2 bg-[#24242a] hover:bg-[#34343c] text-[#82828a] hover:text-[#d8d8dc] rounded text-xs font-medium transition-colors">Cancelar</button>
-        <button onclick={submitPhysioSession} class="px-5 py-2 bg-[#2ed6e8] hover:bg-[#25b5c5] text-black rounded text-xs font-semibold transition-colors">
+      <div class="tg-modal-foot">
+        <button onclick={() => physioModalDancer = null} class="tg-btn">Cancelar</button>
+        <button onclick={submitPhysioSession} class="tg-btn tg-btn-primary">
           Guardar Sesión en Fisioterapia
         </button>
       </div>
@@ -1126,56 +1112,48 @@
 <!-- MODAL DE LLEGADA TARDE                                                  -->
 <!-- ======================================================================= -->
 {#if lateModalDancer}
-  <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-    <div class="bg-[#1a1a1e] border border-[#34343c] rounded-md w-full max-w-sm p-5 shadow-2xl space-y-4">
-      <div class="flex items-center justify-between pb-3 border-b border-[#34343c]">
-        <div>
-          <h3 class="text-sm font-semibold text-[#d8d8dc] uppercase tracking-wide">
-            Llegada Tarde
-          </h3>
-          <p class="text-xs text-amber-400 font-mono mt-0.5">{lateModalDancer.dancer_name}</p>
-        </div>
-        <button onclick={() => lateModalDancer = null} class="text-[#82828a] hover:text-white text-sm font-mono font-bold">✕</button>
-      </div>
+  <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" use:modalBehavior={{ onclose: () => lateModalDancer = null, backdrop: false }}>
+    <div class="tg-modal max-w-sm">
+      <ModalHeader title="Llegada Tarde" subtitle={lateModalDancer.dancer_name} onclose={() => lateModalDancer = null} />
 
-      <div class="space-y-3">
+      <div class="tg-modal-body space-y-3">
         <div>
-          <label for="late-time-input" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Hora de Llegada / Aviso a Clase</label>
+          <label for="late-time-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Hora de Llegada / Aviso a Clase</label>
           <input
             id="late-time-input"
             type="time"
             bind:value={lateCheckinTime}
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-semibold text-[#d8d8dc] font-mono outline-none focus:border-[#ffb31a]"
+            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-semibold text-ink] font-mono outline-none focus:border-amber]"
           />
         </div>
 
         <div>
-          <label for="late-min-input" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Minutos de Demora ({lateMinutes} min)</label>
+          <label for="late-min-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Minutos de Demora ({lateMinutes} min)</label>
           <input
             id="late-min-input"
             type="number"
             min="1"
             max="180"
             bind:value={lateMinutes}
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-semibold text-[#d8d8dc] font-mono outline-none focus:border-[#ffb31a]"
+            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-semibold text-ink] font-mono outline-none focus:border-amber]"
           />
         </div>
 
         <div>
-          <label for="late-rem-input" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Motivo / Justificación</label>
+          <label for="late-rem-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Motivo / Justificación</label>
           <input
             id="late-rem-input"
             type="text"
             bind:value={lateRemarks}
             placeholder="Transporte, trámite justificado..."
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber]"
           />
         </div>
       </div>
 
-      <div class="flex items-center justify-end gap-2 pt-3 border-t border-[#34343c]">
-        <button onclick={() => lateModalDancer = null} class="px-4 py-2 bg-[#24242a] hover:bg-[#34343c] text-[#82828a] hover:text-[#d8d8dc] rounded text-xs font-medium transition-colors">Cancelar</button>
-        <button onclick={submitLate} class="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded text-xs font-semibold transition-colors">
+      <div class="tg-modal-foot">
+        <button onclick={() => lateModalDancer = null} class="tg-btn">Cancelar</button>
+        <button onclick={submitLate} class="tg-btn tg-btn-primary">
           Registrar Demora
         </button>
       </div>
@@ -1187,55 +1165,45 @@
 <!-- MODAL DE VISOR / ZOOM DE CERTIFICADO MÉDICO                              -->
 <!-- ======================================================================= -->
 {#if zoomCertificateModal}
-  <div class="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4">
-    <div class="bg-[#1a1a1e] border border-[#34343c] rounded-md w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
-      <div class="flex items-center justify-between p-4 border-b border-[#34343c] bg-[#121214]">
-        <div class="flex items-center gap-2 text-purple-400 font-semibold text-sm">
-          <span class="truncate">{zoomCertificateTitle}</span>
-        </div>
-        <button
-          onclick={() => zoomCertificateModal = false}
-          class="text-[#82828a] hover:text-white font-mono text-sm"
-        >
-          ✕
-        </button>
-      </div>
-      <div class="flex-1 overflow-auto p-4 flex items-center justify-center bg-[#121214]/50">
+  <div class="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4" use:modalBehavior={{ onclose: () => zoomCertificateModal = false }}>
+    <div class="tg-modal max-w-4xl">
+      <ModalHeader title={zoomCertificateTitle} onclose={() => zoomCertificateModal = false} />
+      <div class="flex-1 overflow-auto p-4 flex items-center justify-center bg-void]/50">
         {#if zoomCertificateUrl}
           {#if zoomCertificateUrl.startsWith('data:image/')}
             <img
               src={zoomCertificateUrl}
               alt="Certificado Médico Adjunto"
-              class="max-w-full max-h-[75vh] object-contain rounded border border-[#34343c]"
+              class="max-w-full max-h-[75vh] object-contain rounded border border-grid]"
             />
           {:else if zoomCertificateUrl.startsWith('data:application/pdf')}
             <iframe
               src={zoomCertificateUrl}
               title="Certificado Médico PDF"
-              class="w-full h-[75vh] rounded border border-[#34343c]"
+              class="w-full h-[75vh] rounded border border-grid]"
             ></iframe>
           {:else}
-            <div class="text-center p-8 text-[#d8d8dc] space-y-3">
+            <div class="text-center p-8 text-ink] space-y-3">
               <p class="text-sm font-semibold">Documento adjunto en formato no previsualizable directamente.</p>
               <a
                 href={zoomCertificateUrl}
                 download="certificado_medico"
-                class="inline-block px-4 py-2 bg-[#24242a] hover:bg-[#34343c] text-[#d8d8dc] border border-[#34343c] font-medium text-xs rounded transition-colors"
+                class="inline-block px-4 py-2 bg-raised] hover:bg-grid] text-ink] border border-grid] font-medium text-xs rounded transition-colors"
               >
                 Descargar Archivo
               </a>
             </div>
           {/if}
         {:else}
-          <div class="text-center p-8 text-[#82828a]">
+          <div class="text-center p-8 text-dim]">
             <p class="text-sm">No se adjuntó contenido base64 en la base de datos para este certificado.</p>
           </div>
         {/if}
       </div>
-      <div class="p-3 border-t border-[#34343c] bg-[#121214] flex justify-end">
+      <div class="tg-modal-foot">
         <button
           onclick={() => zoomCertificateModal = false}
-          class="px-5 py-2 bg-[#24242a] hover:bg-[#34343c] text-[#d8d8dc] text-xs font-semibold rounded transition-colors"
+          class="tg-btn"
         >
           Cerrar
         </button>
@@ -1248,25 +1216,17 @@
 <!-- MODAL DE RECTIFICACIÓN ADMINISTRATIVA DE FICHADA / TC                   -->
 <!-- ======================================================================= -->
 {#if rectifyModalDancer}
-  <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-    <div class="bg-[#1a1a1e] border border-[#34343c] rounded-md w-full max-w-md p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-[#34343c]">
-        <div>
-          <h3 class="text-sm font-semibold text-[#d8d8dc] uppercase tracking-wide">
-            Rectificar Asistencia / Estado
-          </h3>
-          <p class="text-xs text-[#ffb31a] font-mono mt-0.5">{rectifyModalDancer.dancer_name}</p>
-        </div>
-        <button onclick={() => rectifyModalDancer = null} class="text-[#82828a] hover:text-white text-sm font-mono font-bold">✕</button>
-      </div>
+  <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" use:modalBehavior={{ onclose: () => rectifyModalDancer = null, backdrop: false }}>
+    <div class="tg-modal max-w-md">
+      <ModalHeader title="Rectificar Asistencia / Estado" subtitle={rectifyModalDancer.dancer_name} onclose={() => rectifyModalDancer = null} />
 
-      <div class="space-y-3">
+      <div class="tg-modal-body space-y-3">
         <div>
-          <label for="rect-status-select" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Estado Operativo</label>
+          <label for="rect-status-select" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Estado Operativo</label>
           <select
             id="rect-status-select"
             bind:value={rectifyStatus}
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-medium text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-medium text-ink] outline-none focus:border-amber]"
           >
             <option value="PRESENT">Está (Presente)</option>
             <option value="NOT_IN_CLASS">No en clase (Eximido/a de barra)</option>
@@ -1283,54 +1243,54 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label for="rect-time-input" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Hora de Llegada / Aviso</label>
+            <label for="rect-time-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Hora de Llegada / Aviso</label>
             <input
               id="rect-time-input"
               type="time"
               bind:value={rectifyCheckinTime}
-              class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-mono font-semibold text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+              class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-mono font-semibold text-ink] outline-none focus:border-amber]"
             />
           </div>
 
           <div>
-            <label for="rect-min-input" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Minutos Tardanza (TC)</label>
+            <label for="rect-min-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Minutos Tardanza (TC)</label>
             <input
               id="rect-min-input"
               type="number"
               min="0"
               max="240"
               bind:value={rectifyMinutesLate}
-              class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-mono font-semibold text-[#d8d8dc] text-center outline-none focus:border-[#ffb31a]"
+              class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-mono font-semibold text-ink] text-center outline-none focus:border-amber]"
             />
           </div>
         </div>
 
         <div>
-          <label for="rect-diag-input" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Diagnóstico / Afección</label>
+          <label for="rect-diag-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Diagnóstico / Afección</label>
           <input
             id="rect-diag-input"
             type="text"
             bind:value={rectifyDiagnosis}
             placeholder="Kinesiología, contractura, reposo..."
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber]"
           />
         </div>
 
         <div>
-          <label for="rect-rem-input" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Motivo de la Rectificación / Justificación</label>
+          <label for="rect-rem-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Motivo de la Rectificación / Justificación</label>
           <input
             id="rect-rem-input"
             type="text"
             bind:value={rectifyRemarks}
             placeholder="Ajuste de reloj, justificado por Inspección..."
-            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber]"
           />
         </div>
       </div>
 
-      <div class="flex justify-end gap-2 pt-3 border-t border-[#34343c]">
-        <button onclick={() => rectifyModalDancer = null} class="px-4 py-2 bg-[#24242a] hover:bg-[#34343c] text-[#82828a] hover:text-[#d8d8dc] rounded text-xs font-medium transition-colors">Cancelar</button>
-        <button onclick={submitRectification} class="px-5 py-2 bg-[#ffb31a] hover:bg-[#e6a117] text-black font-semibold rounded text-xs transition-colors">
+      <div class="tg-modal-foot">
+        <button onclick={() => rectifyModalDancer = null} class="tg-btn">Cancelar</button>
+        <button onclick={submitRectification} class="tg-btn tg-btn-primary">
           Guardar Rectificación
         </button>
       </div>

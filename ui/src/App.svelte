@@ -11,6 +11,8 @@
 
   // Componentes de Escritorio
   import DailyRegimeBar from './lib/components/desktop/DailyRegimeBar.svelte';
+  import { modalBehavior } from './lib/actions/modalBehavior';
+  import ModalHeader from './lib/components/shared/ModalHeader.svelte';
   import MorningClassPanel from './lib/components/desktop/MorningClassPanel.svelte';
   import RehearsalMultiTrackGrid from './lib/components/desktop/RehearsalMultiTrackGrid.svelte';
   import ConflictAuditPanel from './lib/components/desktop/ConflictAuditPanel.svelte';
@@ -176,10 +178,10 @@
 {#if licenseInfo?.is_locked}
   <LicenseLockScreen info={licenseInfo} onActivated={loadLicenseInfo} />
 {:else}
-  <main class="app-shell h-screen overflow-hidden bg-[#121214] text-[#d8d8dc] flex flex-col selection:bg-[#ffb31a] selection:text-[#121214]">
+  <main class="app-shell h-screen overflow-hidden bg-void] text-ink] flex flex-col selection:bg-amber] selection:text-void]">
     
     {#if licenseInfo?.warning}
-      <div class="shrink-0 bg-[#ffb31a]/15 border-b border-[#ffb31a]/30 text-[#ffb31a] px-4 py-2 text-xs flex items-center justify-between z-40">
+      <div class="shrink-0 bg-amber]/15 border-b border-amber]/30 text-amber] px-4 py-2 text-xs flex items-center justify-between z-40">
         <span>{licenseInfo.warning}</span>
         <button
           type="button"
@@ -192,15 +194,15 @@
     {/if}
 
     <!-- Encabezado Estilo TeatroCue -->
-    <header class="shrink-0 bg-[#1a1a1e] border-b border-[#34343c] z-30 px-3 md:px-5 py-2 shadow-md">
+    <header class="shrink-0 bg-panel] border-b border-grid] z-30 px-3 md:px-5 py-2">
       <div class="max-w-7xl mx-auto flex items-center gap-2 md:gap-4">
 
         <!-- Marca -->
         <div class="flex items-center gap-2.5 shrink-0">
-          <div class="w-9 h-9 rounded-md bg-[#24242a] border border-[#ffb31a] flex items-center justify-center font-mono font-bold text-[#ffb31a] text-sm shrink-0">TG</div>
+          <div class="w-9 h-9 rounded bg-raised] border border-amber] flex items-center justify-center font-mono font-bold text-amber] text-sm shrink-0">TG</div>
           <div class="leading-tight">
-            <h1 class="text-[15px] font-bold tracking-tight text-[#d8d8dc]">TeatroGestión</h1>
-            <p class="text-[11px] text-[#82828a] hidden sm:block">Ballet Oficial de Córdoba</p>
+            <h1 class="text-[15px] font-bold tracking-tight text-ink]">TeatroGestión</h1>
+            <p class="text-[11px] text-dim] hidden sm:block">Ballet Oficial de Córdoba</p>
           </div>
         </div>
 
@@ -211,7 +213,7 @@
               <button
                 type="button"
                 onclick={() => (desktopTab = key as typeof desktopTab)}
-                class="h-9 px-3.5 rounded-md text-[13px] font-semibold transition-colors {desktopTab === key ? 'bg-[#ffb31a] text-[#121214]' : 'text-[#b4b4bc] hover:bg-[#24242a] hover:text-white'}"
+                class="h-8 px-3 rounded text-[13px] font-semibold transition-colors {desktopTab === key ? 'bg-amber] text-void]' : 'text-ink] hover:bg-raised] hover:text-white'}"
               >
                 {label}
               </button>
@@ -261,17 +263,17 @@
           />
 
           <!-- Selector Vista PC / Móvil -->
-          <div class="{isAndroidDevice ? 'hidden' : 'inline-flex'} bg-[#141416] p-0.5 rounded-md border border-[#34343c] ml-1" role="group" aria-label="Tipo de pantalla">
+          <div class="{isAndroidDevice ? 'hidden' : 'inline-flex'} bg-void] p-0.5 rounded border border-grid] ml-1" role="group" aria-label="Tipo de pantalla">
             <button
               type="button"
               onclick={() => (viewMode = 'desktop')}
-              class="h-8 px-2.5 rounded text-xs font-bold transition-colors {viewMode === 'desktop' ? 'bg-[#ffb31a] text-[#121214]' : 'text-[#82828a] hover:text-[#d8d8dc]'}"
+              class="h-8 px-2.5 rounded text-xs font-bold transition-colors {viewMode === 'desktop' ? 'bg-amber] text-void]' : 'text-dim] hover:text-ink]'}"
               title="Vista de computadora"
             >PC</button>
             <button
               type="button"
               onclick={() => (viewMode = 'mobile')}
-              class="h-8 px-2.5 rounded text-xs font-bold transition-colors {viewMode === 'mobile' ? 'bg-[#ffb31a] text-[#121214]' : 'text-[#82828a] hover:text-[#d8d8dc]'}"
+              class="h-8 px-2.5 rounded text-xs font-bold transition-colors {viewMode === 'mobile' ? 'bg-amber] text-void]' : 'text-dim] hover:text-ink]'}"
               title="Vista de celular"
             >Móvil</button>
           </div>
@@ -284,17 +286,17 @@
   <div class="app-scroll flex-1 min-h-0 overflow-y-auto">
   <div class="max-w-7xl w-full mx-auto p-3 md:p-6 {viewMode === 'mobile' ? 'pb-32' : 'pb-8'}">
     {#if isLoading && !schedule}
-      <div class="h-64 flex flex-col items-center justify-center gap-3 text-[#82828a]">
-        <div class="w-8 h-8 border-2 border-[#ffb31a] border-t-transparent rounded-full animate-spin"></div>
+      <div class="h-64 flex flex-col items-center justify-center gap-3 text-dim]">
+        <div class="w-8 h-8 border-2 border-amber] border-t-transparent rounded-full animate-spin"></div>
         <p class="text-xs font-mono">Conectando con base de datos SQLite WAL local...</p>
       </div>
     {:else if errorMessage}
-      <div class="p-6 rounded bg-[#241a1a] border border-[#ff4a4a] text-[#ff4a4a] text-center my-8">
+      <div class="p-6 rounded bg-void] border border-red] text-red] text-center my-8">
         <p class="text-xs font-mono font-bold mb-2">[ERROR DE INICIALIZACIÓN]</p>
-        <p class="text-xs font-mono mb-4 text-[#d8d8dc]">{errorMessage}</p>
+        <p class="text-xs font-mono mb-4 text-ink]">{errorMessage}</p>
         <button
           onclick={() => loadSchedule(currentDate)}
-          class="px-4 py-2 bg-[#ff4a4a] hover:bg-[#ff6060] text-white text-xs font-bold rounded transition-colors"
+          class="px-4 py-2 bg-red] hover:bg-red] text-white text-xs font-bold rounded transition-colors"
         >
           Reintentar conexión
         </button>
@@ -308,25 +310,25 @@
         <div class="space-y-4">
           <!-- Selector de vista del cronograma -->
           {#if desktopTab === 'schedule'}
-          <div class="flex items-center justify-between gap-2 bg-[#1a1a1e] p-2 rounded border border-[#34343c]">
+          <div class="flex items-center justify-between gap-2 bg-panel] p-2 rounded border border-grid]">
             <!-- Selector de Vista Diaria / Semanal / Mensual -->
             {#if true}
-              <div class="inline-flex bg-[#141416] p-0.5 rounded border border-[#34343c]">
+              <div class="inline-flex bg-void] p-0.5 rounded border border-grid]">
                 <button
                   onclick={() => scheduleViewMode = 'day'}
-                  class="px-3 py-1 rounded text-xs font-bold transition-colors {scheduleViewMode === 'day' ? 'bg-[#24242a] text-[#ffb31a] border border-[#ffb31a]/40' : 'text-[#82828a] hover:text-[#d8d8dc]'}"
+                  class="px-3 py-1 rounded text-xs font-bold transition-colors {scheduleViewMode === 'day' ? 'bg-raised] text-amber] border border-amber]/40' : 'text-dim] hover:text-ink]'}"
                 >
                   Vista Diaria
                 </button>
                 <button
                   onclick={() => scheduleViewMode = 'week'}
-                  class="px-3 py-1 rounded text-xs font-bold transition-colors {scheduleViewMode === 'week' ? 'bg-[#24242a] text-[#ffb31a] border border-[#ffb31a]/40' : 'text-[#82828a] hover:text-[#d8d8dc]'}"
+                  class="px-3 py-1 rounded text-xs font-bold transition-colors {scheduleViewMode === 'week' ? 'bg-raised] text-amber] border border-amber]/40' : 'text-dim] hover:text-ink]'}"
                 >
                   Vista Semanal
                 </button>
                 <button
                   onclick={() => scheduleViewMode = 'month'}
-                  class="px-3 py-1 rounded text-xs font-bold transition-colors {scheduleViewMode === 'month' ? 'bg-[#24242a] text-[#ffb31a] border border-[#ffb31a]/40' : 'text-[#82828a] hover:text-[#d8d8dc]'}"
+                  class="px-3 py-1 rounded text-xs font-bold transition-colors {scheduleViewMode === 'month' ? 'bg-raised] text-amber] border border-amber]/40' : 'text-dim] hover:text-ink]'}"
                 >
                   Vista Mensual
                 </button>
@@ -431,103 +433,103 @@
             <div class="space-y-3">
               
               <!-- Tarjeta de Acciones Rápidas de Inventario -->
-              <div class="bg-[#1a1a1e] border border-[#34343c] rounded p-4 space-y-3">
+              <div class="bg-panel] border border-grid] rounded p-4 space-y-3">
                 <div class="flex items-center justify-between">
                   <div>
-                    <h2 class="text-sm font-bold text-[#d8d8dc] uppercase tracking-wide">Inventario del Ballet Oficial</h2>
-                    <p class="text-[11px] text-[#82828a]">Puntas, zapatillas, indumentaria y stock del depósito</p>
+                    <h2 class="text-sm font-bold text-ink] uppercase tracking-wide">Inventario del Ballet Oficial</h2>
+                    <p class="text-[11px] text-dim]">Puntas, zapatillas, indumentaria y stock del depósito</p>
                   </div>
-                  <span class="text-[10px] font-mono font-bold text-[#ffb31a] bg-[#24242a] px-2 py-0.5 rounded border border-[#34343c]">INVENTARIO</span>
+                  <span class="text-[10px] font-mono font-bold text-amber] bg-raised] px-2 py-0.5 rounded border border-grid]">INVENTARIO</span>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2 pt-1">
                   <button
                     onclick={() => showBarcodeScannerModal = true}
-                    class="p-2.5 bg-[#24242a] hover:bg-[#2e2e36] border border-[#34343c] rounded text-left transition-colors flex flex-col justify-between"
+                    class="p-2.5 bg-raised] hover:bg-raised-hover] border border-grid] rounded text-left transition-colors flex flex-col justify-between"
                   >
                     <div>
-                      <div class="text-xs font-bold text-[#d8d8dc]">Escanear Código</div>
-                      <div class="text-[10px] text-[#82828a]">Cámara / Ingreso / Pedido</div>
+                      <div class="text-xs font-bold text-ink]">Escanear Código</div>
+                      <div class="text-[10px] text-dim]">Cámara / Ingreso / Pedido</div>
                     </div>
                   </button>
 
                   <button
                     onclick={() => showWorkCastingModal = true}
-                    class="p-2.5 bg-[#24242a] hover:bg-[#2e2e36] border border-[#34343c] rounded text-left transition-colors flex flex-col justify-between"
+                    class="p-2.5 bg-raised] hover:bg-raised-hover] border border-grid] rounded text-left transition-colors flex flex-col justify-between"
                   >
                     <div>
-                      <div class="text-xs font-bold text-[#d8d8dc]">Repartos de Obra</div>
-                      <div class="text-[10px] text-[#82828a]">Elencos y Pasajes</div>
+                      <div class="text-xs font-bold text-ink]">Repartos de Obra</div>
+                      <div class="text-[10px] text-dim]">Elencos y Pasajes</div>
                     </div>
                   </button>
 
                   <button
                     onclick={() => showSoloistModal = true}
-                    class="p-2.5 bg-[#24242a] hover:bg-[#2e2e36] border border-[#ffb31a]/40 rounded text-left transition-colors flex flex-col justify-between"
+                    class="p-2.5 bg-raised] hover:bg-raised-hover] border border-amber]/40 rounded text-left transition-colors flex flex-col justify-between"
                   >
                     <div>
-                      <div class="text-xs font-bold text-[#ffb31a]">Solísticos (Rol)</div>
-                      <div class="text-[10px] text-[#82828a]">Plus / Certificación</div>
+                      <div class="text-xs font-bold text-amber]">Solísticos (Rol)</div>
+                      <div class="text-[10px] text-dim]">Plus / Certificación</div>
                     </div>
                   </button>
 
                   <button
                     onclick={() => showBopMatrixModal = true}
-                    class="p-2.5 bg-[#24242a] hover:bg-[#2e2e36] border border-[#2ed6e8]/40 rounded text-left transition-colors flex flex-col justify-between"
+                    class="p-2.5 bg-raised] hover:bg-raised-hover] border border-cyan]/40 rounded text-left transition-colors flex flex-col justify-between"
                   >
                     <div>
-                      <div class="text-xs font-bold text-[#2ed6e8]">Ausentismo BOP</div>
-                      <div class="text-[10px] text-[#82828a]">Planilla Mensual Excel</div>
+                      <div class="text-xs font-bold text-cyan]">Ausentismo BOP</div>
+                      <div class="text-[10px] text-dim]">Planilla Mensual Excel</div>
                     </div>
                   </button>
 
                   <button
                     onclick={() => showVaultModal = true}
-                    class="p-2.5 bg-[#24242a] hover:bg-[#2e2e36] border border-[#ff4a4a]/40 rounded text-left transition-colors flex flex-col justify-between"
+                    class="p-2.5 bg-raised] hover:bg-raised-hover] border border-red]/40 rounded text-left transition-colors flex flex-col justify-between"
                   >
                     <div>
-                      <div class="text-xs font-bold text-[#ffd0d0]">Bóveda de Inspección</div>
-                      <div class="text-[10px] text-[#82828a]">Fotos, Recibos y Memos</div>
+                      <div class="text-xs font-bold text-red]">Bóveda de Inspección</div>
+                      <div class="text-[10px] text-dim]">Fotos, Recibos y Memos</div>
                     </div>
                   </button>
 
                   <button
                     onclick={() => showInventoryReportModal = true}
-                    class="p-2.5 bg-[#24242a] hover:bg-[#2e2e36] border border-[#34343c] rounded text-left transition-colors flex flex-col justify-between"
+                    class="p-2.5 bg-raised] hover:bg-raised-hover] border border-grid] rounded text-left transition-colors flex flex-col justify-between"
                   >
                     <div>
-                      <div class="text-xs font-bold text-[#d8d8dc]">Inventario Completo</div>
-                      <div class="text-[10px] text-[#82828a]">Exportar PDF / Excel</div>
+                      <div class="text-xs font-bold text-ink]">Inventario Completo</div>
+                      <div class="text-[10px] text-dim]">Exportar PDF / Excel</div>
                     </div>
                   </button>
 
                   <button
                     onclick={() => showPersonnelRosterModal = true}
-                    class="p-2.5 bg-[#24242a] hover:bg-[#2e2e36] border border-[#34343c] rounded text-left transition-colors flex flex-col justify-between"
+                    class="p-2.5 bg-raised] hover:bg-raised-hover] border border-grid] rounded text-left transition-colors flex flex-col justify-between"
                   >
                     <div>
-                      <div class="text-xs font-bold text-[#d8d8dc]">Padrón de Personal</div>
-                      <div class="text-[10px] text-[#82828a]">DNI, Talles y Revista</div>
+                      <div class="text-xs font-bold text-ink]">Padrón de Personal</div>
+                      <div class="text-[10px] text-dim]">DNI, Talles y Revista</div>
                     </div>
                   </button>
 
                   <button
                     onclick={() => showHelpModal = true}
-                    class="p-2.5 bg-[#1a241e] hover:bg-[#203026] border border-[#00e676]/40 rounded text-left transition-colors flex flex-col justify-between col-span-2"
+                    class="p-2.5 bg-void] hover:bg-raised-hover] border border-green]/40 rounded text-left transition-colors flex flex-col justify-between col-span-2"
                   >
                     <div class="flex items-center justify-between">
                       <div>
-                        <div class="text-xs font-bold text-[#00e676]">Centro de Ayuda & Manual</div>
-                        <div class="text-[10px] text-[#82828a]">Manual oficial en PDF (8 págs) y guías operativas</div>
+                        <div class="text-xs font-bold text-green]">Centro de Ayuda & Manual</div>
+                        <div class="text-[10px] text-dim]">Manual oficial en PDF (8 págs) y guías operativas</div>
                       </div>
-                      <span class="text-[10px] text-[#00e676] font-mono font-bold px-2 py-0.5 rounded bg-[#121c16] border border-[#00e676]/30">PDF</span>
+                      <span class="text-[10px] text-green] font-mono font-bold px-2 py-0.5 rounded bg-void] border border-green]/30">PDF</span>
                     </div>
                   </button>
                 </div>
               </div>
 
               <!-- Catálogo Completo de Depósito Móvil -->
-              <div class="border-t border-[#34343c] pt-2">
+              <div class="border-t border-grid] pt-2">
                 <MobileStockCatalogView onScanCode={() => showBarcodeScannerModal = true} />
               </div>
             </div>
@@ -554,10 +556,10 @@
           {:else if mobileTab === 'schedule'}
             <div class="space-y-3">
               <!-- Navegador de Fecha Móvil -->
-              <div class="flex items-center justify-between gap-1.5 bg-[#1a1a1e] border border-[#34343c] rounded p-2">
+              <div class="flex items-center justify-between gap-1.5 bg-panel] border border-grid] rounded p-2">
                 <button
                   onclick={() => changeDate(-1)}
-                  class="h-8 px-2.5 bg-[#24242a] hover:bg-[#34343c] text-[#d8d8dc] rounded text-xs font-mono font-bold transition-colors"
+                  class="h-8 px-2.5 bg-raised] hover:bg-grid] text-ink] rounded text-xs font-mono font-bold transition-colors"
                   title="Día Anterior"
                 >
                   ◀ Ayer
@@ -567,11 +569,11 @@
                     type="date"
                     bind:value={currentDate}
                     onchange={() => loadSchedule(currentDate)}
-                    class="h-8 px-2 bg-[#121214] border border-[#34343c] rounded text-xs font-mono font-bold text-[#ffb31a] outline-none"
+                    class="h-8 px-2 bg-void] border border-grid] rounded text-xs font-mono font-bold text-amber] outline-none"
                   />
                   <button
                     onclick={goToToday}
-                    class="h-8 px-2.5 bg-[#24242a] hover:bg-[#34343c] text-[#ffb31a] rounded text-xs font-mono font-bold transition-colors"
+                    class="h-8 px-2.5 bg-raised] hover:bg-grid] text-amber] rounded text-xs font-mono font-bold transition-colors"
                     title="Ir a la fecha de hoy"
                   >
                     Hoy
@@ -579,7 +581,7 @@
                 </div>
                 <button
                   onclick={() => changeDate(1)}
-                  class="h-8 px-2.5 bg-[#24242a] hover:bg-[#34343c] text-[#d8d8dc] rounded text-xs font-mono font-bold transition-colors"
+                  class="h-8 px-2.5 bg-raised] hover:bg-grid] text-ink] rounded text-xs font-mono font-bold transition-colors"
                   title="Día Siguiente"
                 >
                   Mañana ▶
@@ -588,23 +590,23 @@
 
               <button
                 onclick={() => showOfficialPartsModal = true}
-                class="w-full py-2.5 px-3 bg-[#24242a] hover:bg-[#2e2e36] border border-[#ffb31a]/40 text-[#ffb31a] rounded text-xs font-bold transition-colors flex items-center justify-center gap-2"
+                class="w-full py-2.5 px-3 bg-raised] hover:bg-raised-hover] border border-amber]/40 text-amber] rounded text-xs font-bold transition-colors flex items-center justify-center gap-2"
               >
                 <span>Ver Parte Oficial Semanal (Excel / PDF)</span>
               </button>
 
-              <div class="bg-[#1a1a1e] border border-[#34343c] rounded p-3">
+              <div class="bg-panel] border border-grid] rounded p-3">
                 <div class="flex items-center justify-between text-xs mb-1.5">
-                  <span class="text-[#82828a] font-medium uppercase tracking-wider text-[10px]">Fecha de Citación</span>
-                  <span class="font-mono text-[#ffb31a] font-bold">{schedule.schedule_date}</span>
+                  <span class="text-dim] font-medium uppercase tracking-wider text-[10px]">Fecha de Citación</span>
+                  <span class="font-mono text-amber] font-bold">{schedule.schedule_date}</span>
                 </div>
                 <div class="flex items-center justify-between text-xs mb-1.5">
-                  <span class="text-[#82828a] font-medium uppercase tracking-wider text-[10px]">Régimen Laboral</span>
-                  <span class="bg-[#24242a] px-2 py-0.5 rounded text-[#d8d8dc] text-[11px] font-medium border border-[#34343c]">{regimeLabel(schedule.regime)}</span>
+                  <span class="text-dim] font-medium uppercase tracking-wider text-[10px]">Régimen Laboral</span>
+                  <span class="bg-raised] px-2 py-0.5 rounded text-ink] text-[11px] font-medium border border-grid]">{regimeLabel(schedule.regime)}</span>
                 </div>
                 <div class="flex items-center justify-between text-xs">
-                  <span class="text-[#82828a] font-medium uppercase tracking-wider text-[10px]">Límite Horario</span>
-                  <span class="font-mono text-[#3de06a] font-bold">{schedule.nominal_end_time} h</span>
+                  <span class="text-dim] font-medium uppercase tracking-wider text-[10px]">Límite Horario</span>
+                  <span class="font-mono text-green] font-bold">{schedule.nominal_end_time} h</span>
                 </div>
               </div>
 
@@ -619,22 +621,22 @@
               <ConflictAuditPanel {conflicts} />
 
               <!-- Lista compacta de bloques de ensayo -->
-              <div class="bg-[#1a1a1e] border border-[#34343c] rounded p-3">
-                <h3 class="text-[10px] font-bold uppercase tracking-wider text-[#82828a] mb-2">Bloques de Ensayo Citados</h3>
+              <div class="bg-panel] border border-grid] rounded p-3">
+                <h3 class="text-[10px] font-bold uppercase tracking-wider text-dim] mb-2">Bloques de Ensayo Citados</h3>
                 {#if schedule.rehearsal_blocks.length === 0}
-                  <p class="text-xs text-[#82828a] py-2">No hay bloques de ensayo agendados para esta fecha.</p>
+                  <p class="text-xs text-dim] py-2">No hay bloques de ensayo agendados para esta fecha.</p>
                 {:else}
                   <div class="space-y-1.5">
                     {#each schedule.rehearsal_blocks as b}
-                      <div class="p-2.5 rounded bg-[#17171b] border border-[#34343c] text-xs">
-                        <div class="flex items-center justify-between font-mono text-[#ffb31a] font-bold">
+                      <div class="p-2.5 rounded bg-alt] border border-grid] text-xs">
+                        <div class="flex items-center justify-between font-mono text-amber] font-bold">
                           <span>{b.start_time} - {b.end_time} h</span>
-                          <span class="bg-[#24242a] text-[#82828a] px-1.5 py-0.5 rounded text-[10px] border border-[#34343c]">{roomLabel(b.room)}</span>
+                          <span class="bg-raised] text-dim] px-1.5 py-0.5 rounded text-[10px] border border-grid]">{roomLabel(b.room)}</span>
                         </div>
-                        <div class="text-[#d8d8dc] font-bold text-xs mt-1">{b.passage_name}</div>
-                        <div class="text-[11px] text-[#82828a] mt-0.5">Mtro: {b.master_name || 'Sin maestro'} • Pno: {b.pianist_name || 'Sin piano'}</div>
+                        <div class="text-ink] font-bold text-xs mt-1">{b.passage_name}</div>
+                        <div class="text-[11px] text-dim] mt-0.5">Mtro: {b.master_name || 'Sin maestro'} • Pno: {b.pianist_name || 'Sin piano'}</div>
                         {#if b.sound_requirement}
-                          <div class="text-[10px] font-mono text-[#2ed6e8] mt-1">[CUE] {b.sound_requirement}</div>
+                          <div class="text-[10px] font-mono text-cyan] mt-1">[CUE] {b.sound_requirement}</div>
                         {/if}
                       </div>
                     {/each}
@@ -652,23 +654,13 @@
 
   <!-- Modal Desplegable de Stock / Entregas en Escritorio -->
   {#if showDesktopStockModal}
-    <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-[#1a1a1e] border border-[#34343c] rounded-md w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl relative">
-        <div class="bg-[#24242a] border-b border-[#34343c] px-4 py-2.5 shrink-0 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <h2 class="text-xs font-bold text-[#ffb31a] uppercase tracking-wider font-mono">Entregas de Calzado y Vales a Bailarines</h2>
-          </div>
-          <button
-            onclick={() => showDesktopStockModal = false}
-            class="text-[#82828a] hover:text-white px-2 py-0.5 rounded hover:bg-[#34343c] text-sm font-mono"
-          >
-            ✕
-          </button>
-        </div>
+    <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" use:modalBehavior={{ onclose: () => showDesktopStockModal = false }}>
+      <div class="tg-modal max-w-2xl">
+        <ModalHeader title="Entregas de Calzado y Vales a Bailarines" onclose={() => showDesktopStockModal = false} />
 
-        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+        <div class="tg-modal-body space-y-4">
           <DancerDepositSearch />
-          <div class="pt-3 border-t border-[#34343c]">
+          <div class="pt-3 border-t border-grid]">
             <GaynorDecoder />
           </div>
         </div>
@@ -796,13 +788,13 @@
   <!-- BARRA DE NAVEGACIÓN INFERIOR MÓVIL (MATERIAL 3 / ONE UI - GALAXY A53)  -->
   <!-- ===================================================================== -->
   {#if viewMode === 'mobile'}
-    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-[#1a1a1e] border-t border-[#34343c] shadow-2xl">
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-panel] border-t border-grid] ">
       <!-- 5 Pestañas Ergonómicas Táctiles -->
       <div class="grid grid-cols-6 h-16 max-w-lg mx-auto px-1">
 
         <button
           onclick={() => mobileTab = 'home'}
-          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'home' ? 'text-[#ffb31a]' : 'text-[#82828a] hover:text-[#d8d8dc]'}"
+          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'home' ? 'text-amber]' : 'text-dim] hover:text-ink]'}"
         >
           <span class="text-sm font-mono font-bold">◉</span>
           <span class="text-[11px] tracking-tight">Inicio</span>
@@ -810,7 +802,7 @@
 
         <button
           onclick={() => mobileTab = 'stock'}
-          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'stock' ? 'text-[#ffb31a]' : 'text-[#82828a] hover:text-[#d8d8dc]'}"
+          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'stock' ? 'text-amber]' : 'text-dim] hover:text-ink]'}"
         >
           <span class="text-xs font-mono font-bold">BALLET</span>
           <span class="text-[11px] tracking-tight">Entregas</span>
@@ -818,7 +810,7 @@
 
         <button
           onclick={() => mobileTab = 'inventory'}
-          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'inventory' ? 'text-[#ffb31a]' : 'text-[#82828a] hover:text-[#d8d8dc]'}"
+          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'inventory' ? 'text-amber]' : 'text-dim] hover:text-ink]'}"
         >
           <span class="text-xs font-mono font-bold">STOCK</span>
           <span class="text-[11px] tracking-tight">Inventario</span>
@@ -826,7 +818,7 @@
 
         <button
           onclick={() => mobileTab = 'attendance'}
-          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'attendance' ? 'text-[#ffb31a]' : 'text-[#82828a] hover:text-[#d8d8dc]'}"
+          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'attendance' ? 'text-amber]' : 'text-dim] hover:text-ink]'}"
         >
           <span class="text-xs font-mono font-bold">08:45</span>
           <span class="text-[11px] tracking-tight">Asistencia</span>
@@ -834,7 +826,7 @@
 
         <button
           onclick={() => mobileTab = 'gaynor'}
-          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'gaynor' ? 'text-[#ffb31a]' : 'text-[#82828a] hover:text-[#d8d8dc]'}"
+          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'gaynor' ? 'text-amber]' : 'text-dim] hover:text-ink]'}"
         >
           <span class="text-xs font-mono font-bold">▲●★</span>
           <span class="text-[11px] tracking-tight">Gaynor</span>
@@ -842,14 +834,14 @@
 
         <button
           onclick={() => mobileTab = 'schedule'}
-          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'schedule' ? 'text-[#ffb31a]' : 'text-[#82828a] hover:text-[#d8d8dc]'}"
+          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'schedule' ? 'text-amber]' : 'text-dim] hover:text-ink]'}"
         >
           <!-- Badge dinámico con el día real y mes -->
-          <div class="w-6 h-6 rounded border {mobileTab === 'schedule' ? 'border-[#ffb31a]' : 'border-[#34343c]'} flex flex-col overflow-hidden bg-[#141416]">
-            <div class="bg-[#ffb31a] text-[#121214] text-[7px] font-black leading-tight text-center uppercase">
+          <div class="w-6 h-6 rounded border {mobileTab === 'schedule' ? 'border-amber]' : 'border-grid]'} flex flex-col overflow-hidden bg-void]">
+            <div class="bg-amber] text-void] text-[7px] font-black leading-tight text-center uppercase">
               {currentDate ? new Date(currentDate + 'T12:00:00').toLocaleDateString('es-AR', { month: 'short' }).slice(0, 3) : 'HOY'}
             </div>
-            <div class="text-[10px] font-bold text-[#d8d8dc] text-center leading-tight flex-1 flex items-center justify-center font-mono">
+            <div class="text-[10px] font-bold text-ink] text-center leading-tight flex-1 flex items-center justify-center font-mono">
               {currentDate ? currentDate.split('-')[2] : '•'}
             </div>
           </div>
@@ -861,12 +853,12 @@
 
   <!-- Pie Institucional de Escritorio -->
   {:else}
-    <footer class="shrink-0 z-40 bg-[#121214] border-t border-[#34343c] px-4 py-2">
+    <footer class="shrink-0 z-40 bg-void] border-t border-grid] px-4 py-2">
       <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 text-center sm:text-left">
-        <p class="text-[11px] font-mono text-[#82828a]">
+        <p class="text-[11px] font-mono text-dim]">
           Teatro del Libertador San Martín · Ballet Oficial de Córdoba
         </p>
-        <p class="text-[10px] text-[#82828a] font-mono hidden md:block">
+        <p class="text-[10px] text-dim] font-mono hidden md:block">
           Datos guardados en este equipo · Sincroniza por Wi-Fi con el celular
         </p>
       </div>
