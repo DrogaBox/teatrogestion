@@ -11,7 +11,11 @@
     type CastAssignmentCondition
   } from '../../ipc/client';
   import ModalHeader from '../shared/ModalHeader.svelte';
+  import PrintPreviewModal from '../shared/PrintPreviewModal.svelte';
   import { modalBehavior } from '../../actions/modalBehavior';
+
+  let printPreviewOpen = $state(false);
+  let printableEl: HTMLElement | null = $state(null);
 
   let {
     isOpen,
@@ -411,7 +415,7 @@
                 Exportar Excel
               </button>
               <button
-                onclick={() => window.print()}
+                onclick={() => printPreviewOpen = true}
                 class="px-2.5 py-1 bg-raised] hover:bg-raised-hover] text-ink] border border-grid] rounded text-xs font-bold transition-colors"
               >
                 Imprimir / PDF
@@ -559,7 +563,7 @@
 
           <!-- 3. PLANILLA OFICIAL DE CARTELERA (IMPRIMIBLE / PDF) -->
           {:else}
-            <div class="bg-white text-black p-6 rounded print:p-0 print:shadow-none print:rounded-none">
+            <div bind:this={printableEl} class="bg-white text-black p-6 rounded print:p-0 print:shadow-none print:rounded-none">
               <!-- Encabezado Institucional -->
               <div class="text-center pb-4 mb-4 border-b-2 border-black">
                 <h1 class="text-lg font-black tracking-tight uppercase">
@@ -693,6 +697,14 @@
           </button>
         </div>
       </div>
+
+      <PrintPreviewModal
+        open={printPreviewOpen}
+        title="Vista previa de impresión"
+        subtitle="Cartelera de obra — ediciones solo para la copia impresa"
+        source={printableEl}
+        onclose={() => (printPreviewOpen = false)}
+      />
     </div>
   </div>
 {/if}

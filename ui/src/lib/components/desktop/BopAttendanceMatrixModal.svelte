@@ -7,7 +7,11 @@
     type BopMatrixCellDto,
   } from '../../ipc/client';
   import ModalHeader from '../shared/ModalHeader.svelte';
+  import PrintPreviewModal from '../shared/PrintPreviewModal.svelte';
   import { modalBehavior } from '../../actions/modalBehavior';
+
+  let printPreviewOpen = $state(false);
+  let printableEl: HTMLElement | null = $state(null);
 
   let {
     isOpen,
@@ -322,7 +326,7 @@
             </button>
 
             <button
-              onclick={() => window.print()}
+              onclick={() => (printPreviewOpen = true)}
               class="px-2.5 py-1 max-md:py-2.5 max-md:text-sm max-md:hidden bg-raised] hover:bg-raised-hover] text-ink] border border-grid] rounded text-xs font-mono font-semibold transition-colors"
             >
               Imprimir A4
@@ -334,7 +338,7 @@
       <!-- ================================================================= -->
       <!-- CUERPO PRINCIPAL: GRILLA MATRICIAL ESTILO EXCEL HISTÓRICO         -->
       <!-- ================================================================= -->
-      <div class="flex-1 overflow-auto border border-grid] rounded bg-void] p-3 md:p-4 print:border-none print:overflow-visible print:bg-white print:text-black">
+      <div bind:this={printableEl} class="flex-1 overflow-auto border border-grid] rounded bg-void] p-3 md:p-4 print:border-none print:overflow-visible print:bg-white print:text-black">
         
         {#if isLoading}
           <div class="py-20 text-center text-xs font-mono text-dim]">
@@ -536,6 +540,14 @@
           Cerrar
         </button>
       </div>
+
+      <PrintPreviewModal
+        open={printPreviewOpen}
+        title="Vista previa de impresión"
+        subtitle="Matriz BOP — ediciones solo para la copia impresa"
+        source={printableEl}
+        onclose={() => (printPreviewOpen = false)}
+      />
     </div>
   </div>
 {/if}

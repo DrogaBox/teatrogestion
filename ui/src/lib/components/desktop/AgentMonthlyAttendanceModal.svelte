@@ -8,6 +8,10 @@
     type PersonnelWithQuotaDto
   } from '../../ipc/client';
   import { modalBehavior } from '../../actions/modalBehavior';
+  import PrintPreviewModal from '../shared/PrintPreviewModal.svelte';
+
+  let printPreviewOpen = $state(false);
+  let printableEl: HTMLElement | null = $state(null);
 
   let {
     isOpen,
@@ -214,7 +218,7 @@
           {/if}
 
           <button
-            onclick={() => window.print()}
+            onclick={() => (printPreviewOpen = true)}
             class="px-3 py-1.5 bg-raised] hover:bg-grid] text-ink] border border-grid] rounded text-xs font-semibold transition-colors"
           >
             Imprimir / PDF Oficial
@@ -284,7 +288,7 @@
       <!-- ================================================================= -->
       <!-- CUERPO PRINCIPAL DEL DOCUMENTO (IMPRIMIBLE A4)                   -->
       <!-- ================================================================= -->
-      <div class="flex-1 overflow-y-auto pr-1 text-black bg-white p-6 md:p-8 rounded shadow-inner font-sans print:p-0 print:m-0 print:shadow-none print:overflow-visible">
+      <div bind:this={printableEl} class="flex-1 overflow-y-auto pr-1 text-black bg-white p-6 md:p-8 rounded shadow-inner font-sans print:p-0 print:m-0 print:shadow-none print:overflow-visible">
         
         <!-- PESTAÑA 1: PLANILLA INDIVIDUAL DEL AGENTE -->
         {#if activeTab === 'individual'}
@@ -517,6 +521,14 @@
         {/if}
 
       </div>
+
+      <PrintPreviewModal
+        open={printPreviewOpen}
+        title="Vista previa de impresión"
+        subtitle="Planilla mensual — ediciones solo para la copia impresa"
+        source={printableEl}
+        onclose={() => (printPreviewOpen = false)}
+      />
     </div>
   </div>
 {/if}

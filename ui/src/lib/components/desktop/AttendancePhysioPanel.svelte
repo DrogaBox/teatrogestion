@@ -12,9 +12,13 @@
   import AgentMonthlyAttendanceModal from './AgentMonthlyAttendanceModal.svelte';
   import BopAttendanceMatrixModal from './BopAttendanceMatrixModal.svelte';
   import ModalHeader from '../shared/ModalHeader.svelte';
+  import PrintPreviewModal from '../shared/PrintPreviewModal.svelte';
   import { modalBehavior } from '../../actions/modalBehavior';
 
   let { scheduleDate, onDateChange } = $props<{ scheduleDate: string; onDateChange?: (date: string) => void }>();
+
+  let printPreviewOpen = $state(false);
+  let printableEl: HTMLElement | null = $state(null);
 
   let activeDate = $state('');
   let logs = $state<AttendanceLogDto[]>([]);
@@ -348,7 +352,7 @@
   );
 </script>
 
-<div class="bg-panel] border border-grid] rounded-md p-4 mb-6">
+<div bind:this={printableEl} class="bg-panel] border border-grid] rounded-md p-4 mb-6">
   <!-- Banner Formal del Día y Detalles Técnicos de Inspección -->
   <div class="bg-void] border border-grid] rounded p-4 mb-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -452,7 +456,7 @@
         Exportar a Excel (.csv)
       </button>
       <button
-        onclick={() => window.print()}
+        onclick={() => (printPreviewOpen = true)}
         class="px-3 py-1.5 bg-raised] hover:bg-grid] text-ink] border border-grid] rounded text-xs font-medium transition-colors"
       >
         Imprimir / PDF
@@ -1314,3 +1318,10 @@
   }}
 />
 
+<PrintPreviewModal
+  open={printPreviewOpen}
+  title="Vista previa de impresión"
+  subtitle="Asistencia del día — ediciones solo para la copia impresa"
+  source={printableEl}
+  onclose={() => (printPreviewOpen = false)}
+/>

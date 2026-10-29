@@ -8,7 +8,11 @@
     type UpsertPersonnelPayload
   } from '../../ipc/client';
   import ModalHeader from '../shared/ModalHeader.svelte';
+  import PrintPreviewModal from '../shared/PrintPreviewModal.svelte';
   import { modalBehavior } from '../../actions/modalBehavior';
+
+  let printPreviewOpen = $state(false);
+  let printableEl: HTMLElement | null = $state(null);
 
   let {
     isOpen,
@@ -317,7 +321,7 @@
           </button>
 
           <button
-            onclick={() => window.print()}
+            onclick={() => (printPreviewOpen = true)}
             class="px-2.5 py-1 bg-raised] hover:bg-raised-hover] text-ink] border border-grid] rounded text-xs font-bold transition-colors"
           >
             Exportar PDF / Imprimir
@@ -388,7 +392,7 @@
       <!-- ================================================================= -->
       <!-- TABLA OFICIAL DE PADRÓN / DOCUMENTO IMPRIMIBLE A4                  -->
       <!-- ================================================================= -->
-      <div class="flex-1 overflow-y-auto p-4 text-ink] print:text-black print:overflow-visible">
+      <div bind:this={printableEl} class="flex-1 overflow-y-auto p-4 text-ink] print:text-black print:overflow-visible">
         
         <!-- Encabezado Institucional Exclusivo de Impresión (PDF / Papel) -->
         <div class="hidden print:block text-center pb-4 mb-4 border-b-2 border-black">
@@ -531,6 +535,14 @@
         </div>
 
       </div>
+
+      <PrintPreviewModal
+        open={printPreviewOpen}
+        title="Vista previa de impresión"
+        subtitle="Personal — ediciones solo para la copia impresa"
+        source={printableEl}
+        onclose={() => (printPreviewOpen = false)}
+      />
     </div>
   </div>
 {/if}

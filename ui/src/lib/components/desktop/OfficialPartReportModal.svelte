@@ -2,6 +2,10 @@
   import { regimeLabel, roomLabel } from '../../labels';
   import type { DailyScheduleAggregate } from '../../ipc/client';
   import { modalBehavior } from '../../actions/modalBehavior';
+  import PrintPreviewModal from '../shared/PrintPreviewModal.svelte';
+
+  let printPreviewOpen = $state(false);
+  let printableEl: HTMLElement | null = $state(null);
 
   let {
     schedule,
@@ -202,7 +206,7 @@
           {/if}
 
           <button
-            onclick={() => window.print()}
+            onclick={() => (printPreviewOpen = true)}
             class="px-3 py-1.5 bg-raised] hover:bg-grid] text-ink] border border-grid] rounded text-xs font-semibold transition-colors"
           >
             Imprimir / Guardar PDF
@@ -224,7 +228,7 @@
       <!-- ================================================================= -->
       <!-- DOCUMENTO IMPRIMIBLE A4 (DISEÑO IDÉNTICO A LAS HOJAS DE INSPECCIÓN) -->
       <!-- ================================================================= -->
-      <div class="bg-white text-black p-6 md:p-10 rounded font-sans print:shadow-none print:p-0 print:m-0">
+      <div bind:this={printableEl} class="bg-white text-black p-6 md:p-10 rounded font-sans print:shadow-none print:p-0 print:m-0">
         
         <!-- PARTE DIARIO ACTIVO -->
         {#if activeReportTab === 'today'}
@@ -434,6 +438,14 @@
           </div>
         {/if}
       </div>
+
+      <PrintPreviewModal
+        open={printPreviewOpen}
+        title="Vista previa de impresión"
+        subtitle="Parte oficial — ediciones solo para la copia impresa"
+        source={printableEl}
+        onclose={() => (printPreviewOpen = false)}
+      />
 
     </div>
   </div>

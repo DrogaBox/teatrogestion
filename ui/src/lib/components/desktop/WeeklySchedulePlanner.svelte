@@ -9,7 +9,11 @@
     type UpsertRehearsalBlockPayload
   } from '../../ipc/client';
   import ModalHeader from '../shared/ModalHeader.svelte';
+  import PrintPreviewModal from '../shared/PrintPreviewModal.svelte';
   import { modalBehavior } from '../../actions/modalBehavior';
+
+  let printPreviewOpen = $state(false);
+  let printableEl: HTMLElement | null = $state(null);
 
   let {
     currentDate,
@@ -426,6 +430,14 @@
         </button>
       </div>
     </div>
+
+    <PrintPreviewModal
+      open={printPreviewOpen}
+      title="Vista previa de impresión"
+      subtitle="Plan semanal — ediciones solo para la copia impresa"
+      source={printableEl}
+      onclose={() => (printPreviewOpen = false)}
+    />
   </div>
 {/if}
 
@@ -440,7 +452,7 @@
         onclose={() => showPrintWeekly = false}
       >
         <button
-          onclick={() => window.print()}
+          onclick={() => (printPreviewOpen = true)}
           class="tg-btn"
         >
           Imprimir (A4 Horizontal)
@@ -448,7 +460,7 @@
       </ModalHeader>
 
       <!-- Contenido Imprimible -->
-      <div class="flex-1 overflow-y-auto p-6 bg-white text-black font-sans text-xs print:p-0">
+      <div bind:this={printableEl} class="flex-1 overflow-y-auto p-6 bg-white text-black font-sans text-xs print:p-0">
         <div class="text-center border-b-2 border-black pb-3 mb-4">
           <h1 class="text-base font-black uppercase tracking-wider">TEATRO DEL LIBERTADOR SAN MARTÍN</h1>
           <h2 class="text-sm font-bold uppercase text-slate-800">BALLET OFICIAL DE CÓRDOBA</h2>

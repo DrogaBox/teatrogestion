@@ -9,6 +9,10 @@
     type WorkWithPassagesAndCastsDto,
   } from '../../ipc/client';
   import { modalBehavior } from '../../actions/modalBehavior';
+  import PrintPreviewModal from '../shared/PrintPreviewModal.svelte';
+
+  let printPreviewOpen = $state(false);
+  let printableEl: HTMLElement | null = $state(null);
 
   let {
     isOpen,
@@ -210,6 +214,32 @@
     }
   }
 
+  /// Guardado desde la vista previa de impresión: reutiliza el mismo IPC
+  /// `saveSoloistCertification` con los textos editados sobre el documento
+  /// (marcados con data-field) y el resto de los datos tal como están en el editor.
+  async function savePrintPreviewEdits(doc: HTMLElement): Promise<void> {
+    const field = (name: string): string => doc.querySelector(`[data-field="${name}"]`)?.textContent?.trim() ?? '';
+    const programTitle = field('program_title') || editProgramTitle;
+    if (!programTitle.trim()) {
+      throw new Error('el título de la obra no puede quedar vacío');
+    }
+    const payload: SaveSoloistCertificationPayload = {
+      id: selectedCertId ? selectedCertId : null,
+      program_title: programTitle,
+      hall_name: field('hall_name') || editHallName,
+      document_date: editDocumentDate,
+      recipient_name: field('recipient_name') || editRecipientName,
+      recipient_title: editRecipientTitle,
+      intro_body: editIntroBody,
+      closing_text: field('closing_text') || editClosingText,
+      status: 'APPROVED',
+      items: editItems,
+    };
+    const saved = await api.saveSoloistCertification(payload);
+    await loadData();
+    selectCertification(saved.id);
+  }
+
   async function handleAutoGenerate() {
     if (!selectedWorkId) return;
     isSaving = true;
@@ -316,7 +346,7 @@
               ✎ Editar Datos
             </button>
             <button
-              onclick={() => window.print()}
+              onclick={() => (printPreviewOpen = true)}
               class="px-3 py-1.5 bg-raised] hover:bg-grid] text-green] border border-grid] rounded text-xs font-semibold font-mono transition-colors flex items-center gap-1.5"
             >
               Imprimir / Guardar PDF
@@ -404,7 +434,7 @@
 
         <!-- PESTAÑA 1: VISTA PREVIA DEL DOCUMENTO A4 OFICIAL -->
         {#if activeTab === 'document'}
-          <div class="bg-white text-black p-8 md:p-12 shadow-md rounded border border-grid] font-sans max-w-[210mm] mx-auto min-h-[297mm] flex flex-col justify-between print:border-none print:shadow-none print:p-0 print:m-0 print:max-w-none print:w-full print:min-h-0">
+          <div bind:this={printableEl} class="bg-white text-black p-8 md:p-12 shadow-md rounded border border-grid] font-sans max-w-[210mm] mx-auto min-h-[297mm] flex flex-col justify-between print:border-none print:shadow-none print:p-0 print:m-0 print:max-w-none print:w-full print:min-h-0">
             
             <div>
               <!-- 1. ENCABEZADO INSTITUCIONAL OBLIGATORIO DE CÓRDOBA -->
@@ -438,13 +468,13 @@
                 <p>Al Sr.</p>
                 <p class="font-bold">Director del</p>
                 <p class="font-bold">Teatro del Libertador</p>
-                <p class="font-bold text-sm tracking-wide">{editRecipientName}</p>
+                <p class="font-bold text-sm tracking-wide"><span data-field="recipient_name">{editRecipientName}</span></p>
                 <p class="tracking-widest font-mono text-[11px]">S................../.................D</p>
               </div>
 
               <!-- 4. TEXTO INTRODUCTORIO FORMAL -->
               <div class="text-justify text-xs font-serif leading-relaxed text-neutral-800 pb-5 indent-6">
-                Me dirijo a Ud. a los fines de informarle los solísticos correspondientes al Ballet Oficial de la Pcia. con respecto a las funciones <strong class="font-sans font-bold">"{editProgramTitle}"</strong> programadas en la {editHallName} los días 01, 02, 03 y 04 de octubre de 2026 se cumplió según el siguiente detalle:
+                Me dirijo a Ud. a los fines de informarle los solísticos correspondientes al Ballet Oficial de la Pcia. con respecto a las funciones <strong class="font-sans font-bold">"<span data-field="program_title">{editProgramTitle}</span>"</strong> programadas en la <span data-field="hall_name">{editHallName}</span> los días 01, 02, 03 y 04 de octubre de 2026 se cumplió según el siguiente detalle:
               </div>
 
               <!-- 5. TABLA OFICIAL DE PRESTACIONES SOLÍSTICAS -->
@@ -505,7 +535,7 @@
 
               <!-- 6. CIERRE PROTOCOLAR -->
               <div class="text-left text-xs font-serif text-neutral-800 pt-3 pb-8">
-                {editClosingText}
+                <span data-field="closing_text">{editClosingText}</span>
               </div>
             </div>
 
@@ -515,6 +545,15 @@
             </div>
 
           </div>
+
+          <PrintPreviewModal
+            open={printPreviewOpen}
+            title="Vista previa de impresión"
+            subtitle="Certificación solista — ediciones solo para la copia impresa"
+            source={printableEl}
+            onclose={() => (printPreviewOpen = false)}
+            onsave={savePrintPreviewEdits}
+          />
 
         <!-- PESTAÑA 2: EDITOR DE DATOS Y AUTOGENERACIÓN -->
         {:else}
