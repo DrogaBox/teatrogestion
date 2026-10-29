@@ -173,8 +173,10 @@ jobs:
             patchelf \
             libfuse2t64
 
-      - name: Instalar dependencias del frontend
-        run: pnpm --dir ui install --frozen-lockfile
+      - name: Compilar el frontend (el repo usa pnpm, no npm)
+        run: |
+          pnpm --dir ui install --frozen-lockfile
+          pnpm --dir ui run build
 
       - name: Compilar app + paquetes .deb y .AppImage (el hook beforeBuildCommand reconstruye ui/)
         working-directory: crates/gestion-app
