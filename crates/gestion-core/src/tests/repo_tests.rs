@@ -4,7 +4,7 @@ use crate::db::attendance_repo::{
 };
 use crate::db::soloist_repo::{list_soloist_certifications, save_soloist_certification};
 use crate::db::personnel_repo::{
-    import_personnel_batch, list_personnel, search_dancer_quick,
+    delete_personnel, import_personnel_batch, list_personnel, search_dancer_quick,
 };
 use crate::db::schedule_repo::{
     get_or_create_daily_schedule, set_schedule_regime, upsert_rehearsal_block,
@@ -16,8 +16,8 @@ use crate::db::stock_repo::{
 use crate::db::DatabaseManager;
 use crate::domain::{
     ActivityRestriction, ActivityType, AttendanceStatus, CastAssignmentCondition,
-    ConfirmationState, CreatePhysioSessionPayload, GenderGroup, PersonnelRole, QuotaBucket,
-    RecordAttendancePayload, RoomCode, WorkRegime,
+    ConfirmationState, CreatePhysioSessionPayload, GenderGroup, LeaveType, PersonnelRole,
+    QuotaBucket, RecordAttendancePayload, RoomCode, WorkRegime,
 };
 use crate::dto::{
     ExecuteVoucherItemPayload, ExecuteVoucherPayload, StockFilterPayload,
@@ -33,7 +33,7 @@ fn test_personnel_queries_and_quick_search() {
     // 1. List dancers
     let dancers = list_personnel(conn, Some(PersonnelRole::Dancer), true).expect("list dancers");
     assert!(!dancers.is_empty());
-    assert!(dancers.iter().any(|d| d.last_name == "Gómez" && d.nickname.as_deref() == Some("Popi")));
+    assert!(dancers.iter().any(|d| (d.last_name == "González" || d.last_name == "Gómez") && d.nickname.as_deref() == Some("Popi")));
 
     // 2. Search by nickname "Popi"
     let popi = search_dancer_quick(conn, "Popi").expect("search popi");
@@ -209,6 +209,7 @@ fn test_attendance_medical_leaves_and_physiotherapy() {
             doctor_details: None,
             leave_start_date: None,
             leave_end_date: None,
+            leave_type: None,
             physio_notes: None,
             update_permanent_physio_tracking: None,
         },
@@ -234,6 +235,7 @@ fn test_attendance_medical_leaves_and_physiotherapy() {
             doctor_details: None,
             leave_start_date: None,
             leave_end_date: None,
+            leave_type: None,
             physio_notes: None,
             update_permanent_physio_tracking: None,
         },
@@ -258,6 +260,7 @@ fn test_attendance_medical_leaves_and_physiotherapy() {
             doctor_details: Some("Dr. Ramos - MP 14820".to_string()),
             leave_start_date: Some("2026-10-19".to_string()),
             leave_end_date: Some("2026-10-21".to_string()),
+            leave_type: None,
             physio_notes: None,
             update_permanent_physio_tracking: None,
         },
@@ -390,6 +393,7 @@ fn test_personnel_import_export_retirement_and_medical_date_ranges() {
             doctor_details: Some("Dr. Fisiatra - MP 9832".to_string()),
             leave_start_date: Some("2026-10-19".to_string()),
             leave_end_date: Some("2026-10-23".to_string()),
+            leave_type: None, // Sin tipo explícito: la base aplica ENFERMEDAD por defecto
             physio_notes: None,
             update_permanent_physio_tracking: None,
         },
@@ -402,12 +406,129 @@ fn test_personnel_import_export_retirement_and_medical_date_ranges() {
     assert_eq!(popi_att.certificate_file_name.as_deref(), Some("certificado_popi_desgarro.jpg"));
     assert_eq!(popi_att.leave_start_date.as_deref(), Some("2026-10-19"));
     assert_eq!(popi_att.leave_end_date.as_deref(), Some("2026-10-23"));
+    assert_eq!(popi_att.leave_type, Some(LeaveType::Enfermedad));
 
     // 5. Verificar que el personal jubilatorio aparece como RETIRED_EXEMPT automáticamente
     let beatriz_att = att_list.iter().find(|a| a.dancer_name.contains("Vázquez")).expect("beatriz att");
     assert_eq!(beatriz_att.attendance_status, AttendanceStatus::RetiredExempt);
     assert!(!beatriz_att.is_in_class);
     assert!(beatriz_att.is_retired);
+}
+
+#[test]
+fn test_delete_personnel_daily_records_and_voucher_guard() {
+    let mut db = DatabaseManager::open_in_memory().expect("in memory db");
+
+    // 1. Importar personal temporario con registro de asistencia del día
+    let batch = vec![UpsertPersonnelPayload {
+        id: None,
+        legajo: Some("BOC-950".to_string()),
+        first_name: "Temporaria".to_string(),
+        last_name: "Eliminable".to_string(),
+        nickname: None,
+        role: Some(PersonnelRole::Dancer),
+        gender_group: Some(GenderGroup::Female),
+        category_id: Some("CAT_CUERPO_BAILE".to_string()),
+        default_pointe_raw_code: None,
+        default_flat_size: None,
+        is_active: Some(true),
+        is_retired: Some(false),
+        retirement_notes: None,
+        specific_position: None,
+        notes: None,
+    }];
+    let import_res = import_personnel_batch(db.connection_mut(), batch).expect("import batch");
+    assert_eq!(import_res.inserted_count, 1);
+
+    let temp_id = list_personnel(db.connection(), None, true)
+        .expect("list all")
+        .iter()
+        .find(|p| p.last_name == "Eliminable")
+        .expect("imported person")
+        .id
+        .clone();
+
+    record_attendance(
+        db.connection(),
+        RecordAttendancePayload {
+            schedule_date: "2026-10-20".to_string(),
+            personnel_id: temp_id.clone(),
+            attendance_status: AttendanceStatus::Present,
+            actual_checkin_time: Some("08:45".to_string()),
+            minutes_late: None,
+            remarks: None,
+            certificate_file_name: None,
+            certificate_data: None,
+            medical_diagnosis: None,
+            doctor_details: None,
+            leave_start_date: None,
+            leave_end_date: None,
+            leave_type: None,
+            physio_notes: None,
+            update_permanent_physio_tracking: None,
+        },
+    )
+    .expect("record temp attendance");
+
+    // 2. Dar de baja del padrón: borra persona y sus registros diarios
+    delete_personnel(db.connection_mut(), &temp_id).expect("delete personnel");
+    let remaining: i64 = db
+        .connection()
+        .query_row(
+            "SELECT COUNT(*) FROM attendance_logs WHERE personnel_id = ?1",
+            [&temp_id],
+            |r| r.get(0),
+        )
+        .expect("count attendance logs");
+    assert_eq!(remaining, 0);
+    assert!(!list_personnel(db.connection(), None, false)
+        .expect("list after delete")
+        .iter()
+        .any(|p| p.id == temp_id));
+
+    // 3. Persona con valera entregada no se elimina: queda inactiva (baja de padrón)
+    let catalog = list_stock_catalog(db.connection(), StockFilterPayload::default()).expect("list catalog");
+    let gm_item = catalog
+        .iter()
+        .find(|i| i.raw_factory_code.as_deref() == Some("SC - 7.5W4PDH"))
+        .expect("must find Gaynor Sculpted");
+    execute_voucher_delivery(
+        db.connection_mut(),
+        ExecuteVoucherPayload {
+            personnel_id: "PER_DANCER_POPI".to_string(),
+            season_year: Some(2026),
+            delivered_by_inspector_id: "PER_INSPECTOR_MAIN".to_string(),
+            device_id: "GALAXY-A53".to_string(),
+            signature_svg_strokes: None,
+            is_quota_exception: false,
+            exception_reason: None,
+            notes: Some("Entrega con reserva semilla".to_string()),
+            items: vec![ExecuteVoucherItemPayload {
+                stock_item_id: gm_item.id.clone(),
+                reservation_id: Some("RES_INIT_POPI_01".to_string()),
+                quantity: 2,
+                quota_bucket: QuotaBucket::Pointe,
+            }],
+        },
+    )
+    .expect("execute voucher delivery");
+
+    delete_personnel(db.connection_mut(), "PER_DANCER_POPI").expect("delete voucher holder");
+    let popi = list_personnel(db.connection(), None, false)
+        .expect("list after guarded delete")
+        .iter()
+        .find(|p| p.id == "PER_DANCER_POPI")
+        .expect("popi must survive as inactive");
+    assert!(!popi.is_active);
+
+    // 4. Persona solo con reserva de stock (sin valera): también queda de baja
+    delete_personnel(db.connection_mut(), "PER_DANCER_BRENDA").expect("delete with reservations");
+    let brenda = list_personnel(db.connection(), None, false)
+        .expect("list after reservation guard")
+        .iter()
+        .find(|p| p.id == "PER_DANCER_BRENDA")
+        .expect("brenda must survive as inactive");
+    assert!(!brenda.is_active);
 }
 
 #[test]
@@ -526,6 +647,7 @@ fn test_export_and_import_sync_bundle_p2p_lan() {
             doctor_details: None,
             leave_start_date: None,
             leave_end_date: None,
+            leave_type: None,
             physio_notes: None,
             update_permanent_physio_tracking: None,
         },
@@ -546,6 +668,7 @@ fn test_export_and_import_sync_bundle_p2p_lan() {
             doctor_details: Some("Dr. Especialista MP 9912".to_string()),
             leave_start_date: Some("2026-10-21".to_string()),
             leave_end_date: Some("2026-10-24".to_string()),
+            leave_type: Some(LeaveType::Estudio),
             physio_notes: None,
             update_permanent_physio_tracking: None,
         },
@@ -853,7 +976,7 @@ fn test_soloist_certifications_and_bop_attendance_matrix() {
         actual_checkin_time: None, minutes_late: None,
         remarks: Some("Adecuación de tareas: depósito".into()),
         certificate_file_name: None, certificate_data: None, medical_diagnosis: None, doctor_details: None,
-        leave_start_date: None, leave_end_date: None, physio_notes: None,
+        leave_start_date: None, leave_end_date: None, leave_type: None, physio_notes: None,
         update_permanent_physio_tracking: None,
     }).expect("record AT");
     assert_eq!(att.attendance_status, AttendanceStatus::TaskAdjustment);
@@ -872,7 +995,7 @@ fn test_soloist_certifications_and_bop_attendance_matrix() {
         attendance_status: AttendanceStatus::JustifiedAbsence,
         actual_checkin_time: None, minutes_late: None, remarks: None,
         certificate_file_name: None, certificate_data: None, medical_diagnosis: None, doctor_details: None,
-        leave_start_date: None, leave_end_date: None, physio_notes: None, update_permanent_physio_tracking: None,
+        leave_start_date: None, leave_end_date: None, leave_type: None, physio_notes: None, update_permanent_physio_tracking: None,
     });
     assert!(ij("2026-09-21").is_err(), "3ra IJ del mes desde asistencia diaria");
     assert!(ij("2026-09-09").is_ok(), "re-guardar una IJ existente no cuenta doble");

@@ -86,6 +86,49 @@ impl AttendanceStatus {
     }
 }
 
+/// Tipos de licencia registrables en la carpeta médica permanente
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum LeaveType {
+    /// Licencia por enfermedad (comportamiento histórico por defecto)
+    Enfermedad,
+    /// Licencia por estudio
+    Estudio,
+    /// Licencia sin goce de haberes
+    SinGoceDeHaberes,
+    /// Otras
+    Otras,
+}
+
+impl LeaveType {
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Enfermedad => "ENFERMEDAD",
+            Self::Estudio => "ESTUDIO",
+            Self::SinGoceDeHaberes => "SIN_GOCE_DE_HABERES",
+            Self::Otras => "OTRAS",
+        }
+    }
+
+    pub fn from_db_str(s: &str) -> Self {
+        match s {
+            "ESTUDIO" => Self::Estudio,
+            "SIN_GOCE_DE_HABERES" => Self::SinGoceDeHaberes,
+            "OTRAS" => Self::Otras,
+            _ => Self::Enfermedad,
+        }
+    }
+
+    pub fn label_es(&self) -> &'static str {
+        match self {
+            Self::Enfermedad => "Licencia por enfermedad",
+            Self::Estudio => "Licencia por estudio",
+            Self::SinGoceDeHaberes => "Licencia sin goce de haberes",
+            Self::Otras => "Otras",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttendanceLogDto {
     pub id: String,
@@ -108,6 +151,7 @@ pub struct AttendanceLogDto {
     pub doctor_details: Option<String>,
     pub leave_start_date: Option<String>,
     pub leave_end_date: Option<String>,
+    pub leave_type: Option<LeaveType>,
     pub is_retired: bool,
     pub retirement_notes: Option<String>,
     pub physio_notes: Option<String>,
@@ -130,6 +174,7 @@ pub struct RecordAttendancePayload {
     pub doctor_details: Option<String>,
     pub leave_start_date: Option<String>,
     pub leave_end_date: Option<String>,
+    pub leave_type: Option<LeaveType>,
     pub physio_notes: Option<String>,
     pub update_permanent_physio_tracking: Option<String>,
 }

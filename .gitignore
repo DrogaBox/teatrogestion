@@ -20,6 +20,9 @@ crates/gestion-app/gen/android/local.properties
 *.pem
 .env
 .env.*
+*roster*.sql
+0014_*.sql
+*.teatrodata
 
 # Binarios generados (se publican como releases)
 *.apk

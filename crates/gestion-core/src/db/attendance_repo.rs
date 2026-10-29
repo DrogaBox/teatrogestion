@@ -1,6 +1,6 @@
 use crate::domain::{
     ActivityRestriction, AttendanceLogDto, AttendanceStatus, CreatePhysioSessionPayload,
-    PhysiotherapySessionDto, RecordAttendancePayload,
+    LeaveType, PhysiotherapySessionDto, RecordAttendancePayload,
 };
 use crate::dto::{
     BopMatrixCellDto, BopMatrixDayInfo, BopMatrixRowDto, MonthlyAgentSummaryDto,
@@ -74,6 +74,7 @@ pub fn list_attendance_for_date(
             COALESCE(a.doctor_details, ml.doctor_name),
             COALESCE(a.leave_start_date, ml.start_date),
             COALESCE(a.leave_end_date, ml.end_date),
+            ml.leave_type,
             a.physio_notes,
             p.current_physio_diagnosis,
             p.physio_tracking_notes,
@@ -121,13 +122,14 @@ pub fn list_attendance_for_date(
         let doctor_details: Option<String> = r.get(17)?;
         let leave_start_date: Option<String> = r.get(18)?;
         let leave_end_date: Option<String> = r.get(19)?;
-        let physio_notes: Option<String> = r.get(20)?;
-        let current_physio_diagnosis: Option<String> = r.get(21)?;
-        let physio_tracking_notes: Option<String> = r.get(22)?;
-        let recorded_at: String = r.get(23)?;
-        let is_retired_raw: i32 = r.get(24)?;
-        let retirement_notes: Option<String> = r.get(25)?;
-        let _specific_position: Option<String> = r.get(26)?;
+        let leave_type_str: Option<String> = r.get(20)?;
+        let physio_notes: Option<String> = r.get(21)?;
+        let current_physio_diagnosis: Option<String> = r.get(22)?;
+        let physio_tracking_notes: Option<String> = r.get(23)?;
+        let recorded_at: String = r.get(24)?;
+        let is_retired_raw: i32 = r.get(25)?;
+        let retirement_notes: Option<String> = r.get(26)?;
+        let _specific_position: Option<String> = r.get(27)?;
 
         let dancer_name = match nickname {
             Some(ref n) if !n.trim().is_empty() => format!("{} ({})", last_name, n),
@@ -155,6 +157,7 @@ pub fn list_attendance_for_date(
             doctor_details,
             leave_start_date,
             leave_end_date,
+            leave_type: leave_type_str.as_deref().map(LeaveType::from_db_str),
             is_retired: is_retired_raw == 1,
             retirement_notes,
             physio_notes,
@@ -291,17 +294,19 @@ pub fn record_attendance(
             payload.personnel_id,
             start_date.replace('-', "_")
         );
+        let leave_type = payload.leave_type.unwrap_or(LeaveType::Enfermedad);
         conn.execute(
             "INSERT INTO medical_leave_records (
-                id, personnel_id, start_date, end_date, diagnosis, doctor_name, certificate_file_name, certificate_data, remarks
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
+                id, personnel_id, start_date, end_date, diagnosis, doctor_name, certificate_file_name, certificate_data, remarks, leave_type
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
             ON CONFLICT(id) DO UPDATE SET
                 end_date = excluded.end_date,
                 diagnosis = excluded.diagnosis,
                 doctor_name = excluded.doctor_name,
                 certificate_file_name = COALESCE(excluded.certificate_file_name, medical_leave_records.certificate_file_name),
                 certificate_data = COALESCE(excluded.certificate_data, medical_leave_records.certificate_data),
-                remarks = excluded.remarks",
+                remarks = excluded.remarks,
+                leave_type = excluded.leave_type",
             params![
                 rec_id,
                 payload.personnel_id,
@@ -312,6 +317,7 @@ pub fn record_attendance(
                 payload.certificate_file_name,
                 payload.certificate_data,
                 payload.remarks,
+                leave_type.as_db_str(),
             ],
         )?;
     }
@@ -424,6 +430,7 @@ pub fn create_physiotherapy_session(
             doctor_details: Some(doctor_name.clone()),
             leave_start_date: None,
             leave_end_date: None,
+            leave_type: None,
             physio_notes: payload.evolution_notes.clone(),
             update_permanent_physio_tracking: None,
         };

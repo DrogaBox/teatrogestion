@@ -6,6 +6,7 @@
     type AttendanceStatus,
     type ActivityRestriction,
     type CreatePhysioSessionPayload,
+    type LeaveType,
     type RecordAttendancePayload
   } from '../../ipc/client';
   import AgentMonthlyAttendanceModal from './AgentMonthlyAttendanceModal.svelte';
@@ -37,6 +38,7 @@
   // Formulario Carpeta Médica
   let medDiagnosis = $state('');
   let medDoctor = $state('');
+  let medLeaveType = $state<LeaveType>('ENFERMEDAD');
   let medLeaveStartDate = $state('');
   let medLeaveEndDate = $state('');
   let medRemarks = $state('');
@@ -129,7 +131,9 @@
         certificate_data: extra?.certificate_data,
         medical_diagnosis: extra?.medical_diagnosis,
         doctor_details: extra?.doctor_details,
+        leave_start_date: extra?.leave_start_date,
         leave_end_date: extra?.leave_end_date,
+        leave_type: extra?.leave_type,
         physio_notes: extra?.physio_notes,
         update_permanent_physio_tracking: extra?.update_permanent_physio_tracking,
       };
@@ -200,11 +204,24 @@
       doctor_details: medDoctor,
       leave_start_date: medLeaveStartDate || scheduleDate,
       leave_end_date: medLeaveEndDate || scheduleDate,
+      leave_type: medLeaveType,
       remarks: medRemarks,
       certificate_file_name: medFileName || undefined,
       certificate_data: medFileData || undefined,
     });
     medicalModalDancer = null;
+  }
+
+  const LEAVE_TYPE_LABELS: Record<string, string> = {
+    ENFERMEDAD: 'Licencia por enfermedad',
+    ESTUDIO: 'Licencia por estudio',
+    SIN_GOCE_DE_HABERES: 'Licencia sin goce de haberes',
+    OTRAS: 'Otras licencias'
+  };
+
+  function leaveTypeLabel(dancer: AttendanceLogDto): string {
+    if (!dancer.leave_type) return 'Licencia médica';
+    return LEAVE_TYPE_LABELS[dancer.leave_type] ?? 'Licencia médica';
   }
 
   function viewCertificate(dancer: AttendanceLogDto) {
@@ -279,7 +296,7 @@
       else if (l.attendance_status === 'NOT_IN_CLASS') stLabel = 'No está en clase';
       else if (l.attendance_status === 'IN_PHYSIOTHERAPY') stLabel = 'En fisioterapia';
       else if (l.attendance_status === 'LATE') stLabel = 'Llegó tarde';
-      else if (l.attendance_status === 'MEDICAL_LEAVE') stLabel = 'Licencia médica';
+      else if (l.attendance_status === 'MEDICAL_LEAVE') stLabel = leaveTypeLabel(l);
       else if (l.attendance_status === 'ABSENT') stLabel = 'No está';
       else if (l.attendance_status === 'NO_PART') stLabel = 'Sin parte';
       else if (l.attendance_status === 'JUSTIFIED_ABSENCE') stLabel = 'Inasistencia justificada (IJ)';
@@ -552,7 +569,7 @@
                 </span>
               {:else if dancer.attendance_status === 'MEDICAL_LEAVE'}
                 <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-500/15 text-purple-400 border border-purple-500/30">
-                  Licencia médica
+                  {leaveTypeLabel(dancer)}
                 </span>
               {:else if dancer.attendance_status === 'ABSENT'}
                 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ff4a4a]/15 text-[#ff4a4a] border border-[#ff4a4a]/30">
@@ -622,6 +639,7 @@
                     medicalModalDancer = dancer;
                     medDiagnosis = dancer.medical_diagnosis || '';
                     medDoctor = dancer.doctor_details || '';
+                    medLeaveType = dancer.leave_type ?? 'ENFERMEDAD';
                     medLeaveStartDate = dancer.leave_start_date || scheduleDate;
                     medLeaveEndDate = dancer.leave_end_date || scheduleDate;
                   }}
@@ -751,7 +769,7 @@
               </span>
             {:else if dancer.attendance_status === 'MEDICAL_LEAVE'}
               <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-500/15 text-purple-400 border border-purple-500/30">
-                Licencia
+                {leaveTypeLabel(dancer)}
               </span>
             {:else if dancer.attendance_status === 'ABSENT'}
               <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ff4a4a]/15 text-[#ff4a4a] border border-[#ff4a4a]/30">
@@ -842,6 +860,7 @@
               medicalModalDancer = dancer;
               medDiagnosis = dancer.medical_diagnosis || '';
               medDoctor = dancer.doctor_details || '';
+              medLeaveType = dancer.leave_type ?? 'ENFERMEDAD';
               medLeaveStartDate = dancer.leave_start_date || scheduleDate;
               medLeaveEndDate = dancer.leave_end_date || scheduleDate;
             }}
@@ -927,6 +946,21 @@
             placeholder="Ej: Esguince de tobillo, desgarro miofascial, tendinopatía..."
             class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-medium text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
           />
+        </div>
+
+        <!-- Tipo de Licencia -->
+        <div>
+          <label for="med-leave-type" class="block text-[10px] font-semibold uppercase tracking-wider text-[#82828a] mb-1">Tipo de Licencia</label>
+          <select
+            id="med-leave-type"
+            bind:value={medLeaveType}
+            class="w-full h-10 px-3 bg-[#121214] border border-[#34343c] rounded text-xs font-medium text-[#d8d8dc] outline-none focus:border-[#ffb31a]"
+          >
+            <option value="ENFERMEDAD">Licencia por enfermedad</option>
+            <option value="ESTUDIO">Licencia por estudio</option>
+            <option value="SIN_GOCE_DE_HABERES">Licencia sin goce de haberes</option>
+            <option value="OTRAS">Otras</option>
+          </select>
         </div>
 
         <!-- Rango de Fechas [Desde, Hasta] de la Licencia -->

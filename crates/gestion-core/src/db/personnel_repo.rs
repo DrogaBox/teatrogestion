@@ -487,26 +487,38 @@ pub fn import_personnel_batch(
 }
 
 pub fn delete_personnel(conn: &mut Connection, personnel_id: &str) -> CoreResult<()> {
+    // Todo el borrado corre en UNA transacción: cualquier error la revierte completa.
     let tx = conn.transaction()?;
 
-    let voucher_count: i64 = tx
-        .query_row(
-            "SELECT COUNT(*) FROM shoe_voucher_deliveries WHERE personnel_id = ?1",
-            [personnel_id],
-            |r| r.get(0),
-        )
-        .unwrap_or(0);
+    // El histórico de stock, valeras, clases y ensayos referencia a la persona con
+    // ON DELETE RESTRICT / NO ACTION: quien tenga historia no se elimina, queda de baja.
+    let history_refs: i64 = tx.query_row(
+        "SELECT
+            (SELECT COUNT(*) FROM voucher_deliveries WHERE personnel_id = ?1 OR delivered_by_inspector_id = ?1) +
+            (SELECT COUNT(*) FROM stock_reservations WHERE personnel_id = ?1 OR created_by = ?1) +
+            (SELECT COUNT(*) FROM stock_ledger WHERE performed_by = ?1) +
+            (SELECT COUNT(*) FROM morning_classes WHERE master_id = ?1 OR pianist_id = ?1) +
+            (SELECT COUNT(*) FROM rehearsal_blocks WHERE master_id = ?1 OR pianist_id = ?1) +
+            (SELECT COUNT(*) FROM daily_schedules WHERE created_by = ?1)",
+        [personnel_id],
+        |r| r.get(0),
+    )?;
 
-    if voucher_count > 0 {
+    if history_refs > 0 {
         tx.execute(
             "UPDATE personnel SET is_active = 0, notes = COALESCE(notes || ' | ', '') || 'Baja de padrón' WHERE id = ?1;",
             [personnel_id],
         )?;
     } else {
+        // Purga explícita de los registros operativos de la persona
         tx.execute("DELETE FROM attendance_logs WHERE personnel_id = ?1;", [personnel_id])?;
-        tx.execute("DELETE FROM rehearsal_cast_members WHERE personnel_id = ?1 OR partner_personnel_id = ?1;", [personnel_id])?;
         tx.execute("DELETE FROM physiotherapy_sessions WHERE personnel_id = ?1;", [personnel_id])?;
-        tx.execute("DELETE FROM dancer_deposits WHERE personnel_id = ?1;", [personnel_id])?;
+        tx.execute("DELETE FROM medical_leave_records WHERE personnel_id = ?1;", [personnel_id])?;
+        // En elencos se elimina la fila propia; donde era pareja, la FK define SET NULL
+        tx.execute("UPDATE rehearsal_cast_members SET partner_personnel_id = NULL WHERE partner_personnel_id = ?1;", [personnel_id])?;
+        tx.execute("DELETE FROM rehearsal_cast_members WHERE personnel_id = ?1;", [personnel_id])?;
+        tx.execute("UPDATE work_cast_plan_members SET partner_personnel_id = NULL WHERE partner_personnel_id = ?1;", [personnel_id])?;
+        tx.execute("DELETE FROM work_cast_plan_members WHERE personnel_id = ?1;", [personnel_id])?;
         tx.execute("DELETE FROM personnel WHERE id = ?1;", [personnel_id])?;
     }
 

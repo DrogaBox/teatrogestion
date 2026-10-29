@@ -476,6 +476,12 @@ export type ActivityRestriction =
   | 'NO_POINTE'
   | 'TOTAL_REST';
 
+export type LeaveType =
+  | 'ENFERMEDAD'
+  | 'ESTUDIO'
+  | 'SIN_GOCE_DE_HABERES'
+  | 'OTRAS';
+
 export interface AttendanceLogDto {
   id: string;
   schedule_id: string;
@@ -495,7 +501,9 @@ export interface AttendanceLogDto {
   certificate_data: string | null;
   medical_diagnosis: string | null;
   doctor_details: string | null;
+  leave_start_date: string | null;
   leave_end_date: string | null;
+  leave_type: LeaveType | null;
   physio_notes: string | null;
   current_physio_diagnosis: string | null;
   physio_tracking_notes: string | null;
@@ -513,7 +521,9 @@ export interface RecordAttendancePayload {
   certificate_data?: string | null;
   medical_diagnosis?: string | null;
   doctor_details?: string | null;
+  leave_start_date?: string | null;
   leave_end_date?: string | null;
+  leave_type?: LeaveType | null;
   physio_notes?: string | null;
   update_permanent_physio_tracking?: string | null;
 }
