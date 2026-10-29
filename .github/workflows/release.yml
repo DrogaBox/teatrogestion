@@ -1,0 +1,218 @@
+# =============================================================================
+# CÓMO PUBLICAR UNA VERSIÓN NUEVA DE TEATROGESTIÓN:
+#   1. Subir la versión en Cargo.toml ([workspace.package].version) si corresponde.
+#   2. git tag v1.2.0 && git push --tags
+#   3. GitHub compila Windows y Linux y publica el Release con notas generadas
+#      automáticamente. Los nombres de los assets son exactamente los que el
+#      actualizador busca (crates/gestion-update y update_cmds.rs):
+#      Windows  → Actualizar_TeatroGestion.exe  (regla: prefijo "actualizar_", sufijo ".exe")
+#      Linux    → TeatroGestion-linux-<versión>-x86_64  (regla: prefijo "teatrogestion-linux", sufijo "-x86_64")
+#   Alternativa: pestaña Actions → "Release" → Run workflow, indicando un tag ya pusheado.
+#
+# Secrets requeridos: NINGUNO. GITHUB_TOKEN lo provee GitHub y este workflow le da
+# permissions: contents: write. El proyecto no firma los binarios: no hay claves de
+# firma en este archivo ni secrets que crear (las claves privadas viven fuera del repo).
+#
+# Nota: la migración 0014_*.sql es privada (gitignored) y no viaja con el checkout;
+# hay una guardia que falla con mensaje claro si el registro de migraciones vuelve a
+# referenciarla. No se publica APK: los móviles se instalan por pendrive.
+# =============================================================================
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag ya existente a publicar (ej.: v1.3.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  windows:
+    name: Windows (TeatroGestion.exe + Instalar_ + Actualizar_)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Guardia — el checkout no debe depender de la migración privada 0014
+        shell: bash
+        run: |
+          if grep -q '0014_official_bop' crates/gestion-core/src/db/migrations.rs; then
+            echo "::error::migrations.rs referencia 0014_*.sql (privada, gitignored, ausente en el checkout). Quitar esa entrada del registro de migraciones antes de publicar."
+            exit 1
+          fi
+
+      - name: Instalar pnpm (versión declarada en ui/package.json)
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: ui/package.json
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Rust (según rust-toolchain.toml)
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Caché de cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      - name: windres para incrustar el icono en los .exe (best-effort; sin icono si falla)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          choco install mingw -y --no-progress
+          $windres = Get-ChildItem 'C:\ProgramData\chocolatey\lib\mingw' -Recurse -Filter 'windres.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($windres) { Add-Content $env:GITHUB_ENV "WINDRES=$($windres.FullName)" }
+
+      - name: Compilar el frontend (el repo usa pnpm, no npm)
+        run: |
+          pnpm --dir ui install --frozen-lockfile
+          pnpm --dir ui run build
+
+      - name: Compilar la app (incrusta ui/dist en el binario)
+        run: cargo build --release -p gestion-app
+
+      - name: Compilar instalador y actualizador (incrustan gestion-app.exe vía TG_PAYLOAD_DIR)
+        env:
+          TG_PAYLOAD_DIR: ${{ github.workspace }}/target/release
+        run: cargo build --release -p installer-win -p updater-win
+
+      - name: Reunir los assets de Windows con los nombres que espera el actualizador
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item target/release/gestion-app.exe dist/TeatroGestion.exe
+          Copy-Item target/release/Instalar_TeatroGestion.exe dist/
+          Copy-Item target/release/Actualizar_TeatroGestion.exe dist/
+
+      - name: Verificar nombres de assets
+        shell: bash
+        run: |
+          ls -l dist
+          test -f dist/TeatroGestion.exe
+          test -f dist/Instalar_TeatroGestion.exe
+          test -f dist/Actualizar_TeatroGestion.exe
+
+      - name: Subir artefactos de Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-assets
+          path: dist/
+          if-no-files-found: error
+
+  linux:
+    name: Linux (binario del actualizador + .deb + .AppImage)
+    runs-on: ubuntu-latest
+    env:
+      APPIMAGE_EXTRACT_AND_RUN: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Guardia — el checkout no debe depender de la migración privada 0014
+        run: |
+          if grep -q '0014_official_bop' crates/gestion-core/src/db/migrations.rs; then
+            echo "::error::migrations.rs referencia 0014_*.sql (privada, gitignored, ausente en el checkout). Quitar esa entrada del registro de migraciones antes de publicar."
+            exit 1
+          fi
+
+      - name: Instalar pnpm (versión declarada en ui/package.json)
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: ui/package.json
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Rust (según rust-toolchain.toml)
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Caché de cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      - name: Dependencias de sistema para Tauri v2 en Linux
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libfuse2t64
+
+      - name: Instalar dependencias del frontend
+        run: pnpm --dir ui install --frozen-lockfile
+
+      - name: Compilar app + paquetes .deb y .AppImage (el hook beforeBuildCommand reconstruye ui/)
+        working-directory: crates/gestion-app
+        run: pnpm dlx @tauri-apps/cli@^2 build --bundles deb,appimage
+
+      - name: Reunir los assets de Linux con los nombres que espera el actualizador
+        run: |
+          VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n1)
+          mkdir -p dist
+          cp target/release/gestion-app "dist/TeatroGestion-linux-${VERSION}-x86_64"
+          cp target/release/bundle/deb/*.deb dist/
+          cp target/release/bundle/appimage/*.AppImage dist/
+          ls -l dist
+          test -f "dist/TeatroGestion-linux-${VERSION}-x86_64"
+
+      - name: Subir artefactos de Linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-assets
+          path: dist/
+          if-no-files-found: error
+
+  release:
+    name: Publicar el release de GitHub
+    needs: [windows, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Bajar los assets compilados
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Crear el release con notas generadas y todos los assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          name: TeatroGestión ${{ inputs.tag || github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: dist/*
