@@ -678,7 +678,7 @@
 
                 {#each shownDays as day}
                   <th
-                    class="border-r border-grid px-0.5 py-1 max-md:py-2 max-md:min-w-[40px] font-bold transition-colors cursor-pointer print:border-black {day.is_weekend ? 'bg-alt text-dim print:bg-neutral-300' : 'hover:bg-raised'}"
+                    class="border-r border-grid px-0 py-1 max-md:py-2 max-md:min-w-[40px] font-bold whitespace-nowrap transition-colors cursor-pointer print:border-black {day.is_weekend ? 'bg-alt text-dim print:bg-neutral-300' : 'hover:bg-raised'}"
                     title="Día {day.day_number} ({day.date}). Clic para fijar evento, feriado o marcar presentes."
                     onclick={() => openDayAnnotation(day.day_number, day.date, day.day_annotation)}
                   >
@@ -805,6 +805,13 @@
   </div>
 {/if}
 
+<PrintPreviewModal
+  open={printPreviewOpen}
+  title="Vista previa de impresión"
+  subtitle="Matriz BOP — ediciones solo para la copia impresa"
+  source={printableEl}
+  onclose={() => (printPreviewOpen = false)}
+/>
 <!-- MODAL FLOTANTE DE SELECCIÓN RÁPIDA DE CÓDIGO (CLIC DERECHO EN CELDA) -->
 {#if activeCellPopup}
   <div class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center max-md:items-end p-3 max-md:p-0" use:modalBehavior={{ onclose: () => activeCellPopup = null }}>
@@ -837,14 +844,6 @@
           Cerrar
         </button>
       </div>
-
-      <PrintPreviewModal
-        open={printPreviewOpen}
-        title="Vista previa de impresión"
-        subtitle="Matriz BOP — ediciones solo para la copia impresa"
-        source={printableEl}
-        onclose={() => (printPreviewOpen = false)}
-      />
     </div>
   </div>
 {/if}

@@ -439,6 +439,38 @@ table {
   background: #ffffff;
   color: #000000;
   min-height: 100%;
+  /* Paleta de papel: los documentos que se clonan desde la interfaz oscura
+     (planilla de asistencia, etc.) usan estas variables; acá se redefinen en
+     claro para que el texto y los bordes se lean sobre fondo blanco, tanto en
+     la vista previa como al imprimir. */
+  --color-void: #f3f4f6;
+  --color-alt: #f9fafb;
+  --color-panel: #ffffff;
+  --color-raised: #e5e7eb;
+  --color-raised-hover: #d1d5db;
+  --color-raised-active: #9ca3af;
+  --color-grid: #b6bac2;
+  --color-ink: #111111;
+  --color-dim: #4b5563;
+  --color-amber: #92400e;
+  --color-amber-bright: #b45309;
+  --color-amber-dim: #a16207;
+  --color-green: #15803d;
+  --color-green-dark: #166534;
+  --color-cyan: #0e7490;
+  --color-blue: #1d4ed8;
+  --color-violet: #6d28d9;
+  --color-red: #b91c1c;
+  --color-red-dark: #991b1b;
+  --color-playhead: #fde68a;
+  --color-selrow: #dbeafe;
+  --color-running: #dcfce7;
+  --color-waiting: #cffafe;
+  /* Tonos claros de la paleta por defecto (pensados para fondo oscuro). */
+  --color-purple-200: #5b21b6;
+  --color-purple-300: #6d28d9;
+  --color-purple-400: #6d28d9;
+  --color-amber-400: #92400e;
 }
 .tg-print-preview-doc:focus {
   outline: 2px solid rgba(255, 179, 26, 0.55);

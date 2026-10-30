@@ -369,7 +369,7 @@
         </p>
 
         <!-- Selector Interactivo de Fecha (Consultar Ausentismo y TC de cualquier día) -->
-        <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+        <div data-print-skip class="flex items-center gap-1.5 mt-2 flex-wrap">
           <button
             onclick={() => shiftDay(-1)}
             class="px-2.5 py-1 bg-raised hover:bg-grid text-dim hover:text-ink rounded text-xs font-medium transition-colors border border-grid"
@@ -491,7 +491,7 @@
       <div class="text-base font-bold text-ink mt-0.5 font-mono">{countAbsent}</div>
     </div>
     <div class="bg-void p-2 rounded border border-grid text-center">
-      <div class="text-[10px] font-semibold uppercase tracking-wider text-purple-300">Sin parte</div>
+      <div class="text-[10px] font-semibold uppercase tracking-wider text-violet">Sin parte</div>
       <div class="text-base font-bold text-purple-300 mt-0.5 font-mono">{countNoPart}</div>
     </div>
     <div class="bg-void p-2 rounded border border-grid text-center" title="Inasistencias justificadas del día (tope: 2 por mes y 10 por año)">
@@ -513,7 +513,7 @@
   </div>
 
   <!-- Buscador de Bailarines -->
-  <div class="mb-4">
+  <div data-print-skip class="mb-4">
     <input
       type="text"
       bind:value={searchQuery}
@@ -530,7 +530,7 @@
           <th class="p-3">Bailarín / Agente</th>
           <th class="p-3">Rol / Cat.</th>
           <th class="p-3">Estado Operativo</th>
-          <th class="p-3">Acciones Rápidas de Inspección</th>
+          <th data-print-skip class="p-3">Acciones Rápidas de Inspección</th>
           <th class="p-3">Seguimiento Kinésico / Médico</th>
         </tr>
       </thead>
@@ -602,7 +602,7 @@
             </td>
 
             <!-- Botonera Táctica Rápida (1 solo toque) -->
-            <td class="p-3">
+            <td data-print-skip class="p-3">
               <div class="flex flex-wrap items-center gap-1">
                 <button
                   onclick={() => updateStatus(dancer, 'PRESENT')}
