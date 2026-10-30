@@ -289,7 +289,7 @@
   const countTask = $derived(logs.filter((l) => l.attendance_status === 'TASK_ADJUSTMENT').length);
   const countJustified = $derived(logs.filter((l) => l.attendance_status === 'JUSTIFIED_ABSENCE').length);
   const countPending = $derived(logs.filter((l) => l.attendance_status === 'PENDING').length);
-  const countRetired = $derived(logs.filter((l) => l.is_retired).length);
+  const countRetired = $derived(logs.filter((l) => l.is_retired && l.attendance_status === 'RETIRED_EXEMPT').length);
 
   // Exportar Excel (CSV con BOM)
   function exportExcel() {
@@ -552,7 +552,7 @@
 
             <!-- Estado Operativo Actual con Badge -->
             <td class="p-3">
-              {#if dancer.is_retired}
+              {#if dancer.is_retired && dancer.attendance_status === 'RETIRED_EXEMPT'}
                 <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber/15 text-amber border border-amber/30" title={dancer.retirement_notes || 'Estado jubilatorio'}>
                   Jubilatorio (No concurre)
                 </span>
@@ -752,7 +752,7 @@
 
           <!-- Badge de Estado Actual -->
           <div>
-            {#if dancer.is_retired}
+            {#if dancer.is_retired && dancer.attendance_status === 'RETIRED_EXEMPT'}
               <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber/15 text-amber border border-amber/30" title={dancer.retirement_notes || 'Estado jubilatorio'}>
                 Jubilatorio
               </span>
