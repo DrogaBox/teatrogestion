@@ -7,7 +7,7 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use gestion_core::db::migrations::{compute_sha256_hex, EMBEDDED_MIGRATIONS};
+use gestion_core::db::migrations::{checksum_candidates, EMBEDDED_MIGRATIONS};
 use rusqlite::{Connection, OpenFlags};
 
 pub mod payload {
@@ -196,7 +196,8 @@ pub fn check_db(db_copy: &Path) -> Result<DbCheck, String> {
     for (version, checksum) in &rows {
         match EMBEDDED_MIGRATIONS.iter().find(|m| m.version == *version) {
             None => return Ok(DbCheck::NewerDb { version: *version }),
-            Some(m) if compute_sha256_hex(m.sql) != *checksum => return Ok(DbCheck::Mismatch { version: *version, name: m.name.to_string() }),
+            // Mismo criterio que la app al abrir: la huella guardada puede ser la de LF o la de CRLF (build de CI).
+            Some(m) if !checksum_candidates(m.sql).contains(checksum) => return Ok(DbCheck::Mismatch { version: *version, name: m.name.to_string() }),
             Some(_) => applied += 1,
         }
     }

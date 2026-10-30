@@ -1,4 +1,5 @@
 use super::*;
+use gestion_core::db::migrations::compute_sha256_hex;
 
 fn tmp(tag: &str) -> PathBuf {
     let d = std::env::temp_dir().join(format!("updater-win-{}-{tag}", std::process::id()));
@@ -85,6 +86,21 @@ fn the_database_check_accepts_older_and_current_databases_and_refuses_the_ones_t
     assert_eq!(check_db(&d.join("sin-tabla.sqlite")).unwrap(), DbCheck::Compatible { applied: 0, pending: all.len() });
 }
 
+#[test]
+fn the_database_check_accepts_a_database_created_by_a_build_with_crlf_scripts() {
+    let d = tmp("dbcrlf");
+    let all: Vec<u32> = EMBEDDED_MIGRATIONS.iter().map(|m| m.version).collect();
+    let path = d.join("ci.sqlite");
+    db_with(&path, &all, None);
+    // Base creada por el build de CI de Windows: la huella de cada script es la de su versión con CRLF.
+    let c = Connection::open(&path).unwrap();
+    for m in EMBEDDED_MIGRATIONS {
+        let crlf = m.sql.replace("\r\n", "\n").replace('\n', "\r\n");
+        c.execute("UPDATE _schema_migrations SET checksum_sha256 = ?1 WHERE version = ?2", rusqlite::params![compute_sha256_hex(&crlf), m.version]).unwrap();
+    }
+    drop(c);
+    assert_eq!(check_db(&path).unwrap(), DbCheck::Compatible { applied: all.len(), pending: 0 });
+}
 #[test]
 fn the_update_replaces_the_programs_keeps_the_previous_ones_and_never_touches_the_license_or_other_files() {
     let dir = tmp("apply");

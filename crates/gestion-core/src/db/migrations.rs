@@ -179,7 +179,7 @@ pub fn compute_sha256_hex(input: &str) -> String {
 /// línea LF (Linux, macOS) o CRLF (el runner de Windows de CI convierte el checkout), y la huella cambia aunque el
 /// contenido sea el mismo: una base creada por un build fallaba con el otro («variante de la actualización interna»).
 /// La huella que se guarda al aplicar es la de LF; al verificar se aceptan LF, CRLF y el texto tal cual se embebió.
-fn checksum_candidates(sql: &str) -> [String; 3] {
+pub fn checksum_candidates(sql: &str) -> [String; 3] {
     let lf = sql.replace("\r\n", "\n");
     let crlf = lf.replace('\n', "\r\n");
     [compute_sha256_hex(&lf), compute_sha256_hex(&crlf), compute_sha256_hex(sql)]
