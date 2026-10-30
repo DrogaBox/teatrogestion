@@ -25,6 +25,10 @@
   let selectedYear = $state<number>(2026);
   let selectedMonth = $state<number>(9); // Septiembre 2026 por defecto (como en la planilla física de Carina)
   let matrix = $state<MonthlyBopMatrixDto | null>(null);
+  // Meses vecinos: la semana de lunes a domingo puede empezar en el mes anterior o terminar en el siguiente
+  let prevMatrix = $state<MonthlyBopMatrixDto | null>(null);
+  let nextMatrix = $state<MonthlyBopMatrixDto | null>(null);
+  type WeekDay = BopMatrixDayInfo & { src: 'prev' | 'cur' | 'next' };
   let isLoading = $state(false);
   // Vista de la planilla: una semana, el mes completo o el resumen del año
   type ViewMode = 'week' | 'month' | 'year';
@@ -47,26 +51,56 @@
     total_sp: number;
     total_other: number;
   };
-  // Semanas del mes cargado, de lunes a domingo (la primera y la última pueden ser parciales)
-  let weeks = $derived.by<BopMatrixDayInfo[][]>(() => {
-    const out: BopMatrixDayInfo[][] = [];
-    for (const d of matrix?.days_header ?? []) {
-      const dow = new Date(d.date + 'T00:00:00').getDay();
-      if (out.length === 0 || dow === 1) out.push([]);
-      out[out.length - 1].push(d);
+  const DAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+  function isoDate(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function addDays(dateIso: string, n: number): string {
+    const [y, m, d] = dateIso.split('-').map(Number);
+    return isoDate(new Date(y, m - 1, d + n));
+  }
+  // Día de la semana con los datos del mes al que pertenece (el cargado o uno vecino)
+  function dayInfoFor(d: Date): WeekDay {
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    let src: WeekDay['src'] = 'cur';
+    let owner = matrix;
+    if (matrix && (y !== matrix.year || m !== matrix.month)) {
+      const before = y * 12 + m < matrix.year * 12 + matrix.month;
+      src = before ? 'prev' : 'next';
+      owner = before ? prevMatrix : nextMatrix;
+    }
+    const known = owner && owner.year === y && owner.month === m ? owner.days_header[d.getDate() - 1] : undefined;
+    if (known) return { ...known, src };
+    const wd = d.getDay();
+    return { day_number: d.getDate(), date: isoDate(d), day_name: DAY_LETTERS[wd], is_weekend: wd === 0 || wd === 6, day_annotation: null, src };
+  }
+  // Semanas que tocan al mes cargado: siempre de lunes a domingo, con 7 días cada una
+  let weeks = $derived.by<WeekDay[][]>(() => {
+    if (!matrix) return [];
+    const first = new Date(matrix.year, matrix.month - 1, 1);
+    const last = new Date(matrix.year, matrix.month, 0);
+    const out: WeekDay[][] = [];
+    for (let s = new Date(matrix.year, matrix.month - 1, 1 - ((first.getDay() + 6) % 7)); s <= last; s.setDate(s.getDate() + 7)) {
+      out.push(Array.from({ length: 7 }, (_, i) => dayInfoFor(new Date(s.getFullYear(), s.getMonth(), s.getDate() + i))));
     }
     return out;
   });
   let safeWeekIdx = $derived(Math.min(weekIdx, Math.max(0, weeks.length - 1)));
   // Días y filas que se muestran según la vista; los totales se recalculan sobre lo visible
-  let shownDays = $derived.by<BopMatrixDayInfo[]>(() =>
-    viewMode === 'week' ? (weeks[safeWeekIdx] ?? []) : (matrix?.days_header ?? []),
+  let shownDays = $derived.by<WeekDay[]>(() =>
+    viewMode === 'week' ? (weeks[safeWeekIdx] ?? []) : (matrix?.days_header ?? []).map(d => ({ ...d, src: 'cur' as const })),
   );
+  function cellFor(row: BopMatrixRowDto, d: WeekDay): BopMatrixCellDto {
+    const owner = d.src === 'cur' ? matrix : d.src === 'prev' ? prevMatrix : nextMatrix;
+    const r = d.src === 'cur' ? row : owner?.rows.find(x => x.personnel_id === row.personnel_id);
+    return r?.cells.find(c => c.date === d.date)
+      ?? { day_number: d.day_number, date: d.date, is_weekend: d.is_weekend, code: '', minutes_late: 0, remarks: null };
+  }
   let shownRows = $derived.by<ShownRow[]>(() => {
     if (!matrix) return [];
-    const nums = new Set(shownDays.map(d => d.day_number));
     return matrix.rows.map(row => {
-      const cells = row.cells.filter(c => nums.has(c.day_number));
+      const cells = shownDays.map(d => cellFor(row, d));
       return {
         row,
         cells,
@@ -77,17 +111,18 @@
       };
     });
   });
+  // "28" si el día es del mes cargado; "31 AGO" si es de un mes vecino
+  function dayLabel(d: WeekDay): string {
+    return d.src === 'cur' ? String(d.day_number) : `${d.day_number} ${monthsShort[Number(d.date.slice(5, 7)) - 1].toUpperCase()}`;
+  }
   let periodLabel = $derived.by(() => {
     if (!matrix) return '';
     if (viewMode === 'year') return `AÑO ${selectedYear}`;
     if (viewMode === 'week' && shownDays.length) {
-      const a = shownDays[0].day_number;
-      const b = shownDays[shownDays.length - 1].day_number;
-      return `${matrix.month_name.toUpperCase()} ${matrix.year} · SEMANA ${safeWeekIdx + 1} (${a} AL ${b})`;
+      return `${matrix.month_name.toUpperCase()} ${matrix.year} · SEMANA ${safeWeekIdx + 1} (${dayLabel(shownDays[0])} AL ${dayLabel(shownDays[shownDays.length - 1])})`;
     }
     return `${matrix.month_name.toUpperCase()} ${matrix.year}`;
   });
-
   // Menú contextual de edición de celda
   let activeCellPopup = $state<{
     personnelId: string;
@@ -138,6 +173,7 @@
     isLoading = true;
     try {
       matrix = await api.getMonthlyBopMatrix(selectedYear, selectedMonth);
+      if (viewMode === 'week') await loadNeighbors();
     } catch (e: any) {
       console.error('Error cargando matriz BOP:', e);
     } finally {
@@ -145,6 +181,14 @@
     }
   }
 
+  async function loadNeighbors() {
+    const prev: [number, number] = selectedMonth === 1 ? [selectedYear - 1, 12] : [selectedYear, selectedMonth - 1];
+    const next: [number, number] = selectedMonth === 12 ? [selectedYear + 1, 1] : [selectedYear, selectedMonth + 1];
+    [prevMatrix, nextMatrix] = await Promise.all([
+      api.getMonthlyBopMatrix(prev[0], prev[1]).catch(() => null),
+      api.getMonthlyBopMatrix(next[0], next[1]).catch(() => null),
+    ]);
+  }
   async function loadYear() {
     isLoading = true;
     try {
@@ -188,11 +232,10 @@
     selectedMonth = m;
     selectedYear = y;
   }
-  // Semana que contiene a hoy si el mes cargado es el actual; si no, la primera
+  // Semana que contiene a hoy; si no está en el mes cargado, la primera
   function currentWeekIdx(): number {
-    const now = new Date();
-    if (!matrix || matrix.year !== now.getFullYear() || matrix.month !== now.getMonth() + 1) return 0;
-    const i = weeks.findIndex(w => w.some(d => d.day_number === now.getDate()));
+    const today = isoDate(new Date());
+    const i = weeks.findIndex(w => w.some(d => d.date === today));
     return i >= 0 ? i : 0;
   }
   async function setViewMode(mode: ViewMode) {
@@ -203,30 +246,46 @@
       return;
     }
     if (!matrix) await loadMatrix();
-    if (mode === 'week') weekIdx = currentWeekIdx();
+    if (mode === 'week') {
+      await loadNeighbors();
+      weekIdx = currentWeekIdx();
+    }
   }
   async function onMonthChange() {
     weekIdx = 0;
     await loadMatrix();
   }
+  // Semana anterior o siguiente: se busca por el lunes de destino y, si cae en otro mes, se cambia de mes
+  async function goWeek(delta: number) {
+    if (!shownDays.length) return;
+    const target = addDays(shownDays[0].date, 7 * delta);
+    const idx = weeks.findIndex(w => w[0].date === target);
+    if (idx >= 0) {
+      weekIdx = idx;
+      return;
+    }
+    shiftMonth(delta);
+    await loadMatrix();
+    weekIdx = Math.max(0, weeks.findIndex(w => w[0].date === target));
+  }
   async function prevPeriod() {
     if (viewMode === 'year') {
       selectedYear -= 1;
       await loadYear();
-    } else if (viewMode === 'week' && safeWeekIdx > 0) {
-      weekIdx = safeWeekIdx - 1;
+    } else if (viewMode === 'week') {
+      await goWeek(-1);
     } else {
       shiftMonth(-1);
       await loadMatrix();
-      weekIdx = viewMode === 'week' ? Math.max(0, weeks.length - 1) : 0;
+      weekIdx = 0;
     }
   }
   async function nextPeriod() {
     if (viewMode === 'year') {
       selectedYear += 1;
       await loadYear();
-    } else if (viewMode === 'week' && safeWeekIdx < weeks.length - 1) {
-      weekIdx = safeWeekIdx + 1;
+    } else if (viewMode === 'week') {
+      await goWeek(1);
     } else {
       shiftMonth(1);
       await loadMatrix();
@@ -239,14 +298,11 @@
     weekIdx = 0;
     await loadMatrix();
   }
-  function getDailyPresentCount(dayNumber: number): number {
-    if (!matrix) return 0;
-    return matrix.rows.filter(r => {
-      const c = r.cells.find(cell => cell.day_number === dayNumber);
-      return c && c.code === 'P';
-    }).length;
+  function getDailyPresentCount(day: WeekDay): number {
+    const owner = day.src === 'cur' ? matrix : day.src === 'prev' ? prevMatrix : nextMatrix;
+    if (!owner) return 0;
+    return owner.rows.filter(r => r.cells.some(c => c.date === day.date && c.code === 'P')).length;
   }
-
   async function setCellCode(personnelId: string, date: string, code: string) {
     try {
       await api.updateBopMatrixCell({
@@ -254,21 +310,20 @@
         personnel_id: personnelId,
         code,
       });
-      // Actualizar localmente la celda para respuesta inmediata
-      if (matrix) {
-        const row = matrix.rows.find(r => r.personnel_id === personnelId);
-        if (row) {
-          const cell = row.cells.find(c => c.date === date);
-          if (cell) {
-            cell.code = code;
-          }
-          // Recalcular totales de fila
-          row.total_p = row.cells.filter(c => c.code === 'P').length;
-          row.total_ei = row.cells.filter(c => c.code === 'EI').length;
-          row.total_sp = row.cells.filter(c => c.code === 'SP').length;
-          row.total_other = row.cells.filter(c => c.code && !['P', 'EI', 'SP', 'S/P'].includes(c.code)).length;
-        }
+      // Actualizar localmente la celda (en el mes cargado o en un vecino) para respuesta inmediata
+      let found = false;
+      for (const m of [matrix, prevMatrix, nextMatrix]) {
+        const row = m?.rows.find(r => r.personnel_id === personnelId);
+        const cell = row?.cells.find(c => c.date === date);
+        if (!row || !cell) continue;
+        found = true;
+        cell.code = code;
+        row.total_p = row.cells.filter(c => c.code === 'P').length;
+        row.total_ei = row.cells.filter(c => c.code === 'EI').length;
+        row.total_sp = row.cells.filter(c => c.code === 'SP').length;
+        row.total_other = row.cells.filter(c => c.code && !['P', 'EI', 'SP', 'S/P'].includes(c.code)).length;
       }
+      if (!found) await loadMatrix();
       activeCellPopup = null;
     } catch (e: any) {
       console.error('Error actualizando celda:', e);
@@ -468,7 +523,7 @@
             </button>
             {#if viewMode === 'week' && shownDays.length}
               <span class="text-xs font-mono text-dim whitespace-nowrap">
-                Semana {safeWeekIdx + 1} de {weeks.length} · días {shownDays[0].day_number}–{shownDays[shownDays.length - 1].day_number}
+                Semana {safeWeekIdx + 1} de {weeks.length} · días {dayLabel(shownDays[0])}–{dayLabel(shownDays[shownDays.length - 1])}
               </span>
             {/if}
           </div>
@@ -612,7 +667,7 @@
             <span>Tocá una celda para elegir</span>
           </div>
 
-          <table class="w-full max-md:w-max border-collapse text-[10px] max-md:text-xs font-mono text-center select-none">
+          <table class="w-full max-md:w-max md:table-fixed border-collapse text-[10px] max-md:text-xs font-mono text-center select-none">
             <thead>
               <!-- Fila 1: Números de Día -->
               <tr class="bg-panel text-ink border-b border-grid print:bg-neutral-200 print:text-black print:border-black">
@@ -628,6 +683,7 @@
                     onclick={() => openDayAnnotation(day.day_number, day.date, day.day_annotation)}
                   >
                     {day.day_number}
+                    {#if day.src !== 'cur'}<span class="block text-[8px] font-normal opacity-70">{monthsShort[Number(day.date.slice(5, 7)) - 1]}</span>{/if}
                   </th>
                 {/each}
 
@@ -695,7 +751,7 @@
 
                   <!-- Celdas de Días -->
                   {#each sr.cells as cell}
-                    {@const isSuspended = matrix.days_header.find(d => d.day_number === cell.day_number)?.day_annotation === 'ENSAYO SUSPENDIDO'}
+                    {@const isSuspended = shownDays.find(d => d.date === cell.date)?.day_annotation === 'ENSAYO SUSPENDIDO'}
                     <td
                       class="border-r border-grid py-1 max-md:py-2.5 max-md:min-w-[40px] text-xs max-md:text-sm cursor-pointer font-bold select-none print:border-black transition-colors {cell.is_weekend ? 'bg-alt print:bg-neutral-200' : 'hover:bg-raised'} {cell.code === 'P' ? 'text-green print:text-black' : cell.code === 'EI' ? 'text-cyan print:text-black print:font-black' : cell.code === 'SP' ? 'text-red print:text-black print:font-black' : cell.code === 'S/P' ? 'text-violet print:text-black font-black' : cell.code === 'LC' ? 'text-amber' : cell.code === 'IJ' || cell.code === 'AT' ? 'text-blue' : 'text-neutral-500'}"
                       onclick={(e) => handleCellClick(row, cell, e)}
@@ -720,7 +776,7 @@
                 <td class="border-r border-grid py-1.5 text-center text-dim print:border-black max-md:hidden">Σ</td>
                 <td class="border-r border-grid py-1.5 px-3 text-left uppercase text-green print:text-black print:border-black max-md:sticky max-md:left-0 max-md:z-10 max-md:bg-alt max-md:text-[11px]">Total P</td>
                 {#each shownDays as day}
-                  {@const pCount = getDailyPresentCount(day.day_number)}
+                  {@const pCount = getDailyPresentCount(day)}
                   <td class="border-r border-grid py-1.5 text-center print:border-black {pCount > 0 ? 'text-green font-bold' : 'text-dim'} {day.is_weekend ? 'bg-void print:bg-neutral-200' : ''}">
                     {pCount > 0 ? pCount : '—'}
                   </td>
