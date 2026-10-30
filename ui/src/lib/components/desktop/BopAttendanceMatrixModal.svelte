@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import {
     api,
     type MonthlyBopMatrixDto,
     type BopMatrixRowDto,
     type BopMatrixCellDto,
+    type BopMatrixDayInfo,
   } from '../../ipc/client';
   import ModalHeader from '../shared/ModalHeader.svelte';
   import PrintPreviewModal from '../shared/PrintPreviewModal.svelte';
@@ -25,6 +26,67 @@
   let selectedMonth = $state<number>(9); // Septiembre 2026 por defecto (como en la planilla física de Carina)
   let matrix = $state<MonthlyBopMatrixDto | null>(null);
   let isLoading = $state(false);
+  // Vista de la planilla: una semana, el mes completo o el resumen del año
+  type ViewMode = 'week' | 'month' | 'year';
+  const viewModes: { key: ViewMode; label: string }[] = [
+    { key: 'week', label: 'Semana' },
+    { key: 'month', label: 'Mes' },
+    { key: 'year', label: 'Año' },
+  ];
+  let viewMode = $state<ViewMode>('month');
+  let weekIdx = $state(0);
+  type YearMonth = { p: number; ei: number; sp: number; other: number; loaded: boolean };
+  type YearRow = { personnelId: string; name: string; months: YearMonth[] };
+  let yearRows = $state<YearRow[]>([]);
+  const monthsShort = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  type ShownRow = {
+    row: BopMatrixRowDto;
+    cells: BopMatrixCellDto[];
+    total_p: number;
+    total_ei: number;
+    total_sp: number;
+    total_other: number;
+  };
+  // Semanas del mes cargado, de lunes a domingo (la primera y la última pueden ser parciales)
+  let weeks = $derived.by<BopMatrixDayInfo[][]>(() => {
+    const out: BopMatrixDayInfo[][] = [];
+    for (const d of matrix?.days_header ?? []) {
+      const dow = new Date(d.date + 'T00:00:00').getDay();
+      if (out.length === 0 || dow === 1) out.push([]);
+      out[out.length - 1].push(d);
+    }
+    return out;
+  });
+  let safeWeekIdx = $derived(Math.min(weekIdx, Math.max(0, weeks.length - 1)));
+  // Días y filas que se muestran según la vista; los totales se recalculan sobre lo visible
+  let shownDays = $derived.by<BopMatrixDayInfo[]>(() =>
+    viewMode === 'week' ? (weeks[safeWeekIdx] ?? []) : (matrix?.days_header ?? []),
+  );
+  let shownRows = $derived.by<ShownRow[]>(() => {
+    if (!matrix) return [];
+    const nums = new Set(shownDays.map(d => d.day_number));
+    return matrix.rows.map(row => {
+      const cells = row.cells.filter(c => nums.has(c.day_number));
+      return {
+        row,
+        cells,
+        total_p: cells.filter(c => c.code === 'P').length,
+        total_ei: cells.filter(c => c.code === 'EI').length,
+        total_sp: cells.filter(c => c.code === 'SP').length,
+        total_other: cells.filter(c => c.code && !['P', 'EI', 'SP', 'S/P'].includes(c.code)).length,
+      };
+    });
+  });
+  let periodLabel = $derived.by(() => {
+    if (!matrix) return '';
+    if (viewMode === 'year') return `AÑO ${selectedYear}`;
+    if (viewMode === 'week' && shownDays.length) {
+      const a = shownDays[0].day_number;
+      const b = shownDays[shownDays.length - 1].day_number;
+      return `${matrix.month_name.toUpperCase()} ${matrix.year} · SEMANA ${safeWeekIdx + 1} (${a} AL ${b})`;
+    }
+    return `${matrix.month_name.toUpperCase()} ${matrix.year}`;
+  });
 
   // Menú contextual de edición de celda
   let activeCellPopup = $state<{
@@ -83,26 +145,100 @@
     }
   }
 
-  function prevMonth() {
-    if (selectedMonth === 1) {
-      selectedMonth = 12;
+  async function loadYear() {
+    isLoading = true;
+    try {
+      const results = await Promise.all(
+        Array.from({ length: 12 }, (_, i) =>
+          api.getMonthlyBopMatrix(selectedYear, i + 1).catch(() => null),
+        ),
+      );
+      const byId = new Map<string, YearRow>();
+      results.forEach((m, mi) => {
+        if (!m) return;
+        for (const r of m.rows) {
+          let yr = byId.get(r.personnel_id);
+          if (!yr) {
+            yr = {
+              personnelId: r.personnel_id,
+              name: r.dancer_name,
+              months: Array.from({ length: 12 }, () => ({ p: 0, ei: 0, sp: 0, other: 0, loaded: false })),
+            };
+            byId.set(r.personnel_id, yr);
+          }
+          yr.months[mi] = { p: r.total_p, ei: r.total_ei, sp: r.total_sp, other: r.total_other, loaded: true };
+        }
+      });
+      yearRows = [...byId.values()];
+    } catch (e: any) {
+      console.error('Error cargando el resumen anual BOP:', e);
+    } finally {
+      isLoading = false;
+    }
+  }
+  async function loadView() {
+    if (viewMode === 'year') await loadYear();
+    else await loadMatrix();
+  }
+  function shiftMonth(delta: number) {
+    let m = selectedMonth + delta;
+    let y = selectedYear;
+    if (m < 1) { m = 12; y -= 1; }
+    if (m > 12) { m = 1; y += 1; }
+    selectedMonth = m;
+    selectedYear = y;
+  }
+  // Semana que contiene a hoy si el mes cargado es el actual; si no, la primera
+  function currentWeekIdx(): number {
+    const now = new Date();
+    if (!matrix || matrix.year !== now.getFullYear() || matrix.month !== now.getMonth() + 1) return 0;
+    const i = weeks.findIndex(w => w.some(d => d.day_number === now.getDate()));
+    return i >= 0 ? i : 0;
+  }
+  async function setViewMode(mode: ViewMode) {
+    if (mode === viewMode) return;
+    viewMode = mode;
+    if (mode === 'year') {
+      await loadYear();
+      return;
+    }
+    if (!matrix) await loadMatrix();
+    if (mode === 'week') weekIdx = currentWeekIdx();
+  }
+  async function onMonthChange() {
+    weekIdx = 0;
+    await loadMatrix();
+  }
+  async function prevPeriod() {
+    if (viewMode === 'year') {
       selectedYear -= 1;
+      await loadYear();
+    } else if (viewMode === 'week' && safeWeekIdx > 0) {
+      weekIdx = safeWeekIdx - 1;
     } else {
-      selectedMonth -= 1;
+      shiftMonth(-1);
+      await loadMatrix();
+      weekIdx = viewMode === 'week' ? Math.max(0, weeks.length - 1) : 0;
     }
-    loadMatrix();
   }
-
-  function nextMonth() {
-    if (selectedMonth === 12) {
-      selectedMonth = 1;
+  async function nextPeriod() {
+    if (viewMode === 'year') {
       selectedYear += 1;
+      await loadYear();
+    } else if (viewMode === 'week' && safeWeekIdx < weeks.length - 1) {
+      weekIdx = safeWeekIdx + 1;
     } else {
-      selectedMonth += 1;
+      shiftMonth(1);
+      await loadMatrix();
+      weekIdx = 0;
     }
-    loadMatrix();
   }
-
+  async function openMonthFromYear(month: number) {
+    selectedMonth = month;
+    viewMode = 'month';
+    weekIdx = 0;
+    await loadMatrix();
+  }
   function getDailyPresentCount(dayNumber: number): number {
     if (!matrix) return 0;
     return matrix.rows.filter(r => {
@@ -204,23 +340,47 @@
     }
   }
 
+  function downloadCsv(csv: string, fileName: string) {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+  function exportYearCsv() {
+    let csv = '\uFEFF';
+    csv += `AUSENTISMO BOP AÑO ${selectedYear}\n`;
+    csv += 'Cada mes: días de ausencia (EI + SP + otras licencias)\n\n';
+    csv += `Nro;Apellido y Nombre;${monthsShort.join(';')};Total P;Total EI;Total SP;Total Otros\n`;
+    yearRows.forEach((yr, i) => {
+      const abs = yr.months.map(m => (m.loaded ? m.ei + m.sp + m.other : ''));
+      const sum = (k: 'p' | 'ei' | 'sp' | 'other') => yr.months.reduce((a, m) => a + m[k], 0);
+      csv += `${i + 1};"${yr.name}";${abs.join(';')};${sum('p')};${sum('ei')};${sum('sp')};${sum('other')}\n`;
+    });
+    downloadCsv(csv, `Ausentismo_BOP_${selectedYear}.csv`);
+  }
   function exportMatrixCsv() {
+    if (viewMode === 'year') {
+      exportYearCsv();
+      return;
+    }
     if (!matrix) return;
     let csv = '\uFEFF';
-    csv += `AUSENTISMO BOP ${matrix.month_name} ${matrix.year}\n\n`;
-
-    // Encabezado de columnas
+    csv += `AUSENTISMO BOP ${periodLabel}\n\n`;
+    // Encabezado de columnas (solo los días de la vista)
     let headerLine = 'Nro;Apellido y Nombre;';
-    for (let d = 1; d <= matrix.days_in_month; d++) {
-      headerLine += `${d};`;
+    for (const d of shownDays) {
+      headerLine += `${d.day_number};`;
     }
     headerLine += 'Total P;Total EI;Total SP;Total Otros\n';
     csv += headerLine;
-
     // Fila de anotaciones de día si existen
     let annotLine = ';;';
     let hasAnnot = false;
-    for (const d of matrix.days_header) {
+    for (const d of shownDays) {
       if (d.day_annotation) {
         annotLine += `"${d.day_annotation}";`;
         hasAnnot = true;
@@ -230,30 +390,21 @@
     }
     annotLine += '\n';
     if (hasAnnot) csv += annotLine;
-
     // Filas de personal
-    for (const row of matrix.rows) {
-      let line = `${row.nro};"${row.dancer_name}";`;
-      for (const cell of row.cells) {
+    for (const sr of shownRows) {
+      let line = `${sr.row.nro};"${sr.row.dancer_name}";`;
+      for (const cell of sr.cells) {
         line += `${cell.code};`;
       }
-      line += `${row.total_p};${row.total_ei};${row.total_sp};${row.total_other}\n`;
+      line += `${sr.total_p};${sr.total_ei};${sr.total_sp};${sr.total_other}\n`;
       csv += line;
     }
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `Ausentismo_BOP_${matrix.month_name}_${matrix.year}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const suffix = viewMode === 'week' ? `_Semana${safeWeekIdx + 1}` : '';
+    downloadCsv(csv, `Ausentismo_BOP_${matrix.month_name}_${matrix.year}${suffix}.csv`);
   }
-
   $effect(() => {
     if (isOpen) {
-      loadMatrix();
+      untrack(() => loadView());
     }
   });
 </script>
@@ -271,40 +422,56 @@
         onclose={onClose}
       >
         <div class="flex flex-wrap items-center gap-2 print:hidden">
-          <!-- Selector de Mes y Año -->
+          <!-- Vista: semana, mes o año -->
+          <div class="inline-flex bg-void p-0.5 rounded border border-grid">
+            {#each viewModes as vm}
+              <button
+                onclick={() => setViewMode(vm.key)}
+                class="h-6 max-md:h-10 px-2.5 max-md:px-3.5 rounded text-xs max-md:text-sm font-semibold transition-colors {viewMode === vm.key ? 'bg-amber text-void' : 'text-dim hover:text-ink'}"
+              >
+                {vm.label}
+              </button>
+            {/each}
+          </div>
+          <!-- Selector de período -->
           <div class="flex items-center gap-2">
             <button
-              onclick={prevMonth}
+              onclick={prevPeriod}
+              title={viewMode === 'year' ? 'Año anterior' : viewMode === 'week' ? 'Semana anterior' : 'Mes anterior'}
               class="w-7 h-7 max-md:w-11 max-md:h-11 max-md:text-base flex items-center justify-center bg-raised hover:bg-raised-hover text-ink border border-grid rounded text-xs font-mono transition-colors"
             >
               ◀
             </button>
-
-            <select
-              bind:value={selectedMonth}
-              onchange={loadMatrix}
-              class="h-7 max-md:h-11 max-md:text-sm px-2.5 bg-void border border-grid rounded text-xs font-semibold text-ink outline-none"
-            >
-              {#each months as m}
-                <option value={m.value}>{m.name.toUpperCase()}</option>
-              {/each}
-            </select>
-
+            {#if viewMode !== 'year'}
+              <select
+                bind:value={selectedMonth}
+                onchange={onMonthChange}
+                class="h-7 max-md:h-11 max-md:text-sm px-2.5 bg-void border border-grid rounded text-xs font-semibold text-ink outline-none"
+              >
+                {#each months as m}
+                  <option value={m.value}>{m.name.toUpperCase()}</option>
+                {/each}
+              </select>
+            {/if}
             <input
               type="number"
               bind:value={selectedYear}
-              onchange={loadMatrix}
+              onchange={loadView}
               class="h-7 max-md:h-11 max-md:text-sm w-20 px-2 bg-void border border-grid rounded text-xs font-mono font-bold text-amber text-center outline-none"
             />
-
             <button
-              onclick={nextMonth}
+              onclick={nextPeriod}
+              title={viewMode === 'year' ? 'Año siguiente' : viewMode === 'week' ? 'Semana siguiente' : 'Mes siguiente'}
               class="w-7 h-7 max-md:w-11 max-md:h-11 max-md:text-base flex items-center justify-center bg-raised hover:bg-raised-hover text-ink border border-grid rounded text-xs font-mono transition-colors"
             >
               ▶
             </button>
+            {#if viewMode === 'week' && shownDays.length}
+              <span class="text-xs font-mono text-dim whitespace-nowrap">
+                Semana {safeWeekIdx + 1} de {weeks.length} · días {shownDays[0].day_number}–{shownDays[shownDays.length - 1].day_number}
+              </span>
+            {/if}
           </div>
-
           <!-- Leyenda de Códigos y Acciones -->
           <div class="flex items-center gap-2">
             <div class="hidden lg:flex items-center gap-2 text-[10px] font-mono text-dim bg-void px-2 py-1 rounded border border-grid">
@@ -344,19 +511,92 @@
           <div class="py-20 text-center text-xs font-mono text-dim">
             Cargando matriz mensual de ausentismo...
           </div>
+        {:else if viewMode === 'year'}
+          <div class="p-2 text-center border-b border-grid bg-panel print:bg-white print:border-black print:pb-3">
+            <h1 class="text-xs md:text-sm font-black font-sans uppercase tracking-widest text-ink print:text-black">
+              AUSENTISMO BOP {periodLabel}
+            </h1>
+          </div>
+          <p class="px-3 py-2 border-b border-grid text-xs font-mono text-dim print:hidden">
+            Cada mes muestra los días de ausencia (EI + SP + otras licencias); tocá el nombre del mes para abrirlo. Los totales de la derecha son de todo el año.
+          </p>
+          <table class="w-full max-md:w-max border-collapse text-[10px] max-md:text-xs font-mono text-center select-none">
+            <thead>
+              <tr class="bg-panel text-ink border-b border-grid print:bg-neutral-200 print:text-black print:border-black">
+                <th class="border-r border-grid px-1 py-1.5 w-8 font-bold print:border-black max-md:hidden">Nro</th>
+                <th class="border-r border-grid px-2.5 py-1.5 text-left font-bold w-48 sm:w-56 max-md:w-[120px] max-md:min-w-[120px] max-md:max-w-[120px] max-md:sticky max-md:left-0 max-md:z-10 max-md:bg-panel print:border-black">
+                  Apellido y Nombre
+                </th>
+                {#each monthsShort as ms, i}
+                  <th
+                    class="border-r border-grid px-1 py-1.5 max-md:min-w-[44px] font-bold cursor-pointer hover:bg-raised transition-colors print:border-black"
+                    title="Abrir {months[i].name} {selectedYear}"
+                    onclick={() => openMonthFromYear(i + 1)}
+                  >
+                    {ms}
+                  </th>
+                {/each}
+                <th class="border-r border-grid px-1 py-1 text-green font-bold w-9 print:border-black" title="Total Presentes (P) del año">P</th>
+                <th class="border-r border-grid px-1 py-1 text-cyan font-bold w-9 print:border-black" title="Total Enfermedad Inculpable (EI) del año">EI</th>
+                <th class="border-r border-grid px-1 py-1 text-red font-bold w-9 print:border-black" title="Total Sin Presencia (SP) del año">SP</th>
+                <th class="px-1 py-1 text-ink font-bold w-11 print:border-black" title="Otras licencias del año">Otras</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each yearRows as yr, i}
+                {@const tp = yr.months.reduce((a, m) => a + m.p, 0)}
+                {@const tei = yr.months.reduce((a, m) => a + m.ei, 0)}
+                {@const tsp = yr.months.reduce((a, m) => a + m.sp, 0)}
+                {@const tot = yr.months.reduce((a, m) => a + m.other, 0)}
+                <tr class="border-b border-raised hover:bg-panel transition-colors print:border-black print:hover:bg-transparent">
+                  <td class="border-r border-grid py-1 text-dim font-mono text-[9px] print:border-black max-md:hidden">{i + 1}</td>
+                  <td class="border-r border-grid py-1 px-2.5 max-md:py-2.5 max-md:w-[120px] max-md:min-w-[120px] max-md:max-w-[120px] max-md:sticky max-md:left-0 max-md:z-10 max-md:bg-panel text-left font-sans text-xs font-semibold text-ink truncate print:text-black print:border-black">
+                    {yr.name}
+                  </td>
+                  {#each yr.months as m, mi}
+                    {@const aus = m.ei + m.sp + m.other}
+                    <td
+                      class="border-r border-grid py-1 max-md:py-2.5 print:border-black {aus > 0 ? 'text-red font-bold' : 'text-dim'}"
+                      title="{months[mi].name}: P {m.p} · EI {m.ei} · SP {m.sp} · Otras {m.other}"
+                    >
+                      {m.loaded ? (aus > 0 ? aus : '·') : ''}
+                    </td>
+                  {/each}
+                  <td class="border-r border-grid py-1 font-bold text-green print:text-black print:border-black">{tp}</td>
+                  <td class="border-r border-grid py-1 font-bold text-cyan print:text-black print:border-black">{tei}</td>
+                  <td class="border-r border-grid py-1 font-bold text-red print:text-black print:border-black">{tsp}</td>
+                  <td class="py-1 font-bold text-ink print:text-neutral-600 print:border-black">{tot}</td>
+                </tr>
+              {/each}
+            </tbody>
+            <tfoot>
+              <tr class="bg-alt border-t-2 border-grid font-mono text-[9px] font-bold print:border-black print:bg-neutral-100">
+                <td class="border-r border-grid py-1.5 text-center text-dim print:border-black max-md:hidden">Σ</td>
+                <td class="border-r border-grid py-1.5 px-3 text-left uppercase text-ink print:text-black print:border-black max-md:sticky max-md:left-0 max-md:z-10 max-md:bg-alt max-md:text-[11px]">Ausencias del mes</td>
+                {#each monthsShort as _, mi}
+                  {@const tm = yearRows.reduce((a, yr) => a + yr.months[mi].ei + yr.months[mi].sp + yr.months[mi].other, 0)}
+                  <td class="border-r border-grid py-1.5 print:border-black {tm > 0 ? 'text-red' : 'text-dim'}">{tm > 0 ? tm : '·'}</td>
+                {/each}
+                <td class="border-r border-grid py-1.5 text-green print:text-black print:border-black">{yearRows.reduce((a, yr) => a + yr.months.reduce((b, m) => b + m.p, 0), 0)}</td>
+                <td class="border-r border-grid py-1.5 text-cyan print:text-black print:border-black">{yearRows.reduce((a, yr) => a + yr.months.reduce((b, m) => b + m.ei, 0), 0)}</td>
+                <td class="border-r border-grid py-1.5 text-red print:text-black print:border-black">{yearRows.reduce((a, yr) => a + yr.months.reduce((b, m) => b + m.sp, 0), 0)}</td>
+                <td class="py-1.5 text-ink print:text-neutral-600 print:border-black">{yearRows.reduce((a, yr) => a + yr.months.reduce((b, m) => b + m.other, 0), 0)}</td>
+              </tr>
+            </tfoot>
+          </table>
         {:else if matrix}
           
           <!-- Título Impreso Oficial -->
           <div class="p-2 text-center border-b border-grid bg-panel print:bg-white print:border-black print:pb-3">
             <h1 class="text-xs md:text-sm font-black font-sans uppercase tracking-widest text-ink print:text-black">
-              AUSENTISMO BOP {matrix.month_name} {matrix.year}
+              AUSENTISMO BOP {periodLabel}
             </h1>
           </div>
 
           <!-- Anotaciones del mes y leyenda: legibles sin tener que adivinar la columna -->
-          {#if matrix.days_header.some(d => d.day_annotation)}
+          {#if shownDays.some(d => d.day_annotation)}
             <div class="px-3 py-2 border-b border-grid bg-raised print:hidden flex flex-wrap gap-x-4 gap-y-1">
-              {#each matrix.days_header.filter(d => d.day_annotation) as d}
+              {#each shownDays.filter(d => d.day_annotation) as d}
                 <span class="text-sm text-amber"><strong class="font-mono">Día {d.day_number}</strong> · {d.day_annotation}</span>
               {/each}
             </div>
@@ -381,7 +621,7 @@
                   Apellido y Nombre
                 </th>
 
-                {#each matrix.days_header as day}
+                {#each shownDays as day}
                   <th
                     class="border-r border-grid px-0.5 py-1 max-md:py-2 max-md:min-w-[40px] font-bold transition-colors cursor-pointer print:border-black {day.is_weekend ? 'bg-alt text-dim print:bg-neutral-300' : 'hover:bg-raised'}"
                     title="Día {day.day_number} ({day.date}). Clic para fijar evento, feriado o marcar presentes."
@@ -405,7 +645,7 @@
                   {matrix.rows.length} integrantes
                 </th>
 
-                {#each matrix.days_header as day}
+                {#each shownDays as day}
                   <th class="border-r border-grid py-0.5 print:border-black {day.is_weekend ? 'bg-void text-red/70 print:bg-neutral-300' : ''}">
                     {day.day_name}
                   </th>
@@ -420,7 +660,7 @@
                 <td class="border-r border-grid text-left px-2.5 text-[9px] max-md:text-[11px] font-bold uppercase text-amber print:border-black truncate max-md:sticky max-md:left-0 max-md:z-10 max-md:bg-raised" title="Clic en cualquier día para fijar feriados, suspensiones o giras">
                   Anotaciones Inspección
                 </td>
-                {#each matrix.days_header as day}
+                {#each shownDays as day}
                   <td
                     class="border-r border-grid p-0 overflow-hidden cursor-pointer transition-colors print:border-black hover:bg-amber/30 {day.day_annotation ? 'bg-amber/20 text-amber font-bold print:bg-neutral-200 print:text-black' : 'text-dim/40 hover:text-amber'}"
                     onclick={() => openDayAnnotation(day.day_number, day.date, day.day_annotation)}
@@ -440,7 +680,8 @@
             </thead>
 
             <tbody>
-              {#each matrix.rows as row}
+              {#each shownRows as sr}
+                {@const row = sr.row}
                 <tr class="border-b border-raised hover:bg-panel transition-colors print:border-black print:hover:bg-transparent">
                   <!-- Nro -->
                   <td class="border-r border-grid py-1 text-dim font-mono text-[9px] print:border-black max-md:hidden">
@@ -453,7 +694,7 @@
                   </td>
 
                   <!-- Celdas de Días -->
-                  {#each row.cells as cell}
+                  {#each sr.cells as cell}
                     {@const isSuspended = matrix.days_header.find(d => d.day_number === cell.day_number)?.day_annotation === 'ENSAYO SUSPENDIDO'}
                     <td
                       class="border-r border-grid py-1 max-md:py-2.5 max-md:min-w-[40px] text-xs max-md:text-sm cursor-pointer font-bold select-none print:border-black transition-colors {cell.is_weekend ? 'bg-alt print:bg-neutral-200' : 'hover:bg-raised'} {cell.code === 'P' ? 'text-green print:text-black' : cell.code === 'EI' ? 'text-cyan print:text-black print:font-black' : cell.code === 'SP' ? 'text-red print:text-black print:font-black' : cell.code === 'S/P' ? 'text-violet print:text-black font-black' : cell.code === 'LC' ? 'text-amber' : cell.code === 'IJ' || cell.code === 'AT' ? 'text-blue' : 'text-neutral-500'}"
@@ -466,10 +707,10 @@
                   {/each}
 
                   <!-- Totales -->
-                  <td class="border-r border-grid py-1 font-bold text-green print:text-black print:border-black" title="Presentes: {row.total_p}">{row.total_p}</td>
-                  <td class="border-r border-grid py-1 font-bold text-cyan print:text-black print:border-black" title="Carpetas Médicas (EI): {row.total_ei}">{row.total_ei}</td>
-                  <td class="border-r border-grid py-1 font-bold text-red print:text-black print:border-black" title="Sin Presencia / Injustificadas (SP): {row.total_sp}">{row.total_sp}</td>
-                  <td class="py-1 text-ink font-bold print:text-neutral-600 print:border-black" title="Otras Licencias (LC, ART, LA, IJ, AT, ES): {row.total_other}">{row.total_other}</td>
+                  <td class="border-r border-grid py-1 font-bold text-green print:text-black print:border-black" title="Presentes: {sr.total_p}">{sr.total_p}</td>
+                  <td class="border-r border-grid py-1 font-bold text-cyan print:text-black print:border-black" title="Carpetas Médicas (EI): {sr.total_ei}">{sr.total_ei}</td>
+                  <td class="border-r border-grid py-1 font-bold text-red print:text-black print:border-black" title="Sin Presencia / Injustificadas (SP): {sr.total_sp}">{sr.total_sp}</td>
+                  <td class="py-1 text-ink font-bold print:text-neutral-600 print:border-black" title="Otras Licencias (LC, ART, LA, IJ, AT, ES): {sr.total_other}">{sr.total_other}</td>
                 </tr>
               {/each}
             </tbody>
@@ -478,23 +719,23 @@
               <tr class="bg-alt border-t-2 border-grid font-mono text-[9px] font-bold print:border-black print:bg-neutral-100">
                 <td class="border-r border-grid py-1.5 text-center text-dim print:border-black max-md:hidden">Σ</td>
                 <td class="border-r border-grid py-1.5 px-3 text-left uppercase text-green print:text-black print:border-black max-md:sticky max-md:left-0 max-md:z-10 max-md:bg-alt max-md:text-[11px]">Total P</td>
-                {#each matrix.days_header as day}
+                {#each shownDays as day}
                   {@const pCount = getDailyPresentCount(day.day_number)}
                   <td class="border-r border-grid py-1.5 text-center print:border-black {pCount > 0 ? 'text-green font-bold' : 'text-dim'} {day.is_weekend ? 'bg-void print:bg-neutral-200' : ''}">
                     {pCount > 0 ? pCount : '—'}
                   </td>
                 {/each}
                 <td class="border-r border-grid py-1.5 font-bold text-green print:text-black print:border-black" title="Total Presentes del Elenco">
-                  {matrix.rows.reduce((acc, r) => acc + r.total_p, 0)}
+                  {shownRows.reduce((acc, r) => acc + r.total_p, 0)}
                 </td>
                 <td class="border-r border-grid py-1.5 font-bold text-cyan print:text-black print:border-black" title="Total Carpetas Médicas (EI)">
-                  {matrix.rows.reduce((acc, r) => acc + r.total_ei, 0)}
+                  {shownRows.reduce((acc, r) => acc + r.total_ei, 0)}
                 </td>
                 <td class="border-r border-grid py-1.5 font-bold text-red print:text-black print:border-black" title="Total Inasistencias Sin Presencia (SP)">
-                  {matrix.rows.reduce((acc, r) => acc + r.total_sp, 0)}
+                  {shownRows.reduce((acc, r) => acc + r.total_sp, 0)}
                 </td>
                 <td class="py-1.5 font-bold text-ink print:text-neutral-600 print:border-black" title="Total Otras Licencias Justificadas (LC, ART, LA, IJ, AT, ES)">
-                  {matrix.rows.reduce((acc, r) => acc + r.total_other, 0)}
+                  {shownRows.reduce((acc, r) => acc + r.total_other, 0)}
                 </td>
               </tr>
             </tfoot>

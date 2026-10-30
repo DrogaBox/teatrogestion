@@ -10,6 +10,19 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.4',
+    date: '29/10/2026',
+    title: 'Planilla de ausentismo por semana, mes y año; vista previa editable',
+    added: [
+      'La planilla de ausentismo BOP tiene tres vistas: Semana, Mes y Año. La semana va de lunes a domingo y se puede avanzar de una a otra aunque cambie el mes; los totales se calculan sobre lo que se ve. El Año resume los 12 meses con los días de ausencia de cada bailarín y sus totales, y un clic en el mes lo abre. Exportar Excel e Imprimir respetan la vista elegida.',
+      'Al imprimir un parte se abre una vista previa donde se puede corregir cualquier dato antes de mandarlo a la impresora; la certificación de solistas guarda los cambios en el registro.',
+    ],
+    fixed: [
+      'Se recuperaron los colores de la interfaz (acento ámbar, estados en verde, celeste y rojo) y el fondo de los menús desplegables, que se veían transparentes.',
+      'La cruz de cerrar queda siempre en la esquina superior derecha de todas las ventanas, y el título de la planilla de ausentismo ya no se comprime.',
+    ],
+  },
+  {
     version: '1.3',
     date: '23/10/2026',
     title: 'Sonidista a cargo en clases, ensayos y funciones',
