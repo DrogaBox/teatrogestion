@@ -1,6 +1,7 @@
 //! Incrusta la clave pública del desarrollador en el binario.
 //!
-//! La clave se toma de TEATROGESTION_PUBLIC_KEY_FILE o TEATROCUE_PUBLIC_KEY_FILE (o ~/.config/teatrocue-keys/public.key).
+//! La clave se toma de TEATROGESTION_PUBLIC_KEY_FILE o TEATROCUE_PUBLIC_KEY_FILE, de ~/.config/teatrocue-keys/public.key
+//! o, si no existen, de public_key.hex junto a este build.rs.
 
 use std::path::PathBuf;
 
@@ -32,6 +33,12 @@ fn main() {
             } else {
                 None
             }
+        })
+        // Clave pública versionada en el repo (no es secreta): las compilaciones de CI no
+        // tienen la del equipo del desarrollador y saldrían sin clave de verificación.
+        .or_else(|| {
+            let dir = std::env::var_os("CARGO_MANIFEST_DIR")?;
+            Some(PathBuf::from(dir).join("public_key.hex"))
         });
 
     let hex = match key_candidate {
