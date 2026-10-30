@@ -411,6 +411,7 @@ export interface UpsertPersonnelPayload {
   role?: PersonnelRole | null;
   gender_group?: GenderGroup | null;
   category_id?: string | null;
+  category_name?: string | null;
   default_pointe_raw_code?: string | null;
   default_flat_size?: string | null;
   is_active?: boolean | null;

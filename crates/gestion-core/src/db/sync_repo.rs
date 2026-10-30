@@ -17,7 +17,8 @@ pub fn export_sync_bundle(
         "SELECT id, legajo, first_name, last_name, nickname, role, gender_group, category_id,
                 phone_whatsapp, default_pointe_raw_code, default_flat_size, is_active,
                 notes, created_at, updated_at, is_retired, retirement_notes, specific_position,
-                current_physio_diagnosis, physio_tracking_notes
+                current_physio_diagnosis, physio_tracking_notes,
+                (SELECT name FROM personnel_categories c WHERE c.id = personnel.category_id)
          FROM personnel",
     )?;
     let personnel = stmt
@@ -43,6 +44,7 @@ pub fn export_sync_bundle(
                 "specific_position": row.get::<_, Option<String>>(17)?,
                 "current_physio_diagnosis": row.get::<_, Option<String>>(18)?,
                 "physio_tracking_notes": row.get::<_, Option<String>>(19)?,
+                "category_name": row.get::<_, Option<String>>(20)?,
             }))
         })?
         .collect::<Result<Vec<Value>, _>>()?;
@@ -379,6 +381,11 @@ pub fn import_sync_bundle(
         let specific_position = item["specific_position"].as_str();
         let current_physio_diagnosis = item["current_physio_diagnosis"].as_str();
         let physio_tracking_notes = item["physio_tracking_notes"].as_str();
+        // Una categoría escrita a mano en el otro equipo puede no existir aquí todavía.
+        tx.execute(
+            "INSERT OR IGNORE INTO personnel_categories (id, code, name) VALUES (?1, ?1, ?2)",
+            params![category_id, item["category_name"].as_str().unwrap_or(category_id)],
+        )?;
 
         let changes = tx.execute(
             "INSERT INTO personnel (

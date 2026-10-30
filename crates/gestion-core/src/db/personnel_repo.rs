@@ -242,7 +242,11 @@ pub fn upsert_personnel(
     let role = payload.role.unwrap_or(PersonnelRole::Dancer);
     let gender = payload.gender_group.unwrap_or(GenderGroup::Female);
     let is_active = payload.is_active.unwrap_or(true);
-    let cat_id = payload.category_id.unwrap_or_else(|| match role {
+    let typed_cat = match payload.category_name.as_deref().map(str::trim) {
+        Some(name) if !name.is_empty() => Some(category_id_for_name(conn, name)?),
+        _ => None,
+    };
+    let cat_id = typed_cat.or(payload.category_id).unwrap_or_else(|| match role {
         PersonnelRole::Master | PersonnelRole::Pianist | PersonnelRole::Inspector => {
             "CAT_STAFF_DOCENTE".to_string()
         }
@@ -524,4 +528,41 @@ pub fn delete_personnel(conn: &mut Connection, personnel_id: &str) -> CoreResult
 
     tx.commit()?;
     Ok(())
+}
+
+/// `id` de la categoría de revista llamada `name` (sin distinguir mayúsculas); si no hay ninguna, la crea sin cupos.
+pub fn category_id_for_name(conn: &Connection, name: &str) -> CoreResult<String> {
+    let name = name.trim();
+    let found: Option<String> = conn
+        .query_row(
+            "SELECT id FROM personnel_categories WHERE lower(trim(name)) = lower(?1) OR lower(code) = lower(?1) LIMIT 1",
+            [name],
+            |r| r.get(0),
+        )
+        .ok();
+    if let Some(id) = found {
+        return Ok(id);
+    }
+    let slug: String = name
+        .chars()
+        .map(|c| match c {
+            'á' | 'Á' => 'A',
+            'é' | 'É' => 'E',
+            'í' | 'Í' => 'I',
+            'ó' | 'Ó' => 'O',
+            'ú' | 'Ú' | 'ü' | 'Ü' => 'U',
+            'ñ' | 'Ñ' => 'N',
+            c if c.is_ascii_alphanumeric() => c.to_ascii_uppercase(),
+            _ => '_',
+        })
+        .collect();
+    let base = format!("CAT_{}", slug.trim_matches('_'));
+    let mut id = base.clone();
+    let mut n = 2;
+    while conn.query_row("SELECT COUNT(*) FROM personnel_categories WHERE id = ?1 OR code = ?1", [&id], |r| r.get::<_, i64>(0))? > 0 {
+        id = format!("{base}_{n}");
+        n += 1;
+    }
+    conn.execute("INSERT INTO personnel_categories (id, code, name) VALUES (?1, ?1, ?2)", rusqlite::params![id, name])?;
+    Ok(id)
 }

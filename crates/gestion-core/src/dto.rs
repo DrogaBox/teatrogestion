@@ -41,6 +41,8 @@ pub struct UpsertPersonnelPayload {
     pub role: Option<PersonnelRole>,
     pub gender_group: Option<GenderGroup>,
     pub category_id: Option<String>,
+    /// Categoría de revista escrita a mano: si no existe una con ese nombre, se crea (sin cupos).
+    pub category_name: Option<String>,
     pub default_pointe_raw_code: Option<String>,
     pub default_flat_size: Option<String>,
     pub is_active: Option<bool>,

@@ -40,6 +40,7 @@
   let formSpecificPosition = $state('');
   let formGender = $state<'FEMALE' | 'MALE'>('FEMALE');
   let formCategoryId = $state('CAT_CUERPO_BAILE');
+  let formCategoryName = $state('Cuerpo de Baile Estable');
   let formIsRetired = $state(false);
   let formRetirementNotes = $state('');
   let formIsActive = $state(true);
@@ -68,6 +69,16 @@
     }
   });
 
+  // Sugerencias para la categoría de revista: las de fábrica y las que ya usa el padrón.
+  const BASE_CATEGORIES = [
+    'Primera Figura / Solista Principal',
+    'Solista',
+    'Cuerpo de Baile Estable',
+    'Contratado / Refuerzo',
+    'Maestros, Pianistas e Inspección',
+  ];
+  let categoryOptions = $derived([...new Set([...BASE_CATEGORIES, ...roster.map((p) => p.category_name)])]);
+
   let filteredRoster = $derived(
     roster.filter((p) => {
       if (filterRetiredOnly && !p.is_retired) return false;
@@ -91,6 +102,7 @@
     formSpecificPosition = '';
     formGender = 'FEMALE';
     formCategoryId = 'CAT_CUERPO_BAILE';
+    formCategoryName = 'Cuerpo de Baile Estable';
     formIsRetired = false;
     formRetirementNotes = '';
     formIsActive = true;
@@ -108,6 +120,7 @@
     formSpecificPosition = p.specific_position || '';
     formGender = (p.gender_group === 'MALE' ? 'MALE' : 'FEMALE');
     formCategoryId = p.category_id;
+    formCategoryName = p.category_name;
     formIsRetired = p.is_retired;
     formRetirementNotes = p.retirement_notes || '';
     formIsActive = p.is_active;
@@ -132,6 +145,7 @@
         role: formRole,
         gender_group: formGender,
         category_id: formCategoryId,
+        category_name: formCategoryName.trim() || null,
         default_pointe_raw_code: null,
         default_flat_size: null,
         is_active: formIsActive,
@@ -639,17 +653,19 @@
 
         <div>
           <label class="block text-dim font-bold mb-1 text-[10px] uppercase" for="category-select">Categoría de Revista</label>
-          <select
+          <input
             id="category-select"
-            bind:value={formCategoryId}
-            class="w-full h-8 px-2 bg-void border border-grid rounded text-ink font-bold outline-none focus:border-amber"
-          >
-            <option value="CAT_PRIMERA_FIGURA">Primera Figura / Solista Principal</option>
-            <option value="CAT_SOLISTA">Solista</option>
-            <option value="CAT_CUERPO_BAILE">Cuerpo de Baile Estable</option>
-            <option value="CAT_CONTRATADO">Contratado / Refuerzo</option>
-            <option value="CAT_STAFF_DOCENTE">Maestros, Pianistas e Inspección</option>
-          </select>
+            type="text"
+            list="category-options"
+            bind:value={formCategoryName}
+            placeholder="Elegí una o escribí otra (Figurante, Pasante...)"
+            class="w-full h-8 px-2.5 bg-void border border-grid rounded text-ink font-bold outline-none focus:border-amber"
+          />
+          <datalist id="category-options">
+            {#each categoryOptions as c (c)}
+              <option value={c}></option>
+            {/each}
+          </datalist>
         </div>
 
         <!-- Casillero de Estado Jubilatorio -->

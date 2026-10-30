@@ -319,6 +319,7 @@ fn test_personnel_import_export_retirement_and_medical_date_ranges() {
             role: Some(PersonnelRole::Inspector),
             gender_group: Some(GenderGroup::Female),
             category_id: Some("CAT_STAFF_DOCENTE".to_string()),
+            category_name: None,
             default_pointe_raw_code: None,
             default_flat_size: None,
             is_active: Some(true),
@@ -336,6 +337,7 @@ fn test_personnel_import_export_retirement_and_medical_date_ranges() {
             role: Some(PersonnelRole::Pianist),
             gender_group: Some(GenderGroup::Male),
             category_id: Some("CAT_STAFF_DOCENTE".to_string()),
+            category_name: None,
             default_pointe_raw_code: None,
             default_flat_size: None,
             is_active: Some(true),
@@ -353,6 +355,7 @@ fn test_personnel_import_export_retirement_and_medical_date_ranges() {
             role: Some(PersonnelRole::Dancer),
             gender_group: Some(GenderGroup::Female),
             category_id: Some("CAT_CUERPO_BAILE".to_string()),
+            category_name: None,
             default_pointe_raw_code: None,
             default_flat_size: None,
             is_active: Some(true),
@@ -429,6 +432,7 @@ fn test_delete_personnel_daily_records_and_voucher_guard() {
         role: Some(PersonnelRole::Dancer),
         gender_group: Some(GenderGroup::Female),
         category_id: Some("CAT_CUERPO_BAILE".to_string()),
+        category_name: None,
         default_pointe_raw_code: None,
         default_flat_size: None,
         is_active: Some(true),
@@ -823,6 +827,47 @@ fn test_sync_merges_schedules_created_on_both_devices_for_the_same_date() {
             .unwrap();
         assert_eq!(n, 1);
     }
+}
+
+#[test]
+fn test_free_text_category_is_created_reused_and_synced() {
+    use crate::db::sync_repo::{export_sync_bundle, import_sync_bundle};
+    use crate::db::personnel_repo::upsert_personnel;
+
+    let db_pc = DatabaseManager::open_in_memory().expect("open pc db");
+    let mut db_mobile = DatabaseManager::open_in_memory().expect("open mobile db");
+    let payload = |last: &str, cat: &str| UpsertPersonnelPayload {
+        id: None,
+        legajo: None,
+        first_name: "Ana".to_string(),
+        last_name: last.to_string(),
+        nickname: None,
+        role: Some(PersonnelRole::Dancer),
+        gender_group: None,
+        category_id: Some("CAT_CUERPO_BAILE".to_string()),
+        category_name: Some(cat.to_string()),
+        default_pointe_raw_code: None,
+        default_flat_size: None,
+        is_active: Some(true),
+        is_retired: None,
+        retirement_notes: None,
+        specific_position: None,
+        notes: None,
+    };
+    let a = upsert_personnel(db_pc.connection(), payload("Figurante Uno", "Figurante")).expect("first");
+    let b = upsert_personnel(db_pc.connection(), payload("Figurante Dos", "  figurante ")).expect("second");
+    assert_eq!(a.category_name, "Figurante");
+    assert_eq!(a.category_id, b.category_id, "el mismo nombre reutiliza la categoría");
+    let c = upsert_personnel(db_pc.connection(), payload("Estable", "Solista")).expect("existing");
+    assert_eq!(c.category_id, "CAT_SOLISTA");
+
+    let bundle = export_sync_bundle(db_pc.connection(), "PC", "node_pc").expect("export");
+    import_sync_bundle(db_mobile.connection_mut(), &bundle).expect("import on mobile");
+    let name: String = db_mobile
+        .connection()
+        .query_row("SELECT c.name FROM personnel p JOIN personnel_categories c ON c.id = p.category_id WHERE p.id = ?1", [&a.id], |r| r.get(0))
+        .expect("category on mobile");
+    assert_eq!(name, "Figurante");
 }
 
 #[test]
