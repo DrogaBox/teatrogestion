@@ -3,7 +3,7 @@ const names = ['Altamirano, Ignacio','Beacon, Federico','Bravo, Silvia','Cornejo
 const codes = ['P','P','P','EI','P','SP','IJ','P','LC','P'];
 function matrix(year: number, month: number) {
   const dim = new Date(year, month, 0).getDate();
-  const dn = ['D','L','M','M','J','V','S'];
+  const dn = ['D','L','M','X','J','V','S'];
   const days_header = Array.from({ length: dim }, (_, i) => {
     const d = i + 1, wd = new Date(year, month - 1, d).getDay();
     return { day_number: d, date: `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`, day_name: dn[wd], is_weekend: wd === 0 || wd === 6, day_annotation: d === 11 ? 'ENSAYO SUSPENDIDO POR LLUVIA' : null };

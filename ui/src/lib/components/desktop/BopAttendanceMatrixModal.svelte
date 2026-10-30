@@ -51,7 +51,7 @@
     total_sp: number;
     total_other: number;
   };
-  const DAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+  const DAY_LETTERS = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
   function isoDate(d: Date): string {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }

@@ -924,7 +924,7 @@ pub fn get_monthly_bop_matrix(
         let day_name = match weekday {
             Weekday::Mon => "L",
             Weekday::Tue => "M",
-            Weekday::Wed => "M",
+            Weekday::Wed => "X",
             Weekday::Thu => "J",
             Weekday::Fri => "V",
             Weekday::Sat => "S",

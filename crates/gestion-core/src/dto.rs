@@ -461,7 +461,7 @@ pub struct BopMatrixRowDto {
 pub struct BopMatrixDayInfo {
     pub day_number: u32,
     pub date: String,
-    pub day_name: String, // "L", "M", "M", "J", "V", "S", "D"
+    pub day_name: String, // "L", "M", "X", "J", "V", "S", "D"
     pub is_weekend: bool,
     pub day_annotation: Option<String>, // e.g. "ENSAYO SUSPENDIDO"
 }
