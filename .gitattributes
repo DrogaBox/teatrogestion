@@ -1,0 +1,2 @@
+# Los scripts SQL se embeben en el binario: con saltos de línea LF en todas las plataformas
+*.sql text eol=lf

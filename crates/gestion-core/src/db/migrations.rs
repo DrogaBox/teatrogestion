@@ -175,6 +175,16 @@ pub fn compute_sha256_hex(input: &str) -> String {
     )
 }
 
+/// Huellas aceptables de un script de migración. Según dónde se compile, el `.sql` embebido llega con saltos de
+/// línea LF (Linux, macOS) o CRLF (el runner de Windows de CI convierte el checkout), y la huella cambia aunque el
+/// contenido sea el mismo: una base creada por un build fallaba con el otro («variante de la actualización interna»).
+/// La huella que se guarda al aplicar es la de LF; al verificar se aceptan LF, CRLF y el texto tal cual se embebió.
+fn checksum_candidates(sql: &str) -> [String; 3] {
+    let lf = sql.replace("\r\n", "\n");
+    let crlf = lf.replace('\n', "\r\n");
+    [compute_sha256_hex(&lf), compute_sha256_hex(&crlf), compute_sha256_hex(sql)]
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AppliedMigrationRecord {
     pub version: u32,
@@ -202,7 +212,8 @@ pub fn run_migrations(conn: &mut Connection) -> CoreResult<Vec<AppliedMigrationR
     }
 
     for migration in EMBEDDED_MIGRATIONS {
-        let expected_checksum = compute_sha256_hex(migration.sql);
+        let candidates = checksum_candidates(migration.sql);
+        let expected_checksum = candidates[0].clone();
 
         let existing: Option<(String, String)> = conn
             .query_row(
@@ -213,7 +224,7 @@ pub fn run_migrations(conn: &mut Connection) -> CoreResult<Vec<AppliedMigrationR
             .optional()?;
 
         if let Some((_recorded_name, recorded_checksum)) = existing {
-            if recorded_checksum != expected_checksum {
+            if !candidates.contains(&recorded_checksum) {
                 if fk_was_on {
                     let _ = conn.execute_batch("PRAGMA foreign_keys = ON;");
                 }
@@ -315,6 +326,32 @@ mod tests {
         assert_eq!(free, 8);
     }
 
+    #[test]
+    fn test_checksum_accepts_lf_and_crlf_variants() {
+        let sql = "CREATE TABLE t (a INTEGER);\nINSERT INTO t VALUES (1);\n";
+        let c = checksum_candidates(sql);
+        let crlf_text = sql.replace('\n', "\r\n");
+        // El mismo script con LF o con CRLF produce el mismo conjunto de huellas aceptadas.
+        assert_eq!(checksum_candidates(&crlf_text)[0], c[0]);
+        assert!(c.contains(&compute_sha256_hex(&crlf_text)));
+        assert!(c.contains(&compute_sha256_hex(sql)));
+        assert_ne!(compute_sha256_hex(sql), compute_sha256_hex(&crlf_text));
+    }
+    #[test]
+    fn test_database_created_with_crlf_checksums_still_opens() {
+        let mut db = DatabaseManager::open_in_memory().expect("Debe abrir DB en memoria");
+        // Simula una base creada por el build de CI: huellas de cada script con CRLF.
+        for m in EMBEDDED_MIGRATIONS {
+            let crlf = m.sql.replace("\r\n", "\n").replace('\n', "\r\n");
+            db.connection_mut()
+                .execute(
+                    "UPDATE _schema_migrations SET checksum_sha256 = ?1 WHERE version = ?2",
+                    params![compute_sha256_hex(&crlf), m.version],
+                )
+                .unwrap();
+        }
+        run_migrations(db.connection_mut()).expect("Las huellas con CRLF deben aceptarse");
+    }
     #[test]
     fn test_migration_checksum_tamper_detection() {
         let mut db = DatabaseManager::open_in_memory().expect("Debe abrir DB en memoria");
