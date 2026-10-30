@@ -47,7 +47,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Guardia — el checkout no debe depender de la migración privada 0014
         shell: bash
@@ -58,12 +58,12 @@ jobs:
           fi
 
       - name: Instalar pnpm (versión declarada en ui/package.json)
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           package_json_file: ui/package.json
 
       - name: Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: pnpm
@@ -115,7 +115,7 @@ jobs:
           test -f dist/Actualizar_TeatroGestion.exe
 
       - name: Subir artefactos de Windows
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: windows-assets
           path: dist/
@@ -123,12 +123,12 @@ jobs:
 
   linux:
     name: Linux (binario del actualizador + .deb + .AppImage)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       APPIMAGE_EXTRACT_AND_RUN: '1'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Guardia — el checkout no debe depender de la migración privada 0014
         run: |
@@ -138,12 +138,12 @@ jobs:
           fi
 
       - name: Instalar pnpm (versión declarada en ui/package.json)
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           package_json_file: ui/package.json
 
       - name: Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: pnpm
@@ -193,7 +193,7 @@ jobs:
           test -f "dist/TeatroGestion-linux-${VERSION}-x86_64"
 
       - name: Subir artefactos de Linux
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: linux-assets
           path: dist/
@@ -202,16 +202,16 @@ jobs:
   release:
     name: Publicar el release de GitHub
     needs: [windows, linux]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Bajar los assets compilados
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: dist
           merge-multiple: true
 
       - name: Crear el release con notas generadas y todos los assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
           name: TeatroGestión ${{ inputs.tag || github.ref_name }}
