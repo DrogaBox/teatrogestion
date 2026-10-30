@@ -516,7 +516,7 @@ fn test_delete_personnel_daily_records_and_voucher_guard() {
     delete_personnel(db.connection_mut(), "PER_DANCER_POPI").expect("delete voucher holder");
     let popi = list_personnel(db.connection(), None, false)
         .expect("list after guarded delete")
-        .iter()
+        .into_iter()
         .find(|p| p.id == "PER_DANCER_POPI")
         .expect("popi must survive as inactive");
     assert!(!popi.is_active);
@@ -525,7 +525,7 @@ fn test_delete_personnel_daily_records_and_voucher_guard() {
     delete_personnel(db.connection_mut(), "PER_DANCER_BRENDA").expect("delete with reservations");
     let brenda = list_personnel(db.connection(), None, false)
         .expect("list after reservation guard")
-        .iter()
+        .into_iter()
         .find(|p| p.id == "PER_DANCER_BRENDA")
         .expect("brenda must survive as inactive");
     assert!(!brenda.is_active);
@@ -763,6 +763,66 @@ fn test_export_and_import_sync_bundle_p2p_lan() {
     assert_eq!(mobile_catalog[0].id, pc_item.id);
     assert_eq!(mobile_catalog[0].physical_qty, 25);
     assert_eq!(mobile_catalog[0].storage_bin_location.as_deref(), Some("Gaveta Central 04"));
+}
+
+#[test]
+fn test_sync_merges_schedules_created_on_both_devices_for_the_same_date() {
+    use crate::db::sync_repo::{export_sync_bundle, import_sync_bundle};
+
+    let mut db_mobile = DatabaseManager::open_in_memory().expect("open mobile db");
+    let mut db_pc = DatabaseManager::open_in_memory().expect("open pc db");
+    let date = "2026-10-30";
+    let mark = |db: &mut DatabaseManager, person: &str, time: &str| {
+        record_attendance(
+            db.connection_mut(),
+            RecordAttendancePayload {
+                schedule_date: date.to_string(),
+                personnel_id: person.to_string(),
+                attendance_status: AttendanceStatus::Present,
+                actual_checkin_time: Some(time.to_string()),
+                minutes_late: None,
+                remarks: None,
+                certificate_file_name: None,
+                certificate_data: None,
+                medical_diagnosis: None,
+                doctor_details: None,
+                leave_start_date: None,
+                leave_end_date: None,
+                leave_type: None,
+                physio_notes: None,
+                update_permanent_physio_tracking: None,
+            },
+        )
+        .expect("record attendance");
+    };
+    // El celular abre el día en el planificador (id aleatorio) y la PC toma asistencia (id fijo por fecha).
+    crate::db::schedule_repo::get_or_create_daily_schedule(db_mobile.connection_mut(), date).expect("open day on mobile");
+    mark(&mut db_mobile, "PER_DANCER_POPI", "08:40");
+    mark(&mut db_pc, "PER_DANCER_ALVAREZ", "08:41");
+    let id_of = |db: &DatabaseManager| -> String {
+        db.connection()
+            .query_row("SELECT id FROM daily_schedules WHERE schedule_date = ?1", [date], |r| r.get(0))
+            .expect("schedule id")
+    };
+    assert_ne!(id_of(&db_mobile), id_of(&db_pc));
+
+    let bundle_mobile = export_sync_bundle(db_mobile.connection(), "A53", "node_a53").expect("export mobile");
+    import_sync_bundle(db_pc.connection_mut(), &bundle_mobile).expect("import on pc");
+    let bundle_pc = export_sync_bundle(db_pc.connection(), "PC", "node_pc").expect("export pc");
+    import_sync_bundle(db_mobile.connection_mut(), &bundle_pc).expect("import on mobile");
+
+    for db in [&db_pc, &db_mobile] {
+        let list = list_attendance_for_date(db.connection(), date).expect("list attendance");
+        for person in ["PER_DANCER_POPI", "PER_DANCER_ALVAREZ"] {
+            let row = list.iter().find(|i| i.personnel_id == person).expect("person present");
+            assert_eq!(row.attendance_status, AttendanceStatus::Present, "{person}");
+        }
+        let n: i64 = db
+            .connection()
+            .query_row("SELECT COUNT(*) FROM daily_schedules WHERE schedule_date = ?1", [date], |r| r.get(0))
+            .unwrap();
+        assert_eq!(n, 1);
+    }
 }
 
 #[test]

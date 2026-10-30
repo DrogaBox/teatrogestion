@@ -1,7 +1,8 @@
 use crate::dto::{SyncBundle, SyncReportDto};
 use crate::error::CoreResult;
 use chrono::Utc;
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, OptionalExtension};
+use std::collections::HashMap;
 use serde_json::Value;
 
 pub fn export_sync_bundle(
@@ -351,6 +352,9 @@ pub fn import_sync_bundle(
     let mut total_applied = 0;
 
     let tx = conn.transaction()?;
+    // Parte remoto -> parte local de la misma fecha: cada equipo crea su propio parte del día al tomar asistencia,
+    // así que la misma fecha puede llegar con otro `id` y `schedule_date` es UNIQUE.
+    let mut schedule_ids: HashMap<String, String> = HashMap::new();
 
     // 1. Personnel
     for item in &bundle.personnel {
@@ -513,6 +517,7 @@ pub fn import_sync_bundle(
         let notes = item["general_notes"].as_str();
         let created_at = item["created_at"].as_str().unwrap_or("");
         let updated_at = item["updated_at"].as_str().unwrap_or("");
+        let id = local_schedule_id(&tx, &mut schedule_ids, id, sched_date)?;
 
         let changes = tx.execute(
             "INSERT INTO daily_schedules (
@@ -697,6 +702,7 @@ pub fn import_sync_bundle(
         let physio_notes = item["physio_notes"].as_str();
         let recorded_at = item["recorded_at"].as_str().unwrap_or("");
 
+        let schedule_id = local_schedule_id(&tx, &mut schedule_ids, schedule_id, schedule_date)?;
         // Ensure parent schedule exists if not already present
         if !schedule_id.is_empty() && !schedule_date.is_empty() {
             let _ = tx.execute(
@@ -788,6 +794,7 @@ pub fn import_sync_bundle(
         total_received += 1;
         let id = item["id"].as_str().unwrap_or_default();
         let sched_id = item["schedule_id"].as_str().unwrap_or_default();
+        let sched_id = schedule_ids.get(sched_id).map_or(sched_id, String::as_str);
         let room_id = item["room_id"].as_str().unwrap_or("SALA_1");
         let start_time = item["start_time"].as_str().unwrap_or("10:30");
         let end_time = item["end_time"].as_str().unwrap_or("12:00");
@@ -858,7 +865,7 @@ pub fn import_sync_bundle(
                 sound_tech_id = excluded.sound_tech_id",
             params![
                 item["id"].as_str().unwrap_or_default(),
-                item["schedule_id"].as_str().unwrap_or_default(),
+                item["schedule_id"].as_str().map(|s| schedule_ids.get(s).map_or(s, String::as_str)).unwrap_or_default(),
                 item["room_id"].as_str().unwrap_or("SALA_1"),
                 item["gender_division"].as_str().unwrap_or("FEMALE"),
                 item["start_time"].as_str().unwrap_or("09:00"),
@@ -891,4 +898,26 @@ pub fn import_sync_bundle(
             bundle.source_device_name, total_received, total_applied
         ),
     })
+}
+
+/// `id` del parte local con la fecha `date` si ya existe con otro `id`; si no, el mismo `id` recibido.
+/// Queda anotado en `map` para traducir después los `schedule_id` de asistencia, ensayos y clases.
+fn local_schedule_id(
+    tx: &rusqlite::Transaction<'_>,
+    map: &mut HashMap<String, String>,
+    id: &str,
+    date: &str,
+) -> CoreResult<String> {
+    if let Some(local) = map.get(id) {
+        return Ok(local.clone());
+    }
+    if id.is_empty() || date.is_empty() {
+        return Ok(id.to_string());
+    }
+    let local: Option<String> = tx
+        .query_row("SELECT id FROM daily_schedules WHERE schedule_date = ?1", params![date], |r| r.get(0))
+        .optional()?;
+    let local = local.unwrap_or_else(|| id.to_string());
+    map.insert(id.to_string(), local.clone());
+    Ok(local)
 }
