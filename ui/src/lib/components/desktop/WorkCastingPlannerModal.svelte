@@ -646,6 +646,14 @@
   </div>
 {/if}
 
+<PrintPreviewModal
+  open={printPreviewOpen}
+  title="Vista previa de impresión"
+  subtitle="Cartelera de obra — ediciones solo para la copia impresa"
+  source={printableEl}
+  onclose={() => (printPreviewOpen = false)}
+/>
+
 <!-- MODAL ALTA / EDICIÓN DE OBRA -->
 {#if showWorkModal}
   <div
@@ -700,14 +708,6 @@
           </button>
         </div>
       </div>
-
-      <PrintPreviewModal
-        open={printPreviewOpen}
-        title="Vista previa de impresión"
-        subtitle="Cartelera de obra — ediciones solo para la copia impresa"
-        source={printableEl}
-        onclose={() => (printPreviewOpen = false)}
-      />
     </div>
   </div>
 {/if}
