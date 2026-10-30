@@ -520,3 +520,26 @@ table {
   }
   .tg-bar-scroll > * { flex-shrink: 0; white-space: nowrap; }
 }
+
+/* =============================================================================
+   MANUAL (HelpCenterModal): texto de lectura con cuerpo y entrelineado de
+   documento, por encima de los tamaños compactos de la interfaz.
+============================================================================= */
+.tg-manual { max-width: 78ch; }
+.tg-manual p,
+.tg-manual li,
+.tg-manual .text-xs,
+.tg-manual .text-\[11px\] {
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+}
+.tg-manual p + p { margin-top: 0.6em; }
+.tg-manual h3 { font-size: 20px !important; line-height: 1.3 !important; margin-bottom: 4px; }
+.tg-manual h4 { font-size: 13px !important; line-height: 1.5 !important; margin-top: 4px; }
+.tg-manual ul, .tg-manual ol { margin-top: 4px; }
+.tg-manual li + li { margin-top: 6px; }
+.tg-manual .rounded-lg { padding: 16px 18px; }
+.tg-manual .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 20px; }
+.tg-manual .space-y-3 > :not([hidden]) ~ :not([hidden]) { margin-top: 16px; }
+.tg-manual .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 10px; }
+.tg-manual .font-mono { font-size: 13px !important; }

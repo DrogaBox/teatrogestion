@@ -102,9 +102,9 @@
           {#each topics as t}
             <button
               onclick={() => activeTopic = t.id as any}
-              class="w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-between {activeTopic === t.id ? 'bg-amber text-void font-bold shadow-sm' : 'text-dim hover:bg-raised hover:text-white'}"
+              class="w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex flex-col items-start gap-1 {activeTopic === t.id ? 'bg-amber text-void font-bold shadow-sm' : 'text-dim hover:bg-raised hover:text-white'}"
             >
-              <span class="truncate">{t.label}</span>
+              <span class="leading-snug">{t.label}</span>
               <span class="text-[9px] px-1.5 py-0.5 rounded font-mono font-normal {activeTopic === t.id ? 'bg-void/20 text-void' : 'bg-raised text-dim'}">
                 {t.badge}
               </span>
@@ -125,7 +125,7 @@
         </div>
 
         <!-- Panel de Lectura / Detalle -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-void text-sm leading-relaxed">
+        <div class="tg-manual flex-1 overflow-y-auto p-6 md:px-8 space-y-6 bg-void text-sm leading-relaxed">
 
           <!-- CAPÍTULO 1 -->
           {#if activeTopic === 'intro' && matchesSearch('inicio instalador grafico consola licencia offline windows 11')}
