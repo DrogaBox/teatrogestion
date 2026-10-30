@@ -545,7 +545,7 @@
 
             <!-- Rol -->
             <td class="p-3">
-              <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-raised text-dim border border-grid">
+              <span class="inline-block max-w-[11rem] px-2 py-0.5 rounded text-[10px] font-medium leading-snug bg-raised text-dim border border-grid">
                 {dancer.category_name}
               </span>
             </td>
