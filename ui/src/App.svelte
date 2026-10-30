@@ -47,6 +47,13 @@
 
   // Estado reactivo principal
   const isAndroidDevice = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+  // Pantalla completa del teléfono (puente nativo de Android): esconde la barra de arriba.
+  const screenBridge = typeof window !== 'undefined' ? (window as any).TGScreen : undefined;
+  let fullscreenOn = $state<boolean>(screenBridge?.isFullscreen?.() ?? false);
+  function toggleFullscreen() {
+    fullscreenOn = !fullscreenOn;
+    screenBridge?.setFullscreen?.(fullscreenOn);
+  }
   let viewMode = $state<'desktop' | 'mobile'>('desktop');
   let mobileTab = $state<'home' | 'stock' | 'inventory' | 'attendance' | 'gaynor' | 'schedule'>('home');
   let desktopTab = $state<'home' | 'schedule' | 'attendance'>('home');
@@ -254,6 +261,7 @@
             items={[
               { label: 'Sincronizar por Wi-Fi', hint: 'PC ↔ celular en la misma red', onSelect: () => (showLanSyncModal = true) },
               ...(viewMode === 'mobile' ? [{ label: 'Escáner de códigos', hint: 'Leer códigos de barras con la cámara', onSelect: () => (showBarcodeScannerModal = true) }] : []),
+              ...(screenBridge?.setFullscreen ? [{ label: fullscreenOn ? 'Mostrar barra del teléfono' : 'Pantalla completa', hint: fullscreenOn ? 'Deja fija la barra de arriba (hora, batería)' : 'Esconde la barra de arriba; deslice desde el borde para verla', onSelect: toggleFullscreen }] : []),
               { label: 'Licencia', hint: 'Estado y vencimiento', onSelect: () => (showLicenseModal = true) },
               { label: 'Asistente de configuración', hint: 'Parámetros de jornada y salas', onSelect: () => (showSetupWizardModal = true) },
               { label: 'Actualizaciones', hint: 'Buscar e instalar versiones nuevas', separatorBefore: true, onSelect: () => { foundUpdate = null; showUpdateModal = true; } },
