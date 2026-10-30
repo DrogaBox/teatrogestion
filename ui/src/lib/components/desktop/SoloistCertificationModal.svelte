@@ -304,80 +304,83 @@
       <!-- ================================================================= -->
       <!-- BARRA DE HERRAMIENTAS SUPERIOR (NO IMPRIMIBLE)                    -->
       <!-- ================================================================= -->
-      <div class="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-grid print:hidden gap-3">
-        <div>
-          <div class="flex items-center gap-2">
-            <h2 class="text-xs font-semibold text-amber uppercase tracking-wider font-mono">
-              [SOLÍSTICOS & PLUS POR PRESTACIÓN DE ROL]
-            </h2>
-            <span class="text-[10px] text-dim font-mono border border-grid px-1.5 py-0.5 rounded">
-              Ballet Oficial de Córdoba
-            </span>
+      <div class="flex pb-3 mb-3 border-b border-grid print:hidden gap-3 items-start">
+        <!-- cierre fijo en la esquina: el resto de la barra puede partirse en filas -->
+        <div class="flex flex-1 min-w-0 flex-wrap items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-xs font-semibold text-amber uppercase tracking-wider font-mono">
+                [SOLÍSTICOS & PLUS POR PRESTACIÓN DE ROL]
+              </h2>
+              <span class="text-[10px] text-dim font-mono border border-grid px-1.5 py-0.5 rounded">
+                Ballet Oficial de Córdoba
+              </span>
+            </div>
+            <p class="text-[11px] text-dim mt-0.5">
+              Certificación formal para liquidación de solísticos y roles principales (Agencia Córdoba Cultura)
+            </p>
           </div>
-          <p class="text-[11px] text-dim mt-0.5">
-            Certificación formal para liquidación de solísticos y roles principales (Agencia Córdoba Cultura)
-          </p>
-        </div>
 
-        <!-- Conmutador de Pestañas -->
-        <div class="inline-flex bg-void p-1 rounded border border-grid">
-          <button
-            onclick={() => activeTab = 'document'}
-            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'document' ? 'bg-amber text-black font-semibold' : 'text-dim hover:text-ink'}"
-          >
-            Nota Oficial A4
-          </button>
-          <button
-            onclick={() => activeTab = 'editor'}
-            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'editor' ? 'bg-amber text-black font-semibold' : 'text-dim hover:text-ink'}"
-          >
-            Editar Datos / Items
-          </button>
-        </div>
-
-        <!-- Acciones Principales -->
-        <div class="flex items-center gap-2">
-          {#if activeTab === 'document'}
-            <button
-              onclick={() => activeTab = 'editor'}
-              class="px-3 py-1.5 bg-raised hover:bg-grid text-amber border border-amber/40 rounded text-xs font-semibold font-mono transition-colors flex items-center gap-1.5"
-              title="Editar los datos, obra o bailarines de esta nota"
-            >
-              ✎ Editar Datos
-            </button>
-            <button
-              onclick={() => (printPreviewOpen = true)}
-              class="px-3 py-1.5 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold font-mono transition-colors flex items-center gap-1.5"
-            >
-              Imprimir / Guardar PDF
-            </button>
-          {:else}
+          <!-- Conmutador de Pestañas -->
+          <div class="inline-flex bg-void p-1 rounded border border-grid">
             <button
               onclick={() => activeTab = 'document'}
-              class="px-3 py-1.5 bg-raised hover:bg-grid text-ink border border-grid rounded text-xs font-semibold font-mono transition-colors"
+              class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'document' ? 'bg-amber text-black font-semibold' : 'text-dim hover:text-ink'}"
             >
-              Ver Nota A4
+              Nota Oficial A4
             </button>
             <button
-              onclick={handleSave}
-              disabled={isSaving}
-              class="px-3 py-1.5 bg-amber hover:bg-amber text-black rounded text-xs font-semibold font-mono transition-colors disabled:opacity-50"
+              onclick={() => activeTab = 'editor'}
+              class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'editor' ? 'bg-amber text-black font-semibold' : 'text-dim hover:text-ink'}"
             >
-              {isSaving ? 'Guardando...' : 'Guardar Certificación'}
+              Editar Datos / Items
             </button>
-          {/if}
+          </div>
 
-          <button
-            onclick={onClose}
-            class="tg-modal-close"
-            aria-label="Cerrar"
-            title="Cerrar"
-          >
-            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-              <path d="M2 2l10 10M12 2L2 12" />
-            </svg>
-          </button>
+          <!-- Acciones Principales -->
+          <div class="flex items-center gap-2">
+            {#if activeTab === 'document'}
+              <button
+                onclick={() => activeTab = 'editor'}
+                class="px-3 py-1.5 bg-raised hover:bg-grid text-amber border border-amber/40 rounded text-xs font-semibold font-mono transition-colors flex items-center gap-1.5"
+                title="Editar los datos, obra o bailarines de esta nota"
+              >
+                ✎ Editar Datos
+              </button>
+              <button
+                onclick={() => (printPreviewOpen = true)}
+                class="px-3 py-1.5 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold font-mono transition-colors flex items-center gap-1.5"
+              >
+                Imprimir / Guardar PDF
+              </button>
+            {:else}
+              <button
+                onclick={() => activeTab = 'document'}
+                class="px-3 py-1.5 bg-raised hover:bg-grid text-ink border border-grid rounded text-xs font-semibold font-mono transition-colors"
+              >
+                Ver Nota A4
+              </button>
+              <button
+                onclick={handleSave}
+                disabled={isSaving}
+                class="px-3 py-1.5 bg-amber hover:bg-amber text-black rounded text-xs font-semibold font-mono transition-colors disabled:opacity-50"
+              >
+                {isSaving ? 'Guardando...' : 'Guardar Certificación'}
+              </button>
+            {/if}
+
+          </div>
         </div>
+        <button
+          onclick={onClose}
+          class="tg-modal-close"
+          aria-label="Cerrar"
+          title="Cerrar"
+        >
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+            <path d="M2 2l10 10M12 2L2 12" />
+          </svg>
+        </button>
       </div>
 
       <!-- Selector de Expediente / Certificación Guardada (No imprimible) -->

@@ -117,7 +117,8 @@ table {
 
 /* =============================================================================
    VENTANAS Y DIÁLOGOS — UN SOLO PATRÓN PARA TODA LA APP
-   Cabecera: título a la izquierda + botón de cierre de 28×28 arriba a la derecha.
+   Cabecera: título a la izquierda + botón de cierre de 28×28 siempre arriba a la derecha
+   (align-self: flex-start: si la cabecera crece a varias filas, la cruz no baja).
    Pie: acciones alineadas a la derecha con la acción primaria al final.
    El Escape, el clic en el fondo y la devolución del foco los maneja la acción
    `modalBehavior` (ui/src/lib/actions/modalBehavior.ts).
@@ -167,6 +168,7 @@ table {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  align-self: flex-start;
   width: 28px;
   height: 28px;
   margin-left: auto;

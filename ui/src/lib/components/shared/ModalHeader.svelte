@@ -21,13 +21,16 @@
 </script>
 
 <div class="tg-modal-head {klass}">
-  <div class="min-w-0 flex-1">
-    <h2 class="tg-modal-title">{title}</h2>
-    {#if subtitle}
-      <p class="tg-modal-sub">{subtitle}</p>
-    {/if}
+  <!-- La cruz queda fuera de este bloque: aunque los controles pasen a otra fila, sigue en la esquina -->
+  <div class="flex flex-1 min-w-0 min-h-7 flex-wrap items-center gap-x-3 gap-y-2">
+    <div class="min-w-[14rem] flex-1">
+      <h2 class="tg-modal-title">{title}</h2>
+      {#if subtitle}
+        <p class="tg-modal-sub">{subtitle}</p>
+      {/if}
+    </div>
+    {@render children?.()}
   </div>
-  {@render children?.()}
   <button type="button" class="tg-modal-close" aria-label="Cerrar" title="Cerrar" onclick={onclose}>
     <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
       <path d="M2 2l10 10M12 2L2 12" />

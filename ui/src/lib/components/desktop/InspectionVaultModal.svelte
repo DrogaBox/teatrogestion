@@ -323,67 +323,70 @@
       <!-- ===================================================================== -->
       <!-- CABECERA DE LA BÓVEDA DOCUMENTAL                                      -->
       <!-- ===================================================================== -->
-      <div class="bg-void border-b border-grid px-4 py-3 flex items-center justify-between shrink-0">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded bg-amber/15 border border-amber/30 flex items-center justify-center text-amber">
-            <!-- Icono Caja Fuerte / Blindaje -->
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-            </svg>
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h2 class="text-sm font-black tracking-wide uppercase font-sans text-white">
-                Bóveda de Documentación de Inspección
-              </h2>
-              <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber/15 text-amber border border-amber/30">
-                CARINA LION
-              </span>
-              {#if isUnlocked}
-                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-green/15 text-green border border-green/30">
-                  DESBLOQUEADA ({securityStatus.lock_timeout_minutes > 0 ? `${securityStatus.lock_timeout_minutes}m inactividad` : 'Sin límite'})
-                </span>
-              {:else}
-                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-red/15 text-red border border-red/30">
-                  BLOQUEADA
-                </span>
-              {/if}
+      <div class="bg-void border-b border-grid px-4 py-3 flex shrink-0 items-start gap-3">
+        <!-- cierre fijo en la esquina: el resto de la barra puede partirse en filas -->
+        <div class="flex flex-1 min-w-0 flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded bg-amber/15 border border-amber/30 flex items-center justify-center text-amber">
+              <!-- Icono Caja Fuerte / Blindaje -->
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
             </div>
-            <p class="text-[11px] text-dim mt-0.5">
-              Certificados médicos, facturas de caja chica (colofonia, botiquín), memos de dirección y acuerdos.
-            </p>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-black tracking-wide uppercase font-sans text-white">
+                  Bóveda de Documentación de Inspección
+                </h2>
+                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber/15 text-amber border border-amber/30">
+                  CARINA LION
+                </span>
+                {#if isUnlocked}
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-green/15 text-green border border-green/30">
+                    DESBLOQUEADA ({securityStatus.lock_timeout_minutes > 0 ? `${securityStatus.lock_timeout_minutes}m inactividad` : 'Sin límite'})
+                  </span>
+                {:else}
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-red/15 text-red border border-red/30">
+                    BLOQUEADA
+                  </span>
+                {/if}
+              </div>
+              <p class="text-[11px] text-dim mt-0.5">
+                Certificados médicos, facturas de caja chica (colofonia, botiquín), memos de dirección y acuerdos.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            {#if isUnlocked}
+              <button
+                onclick={() => showSecurityConfigModal = true}
+                class="h-8 px-2.5 bg-raised hover:bg-grid text-ink hover:text-amber border border-grid rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                title="Cambiar contraseña de inspectora o tiempo de bloqueo automático"
+              >
+                <span>Seguridad</span>
+              </button>
+              <button
+                onclick={lockVault}
+                class="h-8 px-2.5 bg-void hover:bg-void text-red border border-red/30 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                title="Bloquear la bóveda inmediatamente"
+              >
+                <span>Bloquear</span>
+              </button>
+            {/if}
+
           </div>
         </div>
-
-        <div class="flex items-center gap-2">
-          {#if isUnlocked}
-            <button
-              onclick={() => showSecurityConfigModal = true}
-              class="h-8 px-2.5 bg-raised hover:bg-grid text-ink hover:text-amber border border-grid rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
-              title="Cambiar contraseña de inspectora o tiempo de bloqueo automático"
-            >
-              <span>Seguridad</span>
-            </button>
-            <button
-              onclick={lockVault}
-              class="h-8 px-2.5 bg-void hover:bg-void text-red border border-red/30 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
-              title="Bloquear la bóveda inmediatamente"
-            >
-              <span>Bloquear</span>
-            </button>
-          {/if}
-
-          <button
-            onclick={onClose}
-            class="tg-modal-close"
-            aria-label="Cerrar"
-            title="Cerrar"
-          >
-            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-              <path d="M2 2l10 10M12 2L2 12" />
-            </svg>
-          </button>
-        </div>
+        <button
+          onclick={onClose}
+          class="tg-modal-close"
+          aria-label="Cerrar"
+          title="Cerrar"
+        >
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+            <path d="M2 2l10 10M12 2L2 12" />
+          </svg>
+        </button>
       </div>
 
       <!-- ===================================================================== -->
@@ -820,42 +823,45 @@
 <!-- ========================================================================= -->
 {#if viewingDocument}
   <div class="fixed inset-0 z-50 bg-black/95 flex flex-col p-4" use:modalBehavior={{ onclose: () => viewingDocument = null }}>
-    <div class="flex items-center justify-between pb-3 border-b border-grid shrink-0">
-      <div class="flex items-center gap-3">
-        <span class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-amber/15 text-amber border border-amber/30">
-          {viewingDocument.category}
-        </span>
-        <h3 class="text-sm font-bold text-white truncate max-w-xl">
-          {viewingDocument.title}
-        </h3>
-        <span class="text-xs font-mono text-dim">({viewingDocument.document_date})</span>
-      </div>
+    <div class="flex pb-3 border-b border-grid shrink-0 items-start gap-3">
+      <!-- cierre fijo en la esquina: el resto de la barra puede partirse en filas -->
+      <div class="flex flex-1 min-w-0 flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-amber/15 text-amber border border-amber/30">
+            {viewingDocument.category}
+          </span>
+          <h3 class="text-sm font-bold text-white truncate max-w-xl">
+            {viewingDocument.title}
+          </h3>
+          <span class="text-xs font-mono text-dim">({viewingDocument.document_date})</span>
+        </div>
 
-      <div class="flex items-center gap-2">
-        <a
-          href={viewingDocument.file_data}
-          download={viewingDocument.file_name}
-          class="h-8 px-3 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold flex items-center gap-1 transition-colors"
-        >
-          Descargar
-        </a>
-        <button
-          onclick={() => window.print()}
-          class="h-8 px-3 bg-raised hover:bg-grid text-ink border border-grid rounded text-xs font-semibold transition-colors"
-        >
-          Imprimir
-        </button>
-        <button
-          onclick={() => viewingDocument = null}
-          class="tg-modal-close"
-          aria-label="Cerrar"
-          title="Cerrar"
-        >
-          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-            <path d="M2 2l10 10M12 2L2 12" />
-          </svg>
-        </button>
+        <div class="flex items-center gap-2">
+          <a
+            href={viewingDocument.file_data}
+            download={viewingDocument.file_name}
+            class="h-8 px-3 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold flex items-center gap-1 transition-colors"
+          >
+            Descargar
+          </a>
+          <button
+            onclick={() => window.print()}
+            class="h-8 px-3 bg-raised hover:bg-grid text-ink border border-grid rounded text-xs font-semibold transition-colors"
+          >
+            Imprimir
+          </button>
+        </div>
       </div>
+      <button
+        onclick={() => viewingDocument = null}
+        class="tg-modal-close"
+        aria-label="Cerrar"
+        title="Cerrar"
+      >
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+          <path d="M2 2l10 10M12 2L2 12" />
+        </svg>
+      </button>
     </div>
 
     <div class="flex-1 overflow-auto flex items-center justify-center p-4">

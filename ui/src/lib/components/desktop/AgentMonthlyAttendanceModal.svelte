@@ -173,68 +173,71 @@
     <div class="tg-modal max-w-6xl relative print:bg-white print:border-none print:shadow-none print:p-0 print:max-h-none print:overflow-visible p-4 md:p-6">
       
       <!-- Barra Superior (No imprimible) -->
-      <div class="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-grid print:hidden gap-3">
-        <div>
-          <h2 class="text-sm font-semibold text-ink uppercase tracking-wide">
-            Planilla Mensual de Asistencia & Novedades para RRHH
-          </h2>
-          <p class="text-xs text-dim mt-0.5">
-            Cómputo individual de asistencia, tardanzas (TC), carpetas médicas y presentismo mensual
-          </p>
-        </div>
+      <div class="flex pb-3 mb-3 border-b border-grid print:hidden gap-3 items-start">
+        <!-- cierre fijo en la esquina: el resto de la barra puede partirse en filas -->
+        <div class="flex flex-1 min-w-0 flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-sm font-semibold text-ink uppercase tracking-wide">
+              Planilla Mensual de Asistencia & Novedades para RRHH
+            </h2>
+            <p class="text-xs text-dim mt-0.5">
+              Cómputo individual de asistencia, tardanzas (TC), carpetas médicas y presentismo mensual
+            </p>
+          </div>
 
-        <!-- Conmutador Individual vs Resumen General -->
-        <div class="inline-flex bg-void p-1 rounded border border-grid">
-          <button
-            onclick={() => handleTabChange('individual')}
-            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'individual' ? 'bg-amber text-black font-semibold' : 'text-dim hover:text-ink'}"
-          >
-            Planilla por Agente
-          </button>
-          <button
-            onclick={() => handleTabChange('summary')}
-            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'summary' ? 'bg-amber text-black font-semibold' : 'text-dim hover:text-ink'}"
-          >
-            Resumen General Compañía (RRHH)
-          </button>
-        </div>
-
-        <!-- Botones de Acción -->
-        <div class="flex items-center gap-2">
-          {#if activeTab === 'individual'}
+          <!-- Conmutador Individual vs Resumen General -->
+          <div class="inline-flex bg-void p-1 rounded border border-grid">
             <button
-              onclick={exportIndividualCsv}
-              class="px-3 py-1.5 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold transition-colors"
+              onclick={() => handleTabChange('individual')}
+              class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'individual' ? 'bg-amber text-black font-semibold' : 'text-dim hover:text-ink'}"
             >
-              Exportar Excel (.csv)
+              Planilla por Agente
             </button>
-          {:else}
             <button
-              onclick={exportSummaryCsv}
-              class="px-3 py-1.5 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold transition-colors"
+              onclick={() => handleTabChange('summary')}
+              class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'summary' ? 'bg-amber text-black font-semibold' : 'text-dim hover:text-ink'}"
             >
-              Exportar Resumen RRHH
+              Resumen General Compañía (RRHH)
             </button>
-          {/if}
+          </div>
 
-          <button
-            onclick={() => (printPreviewOpen = true)}
-            class="px-3 py-1.5 bg-raised hover:bg-grid text-ink border border-grid rounded text-xs font-semibold transition-colors"
-          >
-            Imprimir / PDF Oficial
-          </button>
+          <!-- Botones de Acción -->
+          <div class="flex items-center gap-2">
+            {#if activeTab === 'individual'}
+              <button
+                onclick={exportIndividualCsv}
+                class="px-3 py-1.5 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold transition-colors"
+              >
+                Exportar Excel (.csv)
+              </button>
+            {:else}
+              <button
+                onclick={exportSummaryCsv}
+                class="px-3 py-1.5 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold transition-colors"
+              >
+                Exportar Resumen RRHH
+              </button>
+            {/if}
 
-          <button
-            onclick={onClose}
-            class="tg-modal-close"
-            aria-label="Cerrar"
-            title="Cerrar"
-          >
-            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-              <path d="M2 2l10 10M12 2L2 12" />
-            </svg>
-          </button>
+            <button
+              onclick={() => (printPreviewOpen = true)}
+              class="px-3 py-1.5 bg-raised hover:bg-grid text-ink border border-grid rounded text-xs font-semibold transition-colors"
+            >
+              Imprimir / PDF Oficial
+            </button>
+
+          </div>
         </div>
+        <button
+          onclick={onClose}
+          class="tg-modal-close"
+          aria-label="Cerrar"
+          title="Cerrar"
+        >
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+            <path d="M2 2l10 10M12 2L2 12" />
+          </svg>
+        </button>
       </div>
 
       <!-- Barra de Filtros: Selección de Agente, Mes y Año (No imprimible) -->

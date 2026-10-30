@@ -193,58 +193,61 @@
     <div class="tg-modal max-w-6xl relative print:bg-white print:border-none print:shadow-none print:p-0 print:max-h-none print:overflow-visible">
       
       <!-- Barra Superior (Oculta en Impresión) -->
-      <div class="bg-raised border-b border-grid px-4 py-2.5 shrink-0 flex items-center justify-between print:hidden">
-        <div class="flex items-center gap-2.5">
-          <span class="text-[10px] font-mono font-bold text-amber bg-void px-2 py-0.5 rounded border border-grid">INVENTARIO</span>
-          <div>
-            <h2 class="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2">
-              Inventario Oficial & Control de Depósito
-              <span class="text-[10px] font-mono text-dim">
-                ({stockItems.length} ítems)
-              </span>
-            </h2>
-            <p class="text-[11px] text-dim">
-              Ballet Oficial de Córdoba • Teatro del Libertador San Martín
-            </p>
+      <div class="bg-raised border-b border-grid px-4 py-2.5 shrink-0 flex print:hidden items-start gap-3">
+        <!-- cierre fijo en la esquina: el resto de la barra puede partirse en filas -->
+        <div class="flex flex-1 min-w-0 flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span class="text-[10px] font-mono font-bold text-amber bg-void px-2 py-0.5 rounded border border-grid">INVENTARIO</span>
+            <div>
+              <h2 class="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2">
+                Inventario Oficial & Control de Depósito
+                <span class="text-[10px] font-mono text-dim">
+                  ({stockItems.length} ítems)
+                </span>
+              </h2>
+              <p class="text-[11px] text-dim">
+                Ballet Oficial de Córdoba • Teatro del Libertador San Martín
+              </p>
+            </div>
+          </div>
+
+          <!-- Botonera de Exportación y Alta -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <button
+              onclick={openNewItem}
+              class="px-2.5 py-1 bg-amber hover:bg-amber text-void rounded text-xs font-bold transition-colors"
+            >
+              + Nuevo Ítem
+            </button>
+
+            <button
+              onclick={exportExcel}
+              class="px-2.5 py-1 bg-raised hover:bg-raised-hover text-green border border-green/40 rounded text-xs font-bold transition-colors"
+              title="Exportar a Microsoft Excel con acentos legibles (BOM UTF-8)"
+            >
+              Exportar Excel
+            </button>
+
+            <button
+              onclick={() => (printPreviewOpen = true)}
+              class="px-2.5 py-1 bg-raised hover:bg-raised-hover text-ink border border-grid rounded text-xs font-bold transition-colors"
+              title="Imprimir o Guardar en PDF con formato oficial"
+            >
+              Exportar PDF / Imprimir
+            </button>
+
           </div>
         </div>
-
-        <!-- Botonera de Exportación y Alta -->
-        <div class="flex items-center gap-2 flex-wrap">
-          <button
-            onclick={openNewItem}
-            class="px-2.5 py-1 bg-amber hover:bg-amber text-void rounded text-xs font-bold transition-colors"
-          >
-            + Nuevo Ítem
-          </button>
-
-          <button
-            onclick={exportExcel}
-            class="px-2.5 py-1 bg-raised hover:bg-raised-hover text-green border border-green/40 rounded text-xs font-bold transition-colors"
-            title="Exportar a Microsoft Excel con acentos legibles (BOM UTF-8)"
-          >
-            Exportar Excel
-          </button>
-
-          <button
-            onclick={() => (printPreviewOpen = true)}
-            class="px-2.5 py-1 bg-raised hover:bg-raised-hover text-ink border border-grid rounded text-xs font-bold transition-colors"
-            title="Imprimir o Guardar en PDF con formato oficial"
-          >
-            Exportar PDF / Imprimir
-          </button>
-
-          <button
-            onclick={onClose}
-            class="tg-modal-close"
-            aria-label="Cerrar"
-            title="Cerrar"
-          >
-            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-              <path d="M2 2l10 10M12 2L2 12" />
-            </svg>
-          </button>
-        </div>
+        <button
+          onclick={onClose}
+          class="tg-modal-close"
+          aria-label="Cerrar"
+          title="Cerrar"
+        >
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+            <path d="M2 2l10 10M12 2L2 12" />
+          </svg>
+        </button>
       </div>
 
       <!-- Filtros Rápidos (Ocultos en Impresión) -->

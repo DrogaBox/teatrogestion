@@ -39,34 +39,34 @@
     <div class="tg-modal max-w-5xl relative">
 
       <!-- Encabezado Modal -->
-      <div class="flex items-center justify-between px-6 py-4 bg-panel border-b border-raised">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded bg-amber/10 border border-amber/30 flex items-center justify-center text-amber font-mono font-bold text-sm">
-            ?
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h2 class="text-base font-bold text-white tracking-wide">CENTRO DE AYUDA Y MANUAL OFICIAL</h2>
-              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-raised text-green border border-raised">
-                v{CHANGELOG[0].version} Producción 2026
-              </span>
+      <div class="flex px-6 py-4 bg-panel border-b border-raised items-start gap-3">
+        <!-- cierre fijo en la esquina: el resto de la barra puede partirse en filas -->
+        <div class="flex flex-1 min-w-0 flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded bg-amber/10 border border-amber/30 flex items-center justify-center text-amber font-mono font-bold text-sm">
+              ?
             </div>
-            <p class="text-xs text-dim">Ballet Oficial de Córdoba — Teatro del Libertador San Martín</p>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-base font-bold text-white tracking-wide">CENTRO DE AYUDA Y MANUAL OFICIAL</h2>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-raised text-green border border-raised">
+                  v{CHANGELOG[0].version} Producción 2026
+                </span>
+              </div>
+              <p class="text-xs text-dim">Ballet Oficial de Córdoba — Teatro del Libertador San Martín</p>
+            </div>
           </div>
         </div>
-
-        <div class="flex items-center gap-3">
-          <button
-            onclick={onClose}
-            class="tg-modal-close"
-            aria-label="Cerrar"
-            title="Cerrar"
-          >
-            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-              <path d="M2 2l10 10M12 2L2 12" />
-            </svg>
-          </button>
-        </div>
+        <button
+          onclick={onClose}
+          class="tg-modal-close"
+          aria-label="Cerrar"
+          title="Cerrar"
+        >
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+            <path d="M2 2l10 10M12 2L2 12" />
+          </svg>
+        </button>
       </div>
 
       <!-- Barra de Estado Institucional & Búsqueda -->

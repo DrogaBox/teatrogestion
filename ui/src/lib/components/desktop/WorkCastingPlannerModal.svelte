@@ -290,48 +290,51 @@
     <div class="tg-modal max-w-6xl relative print:bg-white print:border-none print:shadow-none print:p-0 print:max-h-none print:overflow-visible">
       
       <!-- Barra Superior -->
-      <div class="bg-raised border-b border-grid px-4 py-2.5 shrink-0 flex items-center justify-between print:hidden">
-        <div class="flex items-center gap-2.5">
-          <span class="text-[10px] font-mono font-bold text-amber bg-void px-2 py-0.5 rounded border border-grid">REPARTOS</span>
-          <div>
-            <h2 class="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2">
-              Planificación de Repartos para Obras
-              <span class="text-[10px] font-mono text-dim">
-                ({works.length} obras)
-              </span>
-            </h2>
-            <p class="text-[11px] text-dim">
-              Ballet Oficial de Córdoba • Teatro del Libertador San Martín
-            </p>
+      <div class="bg-raised border-b border-grid px-4 py-2.5 shrink-0 flex print:hidden items-start gap-3">
+        <!-- cierre fijo en la esquina: el resto de la barra puede partirse en filas -->
+        <div class="flex flex-1 min-w-0 flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span class="text-[10px] font-mono font-bold text-amber bg-void px-2 py-0.5 rounded border border-grid">REPARTOS</span>
+            <div>
+              <h2 class="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2">
+                Planificación de Repartos para Obras
+                <span class="text-[10px] font-mono text-dim">
+                  ({works.length} obras)
+                </span>
+              </h2>
+              <p class="text-[11px] text-dim">
+                Ballet Oficial de Córdoba • Teatro del Libertador San Martín
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              onclick={() => {
+                editWorkId = null;
+                editWorkTitle = '';
+                editWorkComposer = '';
+                editWorkChoreographer = '';
+                showWorkModal = true;
+              }}
+              class="px-2.5 py-1 bg-panel hover:bg-raised-hover text-amber border border-grid hover:border-amber/50 rounded text-xs font-medium transition-colors"
+            >
+              + Nueva Obra
+            </button>
           </div>
         </div>
-
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            onclick={() => {
-              editWorkId = null;
-              editWorkTitle = '';
-              editWorkComposer = '';
-              editWorkChoreographer = '';
-              showWorkModal = true;
-            }}
-            class="px-2.5 py-1 bg-panel hover:bg-raised-hover text-amber border border-grid hover:border-amber/50 rounded text-xs font-medium transition-colors"
-          >
-            + Nueva Obra
-          </button>
-          <button
-            type="button"
-            onclick={onClose}
-            class="tg-modal-close"
-            aria-label="Cerrar"
-            title="Cerrar"
-          >
-            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-              <path d="M2 2l10 10M12 2L2 12" />
-            </svg>
-          </button>
-        </div>
+        <button
+          type="button"
+          onclick={onClose}
+          class="tg-modal-close"
+          aria-label="Cerrar"
+          title="Cerrar"
+        >
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+            <path d="M2 2l10 10M12 2L2 12" />
+          </svg>
+        </button>
       </div>
 
       <!-- Selector de Obras en Pestañas Superiores -->
