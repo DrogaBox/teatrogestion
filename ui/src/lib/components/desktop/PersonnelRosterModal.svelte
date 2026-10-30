@@ -637,6 +637,21 @@
           </div>
         </div>
 
+        <div>
+          <label class="block text-dim font-bold mb-1 text-[10px] uppercase" for="category-select">Categoría de Revista</label>
+          <select
+            id="category-select"
+            bind:value={formCategoryId}
+            class="w-full h-8 px-2 bg-void border border-grid rounded text-ink font-bold outline-none focus:border-amber"
+          >
+            <option value="CAT_PRIMERA_FIGURA">Primera Figura / Solista Principal</option>
+            <option value="CAT_SOLISTA">Solista</option>
+            <option value="CAT_CUERPO_BAILE">Cuerpo de Baile Estable</option>
+            <option value="CAT_CONTRATADO">Contratado / Refuerzo</option>
+            <option value="CAT_STAFF_DOCENTE">Maestros, Pianistas e Inspección</option>
+          </select>
+        </div>
+
         <!-- Casillero de Estado Jubilatorio -->
         <div class="p-2.5 bg-alt border border-grid rounded space-y-1.5">
           <label class="inline-flex items-center gap-2 cursor-pointer">
