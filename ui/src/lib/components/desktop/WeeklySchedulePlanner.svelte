@@ -380,6 +380,13 @@
   </div>
 </div>
 
+<PrintPreviewModal
+  open={printPreviewOpen}
+  title="Vista previa de impresión"
+  subtitle="Plan semanal — ediciones solo para la copia impresa"
+  source={printableEl}
+  onclose={() => (printPreviewOpen = false)}
+/>
 <!-- MODAL PARA DUPLICAR/COPIAR DÍA -->
 {#if showCopyModal}
   <div class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3" use:modalBehavior={{ onclose: () => showCopyModal = false, backdrop: false }}>
@@ -430,14 +437,6 @@
         </button>
       </div>
     </div>
-
-    <PrintPreviewModal
-      open={printPreviewOpen}
-      title="Vista previa de impresión"
-      subtitle="Plan semanal — ediciones solo para la copia impresa"
-      source={printableEl}
-      onclose={() => (printPreviewOpen = false)}
-    />
   </div>
 {/if}
 

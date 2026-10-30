@@ -796,40 +796,40 @@
           onclick={() => mobileTab = 'home'}
           class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'home' ? 'text-amber' : 'text-dim hover:text-ink'}"
         >
-          <span class="text-sm font-mono font-bold">◉</span>
-          <span class="text-[11px] tracking-tight">Inicio</span>
+          <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
+          <span class="text-[10px] leading-none tracking-tight">Inicio</span>
         </button>
 
         <button
           onclick={() => mobileTab = 'stock'}
           class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'stock' ? 'text-amber' : 'text-dim hover:text-ink'}"
         >
-          <span class="text-xs font-mono font-bold">BALLET</span>
-          <span class="text-[11px] tracking-tight">Entregas</span>
+          <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>
+          <span class="text-[10px] leading-none tracking-tight">Entregas</span>
         </button>
 
         <button
           onclick={() => mobileTab = 'inventory'}
           class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'inventory' ? 'text-amber' : 'text-dim hover:text-ink'}"
         >
-          <span class="text-xs font-mono font-bold">STOCK</span>
-          <span class="text-[11px] tracking-tight">Inventario</span>
+          <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9"/><path d="M10 13h4"/></svg>
+          <span class="text-[10px] leading-none tracking-tight">Inventario</span>
         </button>
 
         <button
           onclick={() => mobileTab = 'attendance'}
           class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'attendance' ? 'text-amber' : 'text-dim hover:text-ink'}"
         >
-          <span class="text-xs font-mono font-bold">08:45</span>
-          <span class="text-[11px] tracking-tight">Asistencia</span>
+          <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9z"/><path d="m9 14 2 2 4-4"/></svg>
+          <span class="text-[10px] leading-none tracking-tight">Asistencia</span>
         </button>
 
         <button
           onclick={() => mobileTab = 'gaynor'}
           class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'gaynor' ? 'text-amber' : 'text-dim hover:text-ink'}"
         >
-          <span class="text-xs font-mono font-bold">▲●★</span>
-          <span class="text-[11px] tracking-tight">Gaynor</span>
+          <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>
+          <span class="text-[10px] leading-none tracking-tight">Gaynor</span>
         </button>
 
         <button
@@ -845,7 +845,7 @@
               {currentDate ? currentDate.split('-')[2] : '•'}
             </div>
           </div>
-          <span class="text-[11px] tracking-tight">Parte</span>
+          <span class="text-[10px] leading-none tracking-tight">Parte</span>
         </button>
 
       </div>

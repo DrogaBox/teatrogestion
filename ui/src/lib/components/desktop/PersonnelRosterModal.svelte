@@ -10,6 +10,7 @@
   import ModalHeader from '../shared/ModalHeader.svelte';
   import PrintPreviewModal from '../shared/PrintPreviewModal.svelte';
   import { modalBehavior } from '../../actions/modalBehavior';
+  import { cardTable } from '../../actions/cardTable';
 
   let printPreviewOpen = $state(false);
   let printableEl: HTMLElement | null = $state(null);
@@ -284,7 +285,7 @@
         <!-- cierre fijo en la esquina: el resto de la barra puede partirse en filas -->
         <div class="flex flex-1 min-w-0 flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-2.5">
-            <span class="text-[10px] font-mono font-bold text-amber bg-void px-2 py-0.5 rounded border border-grid">PADRÓN</span>
+            <span class="max-md:hidden text-[10px] font-mono font-bold text-amber bg-void px-2 py-0.5 rounded border border-grid">PADRÓN</span>
             <div>
               <h2 class="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2">
                 Padrón Integral del Sector
@@ -292,14 +293,14 @@
                   ({filteredRoster.length} miembros)
                 </span>
               </h2>
-              <p class="text-[11px] text-dim">
+              <p class="text-[11px] text-dim max-md:hidden">
                 Ballet Oficial de Córdoba • Bailarines, Maestros, Pianistas, Dirección e Inspección
               </p>
             </div>
           </div>
 
           <!-- Botones de Acción -->
-          <div class="flex items-center gap-2 flex-wrap">
+          <div class="tg-bar-scroll flex items-center gap-2 flex-wrap">
             <button
               onclick={openNewPersonnel}
               class="px-2.5 py-1 bg-amber hover:bg-amber text-void rounded text-xs font-bold transition-colors"
@@ -421,7 +422,7 @@
           </div>
         {:else}
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs print:text-[10px]">
+            <table use:cardTable class="tg-card-table w-full text-left border-collapse text-xs print:text-[10px]">
               <thead>
                 <tr class="bg-alt border-b border-grid text-dim uppercase tracking-wider font-mono text-[10px] print:bg-slate-200 print:text-black print:border-black">
                   <th class="py-2 px-3">DNI</th>

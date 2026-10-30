@@ -8,6 +8,7 @@
   } from '../../ipc/client';
   import ModalHeader from '../shared/ModalHeader.svelte';
   import { modalBehavior } from '../../actions/modalBehavior';
+  import { cardTable } from '../../actions/cardTable';
   import NewStockItemModal from './NewStockItemModal.svelte';
   import PrintPreviewModal from '../shared/PrintPreviewModal.svelte';
 
@@ -197,7 +198,7 @@
         <!-- cierre fijo en la esquina: el resto de la barra puede partirse en filas -->
         <div class="flex flex-1 min-w-0 flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-2.5">
-            <span class="text-[10px] font-mono font-bold text-amber bg-void px-2 py-0.5 rounded border border-grid">INVENTARIO</span>
+            <span class="max-md:hidden text-[10px] font-mono font-bold text-amber bg-void px-2 py-0.5 rounded border border-grid">INVENTARIO</span>
             <div>
               <h2 class="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2">
                 Inventario Oficial & Control de Depósito
@@ -205,14 +206,14 @@
                   ({stockItems.length} ítems)
                 </span>
               </h2>
-              <p class="text-[11px] text-dim">
+              <p class="text-[11px] text-dim max-md:hidden">
                 Ballet Oficial de Córdoba • Teatro del Libertador San Martín
               </p>
             </div>
           </div>
 
           <!-- Botonera de Exportación y Alta -->
-          <div class="flex items-center gap-2 flex-wrap">
+          <div class="tg-bar-scroll flex items-center gap-2 flex-wrap">
             <button
               onclick={openNewItem}
               class="px-2.5 py-1 bg-amber hover:bg-amber text-void rounded text-xs font-bold transition-colors"
@@ -352,7 +353,7 @@
           </div>
         {:else}
           <div class="overflow-x-auto print:overflow-visible">
-            <table class="w-full text-left border-collapse text-xs print:text-[10px] print:border print:border-black">
+            <table use:cardTable class="tg-card-table w-full text-left border-collapse text-xs print:text-[10px] print:border print:border-black">
               <thead class="print:table-header-group">
                 <tr class="bg-alt border-b border-grid text-dim uppercase tracking-wider font-mono text-[10px] print:bg-slate-200 print:text-black print:border-black">
                   <th class="py-2 px-3">Rubro</th>

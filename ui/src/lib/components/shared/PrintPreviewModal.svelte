@@ -54,7 +54,8 @@
     const clone = src.cloneNode(true) as HTMLElement;
     // Controles fuera de la copia impresa: botones desaparecen y los campos se
     // vuelven texto plano con su valor.
-    clone.querySelectorAll('button, [data-print-skip]').forEach((el) => el.remove());
+    // También sale lo que el documento ya oculta al imprimir (`print:hidden`).
+    clone.querySelectorAll('button, [data-print-skip], .print\\:hidden').forEach((el) => el.remove());
     clone.querySelectorAll('input, textarea').forEach((el) => {
       const span = document.createElement('span');
       span.textContent = (el as HTMLInputElement | HTMLTextAreaElement).value;
@@ -65,6 +66,7 @@
       span.textContent = el.selectedOptions[0]?.textContent ?? '';
       el.replaceWith(span);
     });
+    clone.querySelectorAll('.tg-card-table').forEach((el) => el.classList.remove('tg-card-table'));
     return clone.innerHTML;
   }
 

@@ -476,3 +476,47 @@ table {
   outline: 2px solid rgba(255, 179, 26, 0.55);
   outline-offset: -2px;
 }
+
+/* =============================================================================
+   MÓVIL: tablas como tarjetas y barras de botones en una sola fila deslizable.
+   - .tg-card-table (con use:cardTable): cada fila pasa a ser una tarjeta con
+     «ETIQUETA  valor» por celda; el encabezado de la tabla se oculta.
+   - .tg-bar-scroll: la botonera de la cabecera no se parte en filas.
+============================================================================= */
+@media screen and (max-width: 767px) {
+  .tg-card-table,
+  .tg-card-table tbody { display: block; width: 100%; min-width: 0 !important; }
+  .tg-card-table thead { display: none; }
+  .tg-card-table tr {
+    display: block;
+    margin-bottom: 8px;
+    padding: 4px 0;
+    border: 1px solid var(--color-grid);
+    border-radius: 6px;
+    background: var(--color-panel);
+  }
+  .tg-card-table td {
+    display: block;
+    padding: 4px 10px !important;
+    text-align: right;
+    border: 0 !important;
+  }
+  .tg-card-table td::before {
+    content: attr(data-label);
+    float: left;
+    margin-right: 12px;
+    font-size: 10px;
+    line-height: 1.6;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-dim);
+  }
+  .tg-card-table td > .flex { justify-content: flex-end; }
+  .tg-bar-scroll {
+    flex-wrap: nowrap !important;
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .tg-bar-scroll > * { flex-shrink: 0; white-space: nowrap; }
+}

@@ -294,7 +294,7 @@
         <!-- cierre fijo en la esquina: el resto de la barra puede partirse en filas -->
         <div class="flex flex-1 min-w-0 flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-2.5">
-            <span class="text-[10px] font-mono font-bold text-amber bg-void px-2 py-0.5 rounded border border-grid">REPARTOS</span>
+            <span class="max-md:hidden text-[10px] font-mono font-bold text-amber bg-void px-2 py-0.5 rounded border border-grid">REPARTOS</span>
             <div>
               <h2 class="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2">
                 Planificación de Repartos para Obras
