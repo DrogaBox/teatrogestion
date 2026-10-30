@@ -290,17 +290,17 @@
     <div class="tg-modal max-w-6xl relative print:bg-white print:border-none print:shadow-none print:p-0 print:max-h-none print:overflow-visible">
       
       <!-- Barra Superior -->
-      <div class="bg-raised] border-b border-grid] px-4 py-2.5 shrink-0 flex items-center justify-between print:hidden">
+      <div class="bg-raised border-b border-grid px-4 py-2.5 shrink-0 flex items-center justify-between print:hidden">
         <div class="flex items-center gap-2.5">
-          <span class="text-[10px] font-mono font-bold text-amber] bg-void] px-2 py-0.5 rounded border border-grid]">REPARTOS</span>
+          <span class="text-[10px] font-mono font-bold text-amber bg-void px-2 py-0.5 rounded border border-grid">REPARTOS</span>
           <div>
-            <h2 class="text-xs font-bold text-ink] uppercase tracking-wider flex items-center gap-2">
+            <h2 class="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2">
               Planificación de Repartos para Obras
-              <span class="text-[10px] font-mono text-dim]">
+              <span class="text-[10px] font-mono text-dim">
                 ({works.length} obras)
               </span>
             </h2>
-            <p class="text-[11px] text-dim]">
+            <p class="text-[11px] text-dim">
               Ballet Oficial de Córdoba • Teatro del Libertador San Martín
             </p>
           </div>
@@ -316,7 +316,7 @@
               editWorkChoreographer = '';
               showWorkModal = true;
             }}
-            class="px-2.5 py-1 bg-panel] hover:bg-raised-hover] text-amber] border border-grid] hover:border-amber]/50 rounded text-xs font-medium transition-colors"
+            class="px-2.5 py-1 bg-panel hover:bg-raised-hover text-amber border border-grid hover:border-amber/50 rounded text-xs font-medium transition-colors"
           >
             + Nueva Obra
           </button>
@@ -335,14 +335,14 @@
       </div>
 
       <!-- Selector de Obras en Pestañas Superiores -->
-      <div class="bg-alt] border-b border-grid] px-4 py-2 flex items-center gap-1.5 overflow-x-auto shrink-0 print:hidden">
+      <div class="bg-alt border-b border-grid px-4 py-2 flex items-center gap-1.5 overflow-x-auto shrink-0 print:hidden">
         {#each works as w}
           <button
             onclick={() => selectedWorkId = w.id}
-            class="px-3 py-1.5 rounded text-xs font-medium transition-colors shrink-0 flex items-center gap-2 {selectedWorkId === w.id ? 'bg-raised] text-amber] border border-amber]/50 font-bold' : 'bg-void] text-dim] hover:text-ink] border border-grid]'}"
+            class="px-3 py-1.5 rounded text-xs font-medium transition-colors shrink-0 flex items-center gap-2 {selectedWorkId === w.id ? 'bg-raised text-amber border border-amber/50 font-bold' : 'bg-void text-dim hover:text-ink border border-grid'}"
           >
             <span>{w.title}</span>
-            <span class="text-[10px] px-1.5 py-0.2 rounded font-mono {selectedWorkId === w.id ? 'bg-amber]/20 text-amber]' : 'bg-panel] text-dim]'}">
+            <span class="text-[10px] px-1.5 py-0.2 rounded font-mono {selectedWorkId === w.id ? 'bg-amber/20 text-amber' : 'bg-panel text-dim'}">
               {w.casting_plans.length}
             </span>
           </button>
@@ -351,12 +351,12 @@
 
       {#if selectedWork}
         <!-- Encabezado de la Obra Seleccionada -->
-        <div class="bg-panel] px-4 py-2.5 border-b border-grid] flex flex-wrap items-center justify-between gap-3 shrink-0 print:hidden">
+        <div class="bg-panel px-4 py-2.5 border-b border-grid flex flex-wrap items-center justify-between gap-3 shrink-0 print:hidden">
           <div>
-            <h3 class="text-sm font-bold text-amber] uppercase tracking-wide">
+            <h3 class="text-sm font-bold text-amber uppercase tracking-wide">
               {selectedWork.title}
             </h3>
-            <p class="text-[11px] text-dim] font-mono">
+            <p class="text-[11px] text-dim font-mono">
               <span>Música: {selectedWork.composer || 'S/D'}</span>
               <span class="mx-1.5">•</span>
               <span>Coreografía: {selectedWork.choreographer || 'S/D'}</span>
@@ -365,22 +365,22 @@
 
           <!-- Conmutador de Sección Interna -->
           <div class="flex items-center gap-2 flex-wrap">
-            <div class="inline-flex bg-void] p-0.5 rounded border border-grid]">
+            <div class="inline-flex bg-void p-0.5 rounded border border-grid">
               <button
                 onclick={() => currentSection = 'casts'}
-                class="px-2.5 py-1 rounded text-xs font-medium transition-colors {currentSection === 'casts' ? 'bg-amber] text-void] font-bold' : 'text-dim] hover:text-ink]'}"
+                class="px-2.5 py-1 rounded text-xs font-medium transition-colors {currentSection === 'casts' ? 'bg-amber text-void font-bold' : 'text-dim hover:text-ink'}"
               >
                 Repartos ({selectedWork.casting_plans.length})
               </button>
               <button
                 onclick={() => currentSection = 'passages'}
-                class="px-2.5 py-1 rounded text-xs font-medium transition-colors {currentSection === 'passages' ? 'bg-amber] text-void] font-bold' : 'text-dim] hover:text-ink]'}"
+                class="px-2.5 py-1 rounded text-xs font-medium transition-colors {currentSection === 'passages' ? 'bg-amber text-void font-bold' : 'text-dim hover:text-ink'}"
               >
                 Pasajes ({selectedWork.passages.length})
               </button>
               <button
                 onclick={() => currentSection = 'print'}
-                class="px-2.5 py-1 rounded text-xs font-medium transition-colors {currentSection === 'print' ? 'bg-amber] text-void] font-bold' : 'text-dim] hover:text-ink]'}"
+                class="px-2.5 py-1 rounded text-xs font-medium transition-colors {currentSection === 'print' ? 'bg-amber text-void font-bold' : 'text-dim hover:text-ink'}"
               >
                 Planilla Cartelera
               </button>
@@ -389,7 +389,7 @@
             {#if currentSection === 'casts'}
               <button
                 onclick={openNewPlan}
-                class="px-2.5 py-1 bg-raised] hover:bg-raised-hover] text-amber] border border-amber]/40 rounded text-xs font-bold transition-colors"
+                class="px-2.5 py-1 bg-raised hover:bg-raised-hover text-amber border border-amber/40 rounded text-xs font-bold transition-colors"
               >
                 + Nuevo Reparto
               </button>
@@ -403,20 +403,20 @@
                   editPassageSoundCue = 'PISTA TeatroCue';
                   showPassageModal = true;
                 }}
-                class="px-2.5 py-1 bg-raised] hover:bg-raised-hover] text-cyan] border border-cyan]/40 rounded text-xs font-bold transition-colors"
+                class="px-2.5 py-1 bg-raised hover:bg-raised-hover text-cyan border border-cyan/40 rounded text-xs font-bold transition-colors"
               >
                 + Nuevo Pasaje
               </button>
             {:else}
               <button
                 onclick={exportExcel}
-                class="px-2.5 py-1 bg-raised] hover:bg-raised-hover] text-green] border border-green]/40 rounded text-xs font-bold transition-colors"
+                class="px-2.5 py-1 bg-raised hover:bg-raised-hover text-green border border-green/40 rounded text-xs font-bold transition-colors"
               >
                 Exportar Excel
               </button>
               <button
                 onclick={() => printPreviewOpen = true}
-                class="px-2.5 py-1 bg-raised] hover:bg-raised-hover] text-ink] border border-grid] rounded text-xs font-bold transition-colors"
+                class="px-2.5 py-1 bg-raised hover:bg-raised-hover text-ink border border-grid rounded text-xs font-bold transition-colors"
               >
                 Imprimir / PDF
               </button>
@@ -429,11 +429,11 @@
           <!-- 1. VISTA DE REPARTOS PLANIFICADOS -->
           {#if currentSection === 'casts'}
             {#if selectedWork.casting_plans.length === 0}
-              <div class="py-12 text-center bg-alt] rounded border border-grid] text-dim] text-xs space-y-3">
+              <div class="py-12 text-center bg-alt rounded border border-grid text-dim text-xs space-y-3">
                 <p>No hay repartos predefinidos para esta obra todavía.</p>
                 <button
                   onclick={openNewPlan}
-                  class="px-3.5 py-1.5 bg-amber] hover:bg-amber] text-void] font-bold rounded text-xs"
+                  class="px-3.5 py-1.5 bg-amber hover:bg-amber text-void font-bold rounded text-xs"
                 >
                   + Crear Primer Reparto de Obra
                 </button>
@@ -441,31 +441,31 @@
             {:else}
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {#each selectedWork.casting_plans as plan}
-                  <div class="bg-alt] border border-grid] hover:border-amber]/40 rounded p-3 shadow transition-colors space-y-2.5">
+                  <div class="bg-alt border border-grid hover:border-amber/40 rounded p-3 shadow transition-colors space-y-2.5">
                     <div class="flex items-start justify-between gap-2">
                       <div>
                         <div class="flex items-center gap-2">
-                          <span class="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase {plan.tier_name.includes('1°') ? 'bg-amber]/20 text-amber] border border-amber]/40' : plan.tier_name.includes('2°') ? 'bg-cyan]/20 text-cyan] border border-cyan]/40' : 'bg-raised] text-dim] border border-grid]'}">
+                          <span class="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase {plan.tier_name.includes('1°') ? 'bg-amber/20 text-amber border border-amber/40' : plan.tier_name.includes('2°') ? 'bg-cyan/20 text-cyan border border-cyan/40' : 'bg-raised text-dim border border-grid'}">
                             {plan.tier_name}
                           </span>
                           {#if plan.passage_name}
-                            <span class="text-xs font-bold text-ink]">{plan.passage_name}</span>
+                            <span class="text-xs font-bold text-ink">{plan.passage_name}</span>
                           {/if}
                         </div>
-                        <h4 class="text-xs font-bold text-amber] mt-1 font-mono">{plan.cast_label}</h4>
+                        <h4 class="text-xs font-bold text-amber mt-1 font-mono">{plan.cast_label}</h4>
                       </div>
 
                       <div class="flex items-center gap-1">
                         <button
                           onclick={() => openEditPlan(plan)}
-                          class="px-2 py-0.5 rounded bg-raised] hover:bg-grid] text-ink] text-xs font-mono border border-grid]"
+                          class="px-2 py-0.5 rounded bg-raised hover:bg-grid text-ink text-xs font-mono border border-grid"
                           title="Editar reparto"
                         >
                           Editar
                         </button>
                         <button
                           onclick={() => deleteCastingPlan(plan.id)}
-                          class="px-2 py-0.5 rounded bg-raised] hover:bg-red]/20 text-dim] hover:text-red] text-xs font-mono border border-grid]"
+                          class="px-2 py-0.5 rounded bg-raised hover:bg-red/20 text-dim hover:text-red text-xs font-mono border border-grid"
                           title="Eliminar reparto"
                         >
                           ✕
@@ -474,26 +474,26 @@
                     </div>
 
                     <!-- Miembros del Reparto -->
-                    <div class="space-y-1 bg-void] p-2 rounded border border-grid] text-xs">
+                    <div class="space-y-1 bg-void p-2 rounded border border-grid text-xs">
                       {#if plan.members.length === 0}
-                        <p class="text-dim] text-[11px] italic">Sin bailarines nominales asignados.</p>
+                        <p class="text-dim text-[11px] italic">Sin bailarines nominales asignados.</p>
                       {:else}
                         {#each plan.members as mem}
                           <div class="flex items-center justify-between text-[11px]">
                             <div class="flex items-center gap-1.5">
-                              <span class="text-amber]">•</span>
-                              <span class="font-bold text-ink]">{mem.dancer_name}</span>
+                              <span class="text-amber">•</span>
+                              <span class="font-bold text-ink">{mem.dancer_name}</span>
                               {#if mem.character_role}
-                                <span class="text-dim] font-mono text-[10px]">({mem.character_role})</span>
+                                <span class="text-dim font-mono text-[10px]">({mem.character_role})</span>
                               {/if}
                             </div>
                             <div>
                               {#if mem.partner_name}
-                                <span class="text-[10px] text-cyan] bg-cyan]/10 px-1.5 py-0.5 rounded border border-cyan]/30">
+                                <span class="text-[10px] text-cyan bg-cyan/10 px-1.5 py-0.5 rounded border border-cyan/30">
                                   c/ {mem.partner_name.split(',')[0]}
                                 </span>
                               {/if}
-                              <span class="text-[9px] font-bold uppercase ml-1 {mem.condition === 'COVER' ? 'text-amber]' : 'text-green]'}">
+                              <span class="text-[9px] font-bold uppercase ml-1 {mem.condition === 'COVER' ? 'text-amber' : 'text-green'}">
                                 {mem.condition === 'COVER' ? 'Estudia' : mem.condition}
                               </span>
                             </div>
@@ -504,7 +504,7 @@
 
                     <!-- Metadatos de Sonido y Notas -->
                     {#if plan.default_sound_cue || plan.notes}
-                      <div class="flex items-center justify-between text-[10px] font-mono text-dim] pt-1 border-t border-grid]">
+                      <div class="flex items-center justify-between text-[10px] font-mono text-dim pt-1 border-t border-grid">
                         <span>[CUE] {plan.default_sound_cue || 'PISTA'}</span>
                         {#if plan.notes}
                           <span class="truncate max-w-[200px]" title={plan.notes}>[NOTA] {plan.notes}</span>
@@ -520,17 +520,17 @@
           {:else if currentSection === 'passages'}
             <div class="space-y-1.5">
               {#each selectedWork.passages as pass}
-                <div class="bg-alt] border border-grid] p-2.5 rounded flex items-center justify-between gap-3 text-xs">
+                <div class="bg-alt border border-grid p-2.5 rounded flex items-center justify-between gap-3 text-xs">
                   <div>
                     <div class="flex items-center gap-2">
-                      <span class="font-bold text-ink] text-xs">{pass.name}</span>
+                      <span class="font-bold text-ink text-xs">{pass.name}</span>
                       {#if pass.act_scene}
-                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-raised] text-dim] font-mono border border-grid]">
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-raised text-dim font-mono border border-grid">
                           {pass.act_scene}
                         </span>
                       {/if}
                     </div>
-                    <div class="text-[11px] text-dim] font-mono mt-0.5 flex items-center gap-3">
+                    <div class="text-[11px] text-dim font-mono mt-0.5 flex items-center gap-3">
                       <span>Duración: {pass.default_duration_min} min</span>
                       <span>Cue Sonido: {pass.default_sound_cue || 'Sin cue'}</span>
                     </div>
@@ -546,13 +546,13 @@
                         editPassageSoundCue = pass.default_sound_cue || '';
                         showPassageModal = true;
                       }}
-                      class="px-2 py-0.5 rounded bg-raised] hover:bg-grid] text-ink] text-xs font-mono border border-grid]"
+                      class="px-2 py-0.5 rounded bg-raised hover:bg-grid text-ink text-xs font-mono border border-grid"
                     >
                       Editar
                     </button>
                     <button
                       onclick={() => deletePassage(pass.id)}
-                      class="px-2 py-0.5 rounded bg-raised] hover:bg-red]/20 text-dim] hover:text-red] text-xs font-mono border border-grid]"
+                      class="px-2 py-0.5 rounded bg-raised hover:bg-red/20 text-dim hover:text-red text-xs font-mono border border-grid"
                     >
                       ✕
                     </button>
@@ -658,35 +658,35 @@
 
       <div class="tg-modal-body space-y-3">
         <div>
-          <label for="work-title-input" class="block text-[10px] font-bold uppercase text-dim] mb-1">Título de la Obra</label>
+          <label for="work-title-input" class="block text-[10px] font-bold uppercase text-dim mb-1">Título de la Obra</label>
           <input
             id="work-title-input"
             type="text"
             bind:value={editWorkTitle}
             placeholder="Ej: Giselle, El Lago de los Cisnes, Paquita..."
-            class="w-full h-8 px-2.5 bg-void] border border-grid] rounded text-xs font-bold text-ink] outline-none focus:border-amber]"
+            class="w-full h-8 px-2.5 bg-void border border-grid rounded text-xs font-bold text-ink outline-none focus:border-amber"
           />
         </div>
 
         <div>
-          <label for="work-composer-input" class="block text-[10px] font-bold uppercase text-dim] mb-1">Compositor / Música</label>
+          <label for="work-composer-input" class="block text-[10px] font-bold uppercase text-dim mb-1">Compositor / Música</label>
           <input
             id="work-composer-input"
             type="text"
             bind:value={editWorkComposer}
             placeholder="Ej: Piotr Ilich Tchaikovsky, Adolphe Adam..."
-            class="w-full h-8 px-2.5 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber]"
+            class="w-full h-8 px-2.5 bg-void border border-grid rounded text-xs text-ink outline-none focus:border-amber"
           />
         </div>
 
         <div>
-          <label for="work-choreographer-input" class="block text-[10px] font-bold uppercase text-dim] mb-1">Coreógrafo / Versión</label>
+          <label for="work-choreographer-input" class="block text-[10px] font-bold uppercase text-dim mb-1">Coreógrafo / Versión</label>
           <input
             id="work-choreographer-input"
             type="text"
             bind:value={editWorkChoreographer}
             placeholder="Ej: Marius Petipa / Jean Coralli..."
-            class="w-full h-8 px-2.5 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber]"
+            class="w-full h-8 px-2.5 bg-void border border-grid rounded text-xs text-ink outline-none focus:border-amber"
           />
         </div>
 
@@ -724,30 +724,30 @@
 
       <div class="tg-modal-body space-y-3">
         <div>
-          <label for="passage-name-input" class="block text-[10px] font-bold uppercase text-dim] mb-1">Nombre del Pasaje / Cuadro</label>
+          <label for="passage-name-input" class="block text-[10px] font-bold uppercase text-dim mb-1">Nombre del Pasaje / Cuadro</label>
           <input
             id="passage-name-input"
             type="text"
             bind:value={editPassageName}
             placeholder="Ej: Pas de deux Cisne Blanco, Danza Española..."
-            class="w-full h-8 px-2.5 bg-void] border border-grid] rounded text-xs font-bold text-ink] outline-none focus:border-amber]"
+            class="w-full h-8 px-2.5 bg-void border border-grid rounded text-xs font-bold text-ink outline-none focus:border-amber"
           />
         </div>
 
         <div>
-          <label for="passage-scene-input" class="block text-[10px] font-bold uppercase text-dim] mb-1">Acto / Escena</label>
+          <label for="passage-scene-input" class="block text-[10px] font-bold uppercase text-dim mb-1">Acto / Escena</label>
           <input
             id="passage-scene-input"
             type="text"
             bind:value={editPassageActScene}
             placeholder="Ej: Acto II, Escena 1..."
-            class="w-full h-8 px-2.5 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber]"
+            class="w-full h-8 px-2.5 bg-void border border-grid rounded text-xs text-ink outline-none focus:border-amber"
           />
         </div>
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label for="passage-duration-input" class="block text-[10px] font-bold uppercase text-dim] mb-1">Duración Habitual (min)</label>
+            <label for="passage-duration-input" class="block text-[10px] font-bold uppercase text-dim mb-1">Duración Habitual (min)</label>
             <input
               id="passage-duration-input"
               type="number"
@@ -755,17 +755,17 @@
               max="180"
               step="15"
               bind:value={editPassageDuration}
-              class="w-full h-8 px-2.5 bg-void] border border-grid] rounded text-xs font-bold text-ink] font-mono outline-none focus:border-amber]"
+              class="w-full h-8 px-2.5 bg-void border border-grid rounded text-xs font-bold text-ink font-mono outline-none focus:border-amber"
             />
           </div>
           <div>
-            <label for="passage-sound-input" class="block text-[10px] font-bold uppercase text-dim] mb-1">Cue de Sonido TeatroCue</label>
+            <label for="passage-sound-input" class="block text-[10px] font-bold uppercase text-dim mb-1">Cue de Sonido TeatroCue</label>
             <input
               id="passage-sound-input"
               type="text"
               bind:value={editPassageSoundCue}
               placeholder="PISTA TeatroCue #08 / Piano"
-              class="w-full h-8 px-2.5 bg-void] border border-grid] rounded text-xs text-ink] font-mono outline-none focus:border-amber]"
+              class="w-full h-8 px-2.5 bg-void border border-grid rounded text-xs text-ink font-mono outline-none focus:border-amber"
             />
           </div>
         </div>
@@ -798,11 +798,11 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <!-- Pasaje -->
           <div>
-            <label for="plan-passage-select" class="block text-[10px] font-bold uppercase text-dim] mb-1">Pasaje Asociado</label>
+            <label for="plan-passage-select" class="block text-[10px] font-bold uppercase text-dim mb-1">Pasaje Asociado</label>
             <select
               id="plan-passage-select"
               bind:value={editPlanPassageId}
-              class="w-full h-8 px-2 bg-void] border border-grid] rounded text-xs font-bold text-ink] outline-none focus:border-amber]"
+              class="w-full h-8 px-2 bg-void border border-grid rounded text-xs font-bold text-ink outline-none focus:border-amber"
             >
               <option value="">(Toda la Obra / General)</option>
               {#each selectedWork?.passages || [] as pass}
@@ -813,11 +813,11 @@
 
           <!-- Tier / Elenco -->
           <div>
-            <label for="plan-tier-select" class="block text-[10px] font-bold uppercase text-dim] mb-1">Elenco / Nivel</label>
+            <label for="plan-tier-select" class="block text-[10px] font-bold uppercase text-dim mb-1">Elenco / Nivel</label>
             <select
               id="plan-tier-select"
               bind:value={editPlanTier}
-              class="w-full h-8 px-2 bg-void] border border-grid] rounded text-xs font-bold text-ink] outline-none focus:border-amber]"
+              class="w-full h-8 px-2 bg-void border border-grid rounded text-xs font-bold text-ink outline-none focus:border-amber"
             >
               <option value="1° Elenco">1° Elenco (Titular)</option>
               <option value="2° Elenco">2° Elenco (Alternante)</option>
@@ -830,22 +830,22 @@
 
           <!-- Etiqueta del Elenco -->
           <div>
-            <label for="plan-label-input" class="block text-[10px] font-bold uppercase text-dim] mb-1">Etiqueta Formateada</label>
+            <label for="plan-label-input" class="block text-[10px] font-bold uppercase text-dim mb-1">Etiqueta Formateada</label>
             <input
               id="plan-label-input"
               type="text"
               bind:value={editPlanLabel}
               placeholder="Ej: Vera & Morchio C."
-              class="w-full h-8 px-2 bg-void] border border-grid] rounded text-xs font-bold text-amber] font-mono outline-none focus:border-amber]"
+              class="w-full h-8 px-2 bg-void border border-grid rounded text-xs font-bold text-amber font-mono outline-none focus:border-amber"
             />
           </div>
         </div>
 
         <!-- Buscador y Selector Rápido de Bailarines -->
-        <div class="border-t border-grid] pt-2">
-          <label for="dancer-search-input" class="block text-[10px] font-bold uppercase text-dim] mb-1 flex items-center justify-between">
+        <div class="border-t border-grid pt-2">
+          <label for="dancer-search-input" class="block text-[10px] font-bold uppercase text-dim mb-1 flex items-center justify-between">
             <span>Seleccionar Bailarines del Padrón Activo ({dancers.length})</span>
-            <span class="text-amber]">{planMembers.length} seleccionados</span>
+            <span class="text-amber">{planMembers.length} seleccionados</span>
           </label>
           
           <input
@@ -853,7 +853,7 @@
             type="text"
             bind:value={dancerSearch}
             placeholder="Buscar bailarín por apellido o apodo (ej: Popi, Brenda, Álvarez, Gil)..."
-            class="w-full h-8 px-2.5 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber] mb-2"
+            class="w-full h-8 px-2.5 bg-void border border-grid rounded text-xs text-ink outline-none focus:border-amber mb-2"
           />
 
           <div class="flex items-center gap-1 overflow-x-auto pb-1">
@@ -862,7 +862,7 @@
               <button
                 type="button"
                 onclick={() => isSelected ? removeDancerFromPlan(d.id) : addDancerToPlan(d)}
-                class="px-2 py-1 rounded text-[11px] font-medium transition-colors shrink-0 flex items-center gap-1 {isSelected ? 'bg-amber] text-void] font-bold' : 'bg-void] text-dim] hover:text-ink] border border-grid]'}"
+                class="px-2 py-1 rounded text-[11px] font-medium transition-colors shrink-0 flex items-center gap-1 {isSelected ? 'bg-amber text-void font-bold' : 'bg-void text-dim hover:text-ink border border-grid'}"
               >
                 <span>{isSelected ? '✓' : '+'}</span>
                 <span>{d.last_name} {d.nickname ? `("${d.nickname}")` : ''}</span>
@@ -872,17 +872,17 @@
         </div>
 
         <!-- Lista de Bailarines Asignados con Rol y Pareja -->
-        <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1 border border-grid] rounded p-2 bg-void]">
+        <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1 border border-grid rounded p-2 bg-void">
           {#if planMembers.length === 0}
-            <p class="text-xs text-dim] text-center py-4">Haz clic en los bailarines de arriba para agregarlos al reparto.</p>
+            <p class="text-xs text-dim text-center py-4">Haz clic en los bailarines de arriba para agregarlos al reparto.</p>
           {:else}
             {#each planMembers as mem, idx}
-              <div class="bg-alt] border border-grid] p-2 rounded flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div class="bg-alt border border-grid p-2 rounded flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div class="flex items-center gap-2">
-                  <span class="w-4 h-4 rounded bg-raised] text-amber] flex items-center justify-center font-bold text-[10px] font-mono border border-grid]">
+                  <span class="w-4 h-4 rounded bg-raised text-amber flex items-center justify-center font-bold text-[10px] font-mono border border-grid">
                     {idx + 1}
                   </span>
-                  <span class="font-bold text-ink]">{mem.dancer_name}</span>
+                  <span class="font-bold text-ink">{mem.dancer_name}</span>
                 </div>
 
                 <div class="flex items-center gap-1.5 flex-wrap">
@@ -890,12 +890,12 @@
                     type="text"
                     bind:value={mem.character_role}
                     placeholder="Rol (ej: Odette)..."
-                    class="h-7 px-2 bg-void] border border-grid] rounded text-[11px] text-ink] w-28 outline-none focus:border-amber]"
+                    class="h-7 px-2 bg-void border border-grid rounded text-[11px] text-ink w-28 outline-none focus:border-amber"
                   />
 
                   <select
                     bind:value={mem.partner_personnel_id}
-                    class="h-7 px-1.5 bg-void] border border-grid] rounded text-[11px] text-dim] outline-none focus:border-amber]"
+                    class="h-7 px-1.5 bg-void border border-grid rounded text-[11px] text-dim outline-none focus:border-amber"
                   >
                     <option value="">(Sin pareja)</option>
                     {#each dancers.filter(d => d.id !== mem.personnel_id) as partner}
@@ -905,7 +905,7 @@
 
                   <select
                     bind:value={mem.condition}
-                    class="h-7 px-1.5 bg-void] border border-grid] rounded text-[11px] text-amber] outline-none focus:border-amber]"
+                    class="h-7 px-1.5 bg-void border border-grid rounded text-[11px] text-amber outline-none focus:border-amber"
                   >
                     <option value="TITULAR">Titular</option>
                     <option value="COVER">Estudia (por las dudas)</option>
@@ -916,7 +916,7 @@
                   <button
                     type="button"
                     onclick={() => removeDancerFromPlan(mem.personnel_id)}
-                    class="text-dim] hover:text-red] px-1 text-sm font-mono"
+                    class="text-dim hover:text-red px-1 text-sm font-mono"
                     title="Quitar"
                   >
                     ✕

@@ -195,15 +195,15 @@
   function getRoomBadge(room: string): { label: string; bg: string; text: string } {
     switch (room) {
       case 'SALA_1':
-        return { label: 'Sala 1', bg: 'bg-void]', text: 'text-green]' };
+        return { label: 'Sala 1', bg: 'bg-void', text: 'text-green' };
       case 'SALA_2':
-        return { label: 'Sala 2', bg: 'bg-void]', text: 'text-cyan]' };
+        return { label: 'Sala 2', bg: 'bg-void', text: 'text-cyan' };
       case 'SALA_3':
-        return { label: 'Sala 3', bg: 'bg-raised]', text: 'text-amber]' };
+        return { label: 'Sala 3', bg: 'bg-raised', text: 'text-amber' };
       case 'ESCENARIO':
-        return { label: 'Escenario', bg: 'bg-void]', text: 'text-red]' };
+        return { label: 'Escenario', bg: 'bg-void', text: 'text-red' };
       default:
-        return { label: 'Gira', bg: 'bg-raised]', text: 'text-dim]' };
+        return { label: 'Gira', bg: 'bg-raised', text: 'text-dim' };
     }
   }
 
@@ -224,31 +224,31 @@
 
 <div class="space-y-3">
   <!-- Barra de Herramientas de Planificación Semanal (Estilo TeatroCue) -->
-  <div class="bg-panel] border border-grid] rounded p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+  <div class="bg-panel border border-grid rounded p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
     
     <!-- Navegación de Semana -->
     <div class="flex items-center gap-1">
       <button
         onclick={() => shiftWeek(-1)}
-        class="h-8 px-2.5 bg-raised] hover:bg-raised-hover] text-ink] border border-grid] rounded font-mono active:scale-95"
+        class="h-8 px-2.5 bg-raised hover:bg-raised-hover text-ink border border-grid rounded font-mono active:scale-95"
         title="Semana anterior"
       >
         ◀
       </button>
       <button
         onclick={goToCurrentWeek}
-        class="h-8 px-3 bg-raised] hover:bg-raised-hover] text-amber] border border-grid] rounded font-bold"
+        class="h-8 px-3 bg-raised hover:bg-raised-hover text-amber border border-grid rounded font-bold"
       >
         Esta Semana
       </button>
       <button
         onclick={() => shiftWeek(1)}
-        class="h-8 px-2.5 bg-raised] hover:bg-raised-hover] text-ink] border border-grid] rounded font-mono active:scale-95"
+        class="h-8 px-2.5 bg-raised hover:bg-raised-hover text-ink border border-grid rounded font-mono active:scale-95"
         title="Semana siguiente"
       >
         ▶
       </button>
-      <span class="ml-2 font-mono text-ink] font-bold">
+      <span class="ml-2 font-mono text-ink font-bold">
         {weekStartStr} al {weekEndStr}
       </span>
     </div>
@@ -257,14 +257,14 @@
     <div class="flex items-center gap-2">
       <button
         onclick={() => showCopyModal = true}
-        class="h-8 px-3 bg-raised] hover:bg-raised-hover] text-cyan] border border-grid] rounded font-medium flex items-center gap-1.5"
+        class="h-8 px-3 bg-raised hover:bg-raised-hover text-cyan border border-grid rounded font-medium flex items-center gap-1.5"
       >
         <span>Duplicar Día</span>
       </button>
 
       <button
         onclick={() => showPrintWeekly = true}
-        class="h-8 px-3 bg-raised] hover:bg-raised-hover] text-amber] border border-grid] rounded font-bold flex items-center gap-1.5"
+        class="h-8 px-3 bg-raised hover:bg-raised-hover text-amber border border-grid rounded font-bold flex items-center gap-1.5"
       >
         <span>Imprimir Plan Semanal</span>
       </button>
@@ -274,25 +274,25 @@
   <!-- Grilla Semanal: 6 Columnas (Lunes a Sábado) -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2">
     {#each weekDays as day}
-      <div class="bg-panel] border {day.isSelected ? 'border-amber]' : 'border-grid]'} rounded flex flex-col min-h-[580px] shadow-sm">
+      <div class="bg-panel border {day.isSelected ? 'border-amber' : 'border-grid'} rounded flex flex-col min-h-[580px] shadow-sm">
         
         <!-- Cabecera del Día -->
-        <div class="p-2 border-b border-grid] {day.isToday ? 'bg-raised]' : 'bg-alt]'} flex items-center justify-between">
+        <div class="p-2 border-b border-grid {day.isToday ? 'bg-raised' : 'bg-alt'} flex items-center justify-between">
           <div>
             <div class="flex items-center gap-1.5">
-              <span class="text-xs font-black tracking-wider text-ink]">{day.dayName}</span>
-              <span class="text-xs font-mono font-bold {day.isToday ? 'text-amber]' : 'text-dim]'}">
+              <span class="text-xs font-black tracking-wider text-ink">{day.dayName}</span>
+              <span class="text-xs font-mono font-bold {day.isToday ? 'text-amber' : 'text-dim'}">
                 {day.dayNumber} {day.monthName}
               </span>
             </div>
-            <div class="text-[10px] text-dim] font-mono mt-0.5">
+            <div class="text-[10px] text-dim font-mono mt-0.5">
               {getRegimeLabel(day.schedule?.regime)}
             </div>
           </div>
 
           <button
             onclick={() => onSwitchToDailyView(day.date)}
-            class="text-[10px] px-1.5 py-0.5 bg-raised] hover:bg-raised-hover] text-cyan] border border-grid] rounded font-mono"
+            class="text-[10px] px-1.5 py-0.5 bg-raised hover:bg-raised-hover text-cyan border border-grid rounded font-mono"
             title="Abrir en vista diaria detallada"
           >
             Ver día ➔
@@ -301,11 +301,11 @@
 
         <!-- Clases Matutinas Resumen -->
         {#if day.schedule && day.schedule.morning_classes.length > 0}
-          <div class="p-1.5 bg-void] border-b border-grid] text-[10px] space-y-1">
-            <span class="text-dim] font-mono uppercase block font-bold text-[9px]">Clases 09:00 - 10:15:</span>
+          <div class="p-1.5 bg-void border-b border-grid text-[10px] space-y-1">
+            <span class="text-dim font-mono uppercase block font-bold text-[9px]">Clases 09:00 - 10:15:</span>
             {#each day.schedule.morning_classes as mc}
-              <div class="text-ink] truncate">
-                <span class="text-green] font-mono font-bold">{mc.room === 'SALA_1' ? 'S1' : 'S3'}:</span>
+              <div class="text-ink truncate">
+                <span class="text-green font-mono font-bold">{mc.room === 'SALA_1' ? 'S1' : 'S3'}:</span>
                 <span>{mc.master_name?.split(',')[0]}</span>
               </div>
             {/each}
@@ -315,11 +315,11 @@
         <!-- Lista de Bloques de Ensayo -->
         <div class="flex-1 p-1.5 overflow-y-auto space-y-1.5">
           {#if day.isLoading}
-            <div class="p-6 text-center text-dim] text-[11px] font-mono">
+            <div class="p-6 text-center text-dim text-[11px] font-mono">
               Cargando...
             </div>
           {:else if !day.schedule || day.schedule.rehearsal_blocks.length === 0}
-            <div class="p-6 text-center text-dim] text-[11px] font-mono italic">
+            <div class="p-6 text-center text-dim text-[11px] font-mono italic">
               Sin ensayos citados
             </div>
           {:else}
@@ -328,11 +328,11 @@
               <button
                 type="button"
                 onclick={() => onOpenCitationModal(day.date, block)}
-                class="w-full text-left p-2 bg-raised] hover:bg-raised-hover] border border-grid] rounded transition-colors group"
+                class="w-full text-left p-2 bg-raised hover:bg-raised-hover border border-grid rounded transition-colors group"
               >
                 <!-- Horario y Sala -->
                 <div class="flex items-center justify-between gap-1 mb-1">
-                  <span class="text-[10px] font-mono font-bold text-amber]">
+                  <span class="text-[10px] font-mono font-bold text-amber">
                     {block.start_time} - {block.end_time}
                   </span>
                   <span class="text-[9px] px-1 py-0.2 rounded font-mono font-bold {badge.bg} {badge.text}">
@@ -341,21 +341,21 @@
                 </div>
 
                 <!-- Obra / Pasaje -->
-                <div class="text-[11px] font-bold text-ink] truncate group-hover:text-white">
+                <div class="text-[11px] font-bold text-ink truncate group-hover:text-white">
                   {block.passage_name}
                 </div>
 
                 <!-- Reparto / Bailarines -->
                 {#if block.cast_groups.length > 0 && block.cast_groups[0].formatted_line}
-                  <div class="text-[10px] text-dim] truncate mt-0.5 font-mono">
+                  <div class="text-[10px] text-dim truncate mt-0.5 font-mono">
                     {block.cast_groups[0].formatted_line}
                   </div>
                 {/if}
 
                 <!-- Maestro / Pianista / Pista -->
-                <div class="text-[9px] text-dim] truncate mt-1 flex items-center justify-between">
+                <div class="text-[9px] text-dim truncate mt-1 flex items-center justify-between">
                   <span>{block.master_name ? block.master_name.split(',')[0] : 'Sin maestro'}</span>
-                  <span class="font-mono text-cyan]">
+                  <span class="font-mono text-cyan">
                     {block.teatrocue_cue_ref ? `Cue: ${block.teatrocue_cue_ref}` : block.pianist_name ? 'Piano' : ''}
                   </span>
                 </div>
@@ -365,11 +365,11 @@
         </div>
 
         <!-- Botón para Citar en este Día -->
-        <div class="p-1.5 border-t border-grid] bg-alt]">
+        <div class="p-1.5 border-t border-grid bg-alt">
           <button
             type="button"
             onclick={() => onOpenCitationModal(day.date)}
-            class="w-full py-1.5 bg-raised] hover:bg-raised-hover] text-ink] hover:text-amber] border border-grid] rounded text-xs font-bold font-mono transition-colors"
+            class="w-full py-1.5 bg-raised hover:bg-raised-hover text-ink hover:text-amber border border-grid rounded text-xs font-bold font-mono transition-colors"
           >
             + Citar Ensayo
           </button>
@@ -388,14 +388,14 @@
 
       <div class="tg-modal-body space-y-4">
 
-      <p class="text-dim]">
+      <p class="text-dim">
         Copia todas las clases matutinas, requerimientos de sonido, maestros y bloques de ensayo desde el día origen al día destino.
       </p>
 
       <div class="space-y-3">
         <div>
-          <label for="weekly-copy-source" class="block text-[10px] uppercase font-bold text-dim] mb-1">Día Origen (Fuente)</label>
-          <select id="weekly-copy-source" bind:value={copySourceDate} class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs text-ink] font-mono">
+          <label for="weekly-copy-source" class="block text-[10px] uppercase font-bold text-dim mb-1">Día Origen (Fuente)</label>
+          <select id="weekly-copy-source" bind:value={copySourceDate} class="w-full h-10 px-3 bg-void border border-grid rounded text-xs text-ink font-mono">
             {#each weekDays as d}
               <option value={d.date}>{d.dayName} {d.date} ({d.schedule?.rehearsal_blocks.length || 0} ensayos)</option>
             {/each}
@@ -403,8 +403,8 @@
         </div>
 
         <div>
-          <label for="weekly-copy-target" class="block text-[10px] uppercase font-bold text-dim] mb-1">Día Destino</label>
-          <select id="weekly-copy-target" bind:value={copyTargetDate} class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs text-ink] font-mono">
+          <label for="weekly-copy-target" class="block text-[10px] uppercase font-bold text-dim mb-1">Día Destino</label>
+          <select id="weekly-copy-target" bind:value={copyTargetDate} class="w-full h-10 px-3 bg-void border border-grid rounded text-xs text-ink font-mono">
             {#each weekDays as d}
               <option value={d.date}>{d.dayName} {d.date}</option>
             {/each}

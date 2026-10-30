@@ -92,16 +92,16 @@
   <!-- Cabecera de Depósito con Botón de Alta -->
   <div class="flex items-center justify-between gap-2">
     <div>
-      <h3 class="text-xs font-bold uppercase tracking-wider text-ink]">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-ink">
         Depósito de Calzado & Stock
       </h3>
-      <p class="text-[10px] text-dim] font-mono">
+      <p class="text-[10px] text-dim font-mono">
         {filteredItems.length} {filteredItems.length === 1 ? 'ítem disponible' : 'ítems en catálogo'}
       </p>
     </div>
     <button
       onclick={() => (showNewItemModal = true)}
-      class="h-7 px-2.5 bg-amber] hover:bg-amber] text-void] font-bold text-xs rounded transition-colors flex items-center gap-1 shrink-0"
+      class="h-7 px-2.5 bg-amber hover:bg-amber text-void font-bold text-xs rounded transition-colors flex items-center gap-1 shrink-0"
     >
       <span>+</span>
       <span>Nuevo Producto</span>
@@ -110,7 +110,7 @@
 
   <!-- Buscador Táctil con Limpieza Rápida -->
   <div class="relative">
-    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-amber]">
+    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-amber">
       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
       </svg>
@@ -120,12 +120,12 @@
       bind:value={searchQuery}
       oninput={() => loadStock()}
       placeholder="Filtrar por marca, modelo o código..."
-      class="w-full h-9 pl-9 pr-9 bg-void] border border-grid] focus:border-amber] rounded text-xs font-medium text-ink] placeholder-dim] outline-none transition-colors"
+      class="w-full h-9 pl-9 pr-9 bg-void border border-grid focus:border-amber rounded text-xs font-medium text-ink placeholder-dim outline-none transition-colors"
     />
     {#if searchQuery}
       <button
         onclick={() => { searchQuery = ''; loadStock(); }}
-        class="absolute right-1 top-0.5 h-8 w-8 flex items-center justify-center text-dim] hover:text-white font-mono text-xs font-bold"
+        class="absolute right-1 top-0.5 h-8 w-8 flex items-center justify-center text-dim hover:text-white font-mono text-xs font-bold"
       >
         ✕
       </button>
@@ -136,31 +136,31 @@
   <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-xs">
     <button
       onclick={() => { categoryFilter = 'ALL'; loadStock(); }}
-      class="h-7 px-2.5 rounded text-[11px] font-medium transition-colors whitespace-nowrap {categoryFilter === 'ALL' ? 'bg-amber] text-black font-semibold' : 'bg-raised] text-dim] hover:text-ink] border border-grid]'}"
+      class="h-7 px-2.5 rounded text-[11px] font-medium transition-colors whitespace-nowrap {categoryFilter === 'ALL' ? 'bg-amber text-black font-semibold' : 'bg-raised text-dim hover:text-ink border border-grid'}"
     >
       Todas
     </button>
     <button
       onclick={() => { categoryFilter = 'POINTE'; loadStock(); }}
-      class="h-7 px-2.5 rounded text-[11px] font-medium transition-colors whitespace-nowrap {categoryFilter === 'POINTE' ? 'bg-amber] text-black font-semibold' : 'bg-raised] text-dim] hover:text-ink] border border-grid]'}"
+      class="h-7 px-2.5 rounded text-[11px] font-medium transition-colors whitespace-nowrap {categoryFilter === 'POINTE' ? 'bg-amber text-black font-semibold' : 'bg-raised text-dim hover:text-ink border border-grid'}"
     >
       Puntas
     </button>
     <button
       onclick={() => { categoryFilter = 'FLAT'; loadStock(); }}
-      class="h-7 px-2.5 rounded text-[11px] font-medium transition-colors whitespace-nowrap {categoryFilter === 'FLAT' ? 'bg-amber] text-black font-semibold' : 'bg-raised] text-dim] hover:text-ink] border border-grid]'}"
+      class="h-7 px-2.5 rounded text-[11px] font-medium transition-colors whitespace-nowrap {categoryFilter === 'FLAT' ? 'bg-amber text-black font-semibold' : 'bg-raised text-dim hover:text-ink border border-grid'}"
     >
       Media Punta
     </button>
     <button
       onclick={() => { categoryFilter = 'APPAREL'; loadStock(); }}
-      class="h-7 px-2.5 rounded text-[11px] font-medium transition-colors whitespace-nowrap {categoryFilter === 'APPAREL' ? 'bg-amber] text-black font-semibold' : 'bg-raised] text-dim] hover:text-ink] border border-grid]'}"
+      class="h-7 px-2.5 rounded text-[11px] font-medium transition-colors whitespace-nowrap {categoryFilter === 'APPAREL' ? 'bg-amber text-black font-semibold' : 'bg-raised text-dim hover:text-ink border border-grid'}"
     >
       Indumentaria
     </button>
     <button
       onclick={() => { categoryFilter = 'LOW'; loadStock(); }}
-      class="h-7 px-2.5 rounded text-[11px] font-medium transition-colors whitespace-nowrap {categoryFilter === 'LOW' ? 'bg-red] text-white font-semibold' : 'bg-raised] text-red] hover:bg-red]/20 border border-red]/30'}"
+      class="h-7 px-2.5 rounded text-[11px] font-medium transition-colors whitespace-nowrap {categoryFilter === 'LOW' ? 'bg-red text-white font-semibold' : 'bg-raised text-red hover:bg-red/20 border border-red/30'}"
     >
       Stock Bajo
     </button>
@@ -169,15 +169,15 @@
   <!-- Lista de Productos en Tarjetas Ergonómicas One UI -->
   <div class="space-y-2">
     {#if isLoading}
-      <div class="text-center py-6 text-dim] text-xs font-mono">
+      <div class="text-center py-6 text-dim text-xs font-mono">
         Consultando catálogo SQLite WAL...
       </div>
     {:else if filteredItems.length === 0}
-      <div class="text-center py-8 bg-panel] rounded border border-grid] text-dim] text-xs space-y-2">
+      <div class="text-center py-8 bg-panel rounded border border-grid text-dim text-xs space-y-2">
         <p>No se encontraron productos para los filtros seleccionados.</p>
         <button
           onclick={() => (showNewItemModal = true)}
-          class="px-3 py-1 bg-raised] hover:bg-raised-hover] text-amber] border border-amber]/40 rounded text-xs font-bold"
+          class="px-3 py-1 bg-raised hover:bg-raised-hover text-amber border border-amber/40 rounded text-xs font-bold"
         >
           + Dar de alta este producto
         </button>
@@ -187,67 +187,67 @@
         {@const isCritical = item.physical_qty < 2}
         {@const isLow = item.physical_qty >= 2 && item.physical_qty < 5}
         {@const isBusy = updatingItemId === item.id}
-        <div class="bg-panel] border {isCritical ? 'border-red]/50' : isLow ? 'border-amber-500/40' : 'border-grid]'} rounded-md p-3 space-y-2 text-ink] shadow-sm">
+        <div class="bg-panel border {isCritical ? 'border-red/50' : isLow ? 'border-amber-500/40' : 'border-grid'} rounded-md p-3 space-y-2 text-ink shadow-sm">
           
           <!-- Encabezado de Producto -->
           <div class="flex items-start justify-between gap-2">
             <div class="min-w-0">
               <div class="flex items-center gap-1.5 flex-wrap">
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-raised] text-amber] border border-grid]">
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-raised text-amber border border-grid">
                   {item.brand}
                 </span>
-                <span class="text-xs font-bold text-ink] truncate">
+                <span class="text-xs font-bold text-ink truncate">
                   {item.model_name}
                 </span>
               </div>
-              <div class="text-[11px] font-mono text-dim] mt-0.5 flex items-center gap-1.5">
+              <div class="text-[11px] font-mono text-dim mt-0.5 flex items-center gap-1.5">
                 <span>{item.raw_factory_code || item.sku_code}</span>
                 {#if item.storage_bin_location}
                   <span>•</span>
-                  <span class="text-cyan]">Loc: {item.storage_bin_location}</span>
+                  <span class="text-cyan">Loc: {item.storage_bin_location}</span>
                 {/if}
               </div>
             </div>
 
             <!-- Cantidad en Stock -->
             <div class="text-right font-mono shrink-0">
-              <div class="text-[9px] text-dim] uppercase font-bold">Físico / Libre</div>
-              <div class="text-base font-black {isCritical ? 'text-red]' : isLow ? 'text-amber-400' : 'text-green]'}">
-                {item.physical_qty} <span class="text-xs font-normal text-dim]">({item.free_available_qty})</span>
+              <div class="text-[9px] text-dim uppercase font-bold">Físico / Libre</div>
+              <div class="text-base font-black {isCritical ? 'text-red' : isLow ? 'text-amber-400' : 'text-green'}">
+                {item.physical_qty} <span class="text-xs font-normal text-dim">({item.free_available_qty})</span>
               </div>
             </div>
           </div>
 
           <!-- Detalles de Talle, Ancho y Material -->
-          <div class="grid grid-cols-3 gap-1.5 bg-void] p-1.5 rounded border border-grid] text-[10px] font-mono">
+          <div class="grid grid-cols-3 gap-1.5 bg-void p-1.5 rounded border border-grid text-[10px] font-mono">
             <div>
-              <span class="text-dim] block text-[8px] uppercase">Talle</span>
-              <span class="font-bold text-ink]">{item.size_value} {item.width_value ? `/${item.width_value}` : ''}</span>
+              <span class="text-dim block text-[8px] uppercase">Talle</span>
+              <span class="font-bold text-ink">{item.size_value} {item.width_value ? `/${item.width_value}` : ''}</span>
             </div>
             <div>
-              <span class="text-dim] block text-[8px] uppercase">Color / Mat.</span>
-              <span class="text-ink] truncate block">{item.color}</span>
+              <span class="text-dim block text-[8px] uppercase">Color / Mat.</span>
+              <span class="text-ink truncate block">{item.color}</span>
             </div>
             <div>
-              <span class="text-dim] block text-[8px] uppercase">Estado</span>
+              <span class="text-dim block text-[8px] uppercase">Estado</span>
               {#if isCritical}
-                <span class="text-red] font-bold">CRÍTICO</span>
+                <span class="text-red font-bold">CRÍTICO</span>
               {:else if isLow}
                 <span class="text-amber-400 font-bold">BAJO</span>
               {:else}
-                <span class="text-green] font-bold">OK</span>
+                <span class="text-green font-bold">OK</span>
               {/if}
             </div>
           </div>
 
           <!-- Botones de Acción Rápida -->
-          <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-grid]/60">
-            <span class="text-[10px] text-dim] font-mono">Sumar:</span>
+          <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-grid/60">
+            <span class="text-[10px] text-dim font-mono">Sumar:</span>
             <div class="flex items-center gap-1">
               <button
                 disabled={isBusy}
                 onclick={() => adjustStock(item, 1)}
-                class="h-7 px-2.5 bg-raised] hover:bg-raised-hover] text-ink] rounded text-[11px] font-mono font-bold border border-grid] active:scale-95 transition-transform"
+                class="h-7 px-2.5 bg-raised hover:bg-raised-hover text-ink rounded text-[11px] font-mono font-bold border border-grid active:scale-95 transition-transform"
                 title="Sumar 1 par al stock físico"
               >
                 +1
@@ -255,7 +255,7 @@
               <button
                 disabled={isBusy}
                 onclick={() => adjustStock(item, 5)}
-                class="h-7 px-2.5 bg-raised] hover:bg-raised-hover] text-ink] rounded text-[11px] font-mono font-bold border border-grid] active:scale-95 transition-transform"
+                class="h-7 px-2.5 bg-raised hover:bg-raised-hover text-ink rounded text-[11px] font-mono font-bold border border-grid active:scale-95 transition-transform"
                 title="Sumar 5 pares al stock físico"
               >
                 +5
@@ -263,7 +263,7 @@
               <button
                 disabled={isBusy}
                 onclick={() => adjustStock(item, 10)}
-                class="h-7 px-2.5 bg-raised] hover:bg-raised-hover] text-ink] rounded text-[11px] font-mono font-bold border border-grid] active:scale-95 transition-transform"
+                class="h-7 px-2.5 bg-raised hover:bg-raised-hover text-ink rounded text-[11px] font-mono font-bold border border-grid active:scale-95 transition-transform"
                 title="Sumar 10 pares al stock físico"
               >
                 +10

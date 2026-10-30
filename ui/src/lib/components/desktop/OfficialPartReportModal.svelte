@@ -155,33 +155,33 @@
     <div class="tg-modal max-w-5xl overflow-y-auto p-4 md:p-6 relative print:bg-white print:border-none print:shadow-none print:p-0 print:max-h-none print:overflow-visible">
       
       <!-- Barra superior no imprimible -->
-      <div class="flex flex-wrap items-center justify-between pb-3 mb-4 border-b border-grid] print:hidden gap-3">
+      <div class="flex flex-wrap items-center justify-between pb-3 mb-4 border-b border-grid print:hidden gap-3">
         <div>
-          <h2 class="text-sm font-semibold text-ink] uppercase tracking-wide">
+          <h2 class="text-sm font-semibold text-ink uppercase tracking-wide">
             Generador Oficial de Partes Diarios y Semanales
           </h2>
-          <p class="text-xs text-dim] mt-0.5">
+          <p class="text-xs text-dim mt-0.5">
             Formato exacto de inspección del Ballet Oficial de Córdoba
           </p>
         </div>
 
         <!-- Conmutador Parte del Día vs Semana -->
-        <div class="inline-flex bg-void] p-1 rounded border border-grid]">
+        <div class="inline-flex bg-void p-1 rounded border border-grid">
           <button
             onclick={() => activeReportTab = 'today'}
-            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeReportTab === 'today' ? 'bg-amber] text-black font-semibold' : 'text-dim] hover:text-ink]'}"
+            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeReportTab === 'today' ? 'bg-amber text-black font-semibold' : 'text-dim hover:text-ink'}"
           >
             Parte de Hoy ({schedule.schedule_date})
           </button>
           <button
             onclick={() => activeReportTab = 'classes'}
-            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeReportTab === 'classes' ? 'bg-amber] text-black font-semibold' : 'text-dim] hover:text-ink]'}"
+            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeReportTab === 'classes' ? 'bg-amber text-black font-semibold' : 'text-dim hover:text-ink'}"
           >
             Semana Clases
           </button>
           <button
             onclick={() => activeReportTab = 'rehearsals'}
-            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeReportTab === 'rehearsals' ? 'bg-amber] text-black font-semibold' : 'text-dim] hover:text-ink]'}"
+            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeReportTab === 'rehearsals' ? 'bg-amber text-black font-semibold' : 'text-dim hover:text-ink'}"
           >
             Semana Ensayos
           </button>
@@ -192,14 +192,14 @@
           {#if activeReportTab === 'classes'}
             <button
               onclick={exportClassesExcel}
-              class="px-3 py-1.5 bg-raised] hover:bg-grid] text-green] border border-grid] rounded text-xs font-semibold transition-colors"
+              class="px-3 py-1.5 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold transition-colors"
             >
               Exportar Excel (.csv)
             </button>
           {:else}
             <button
               onclick={exportRehearsalsExcel}
-              class="px-3 py-1.5 bg-raised] hover:bg-grid] text-green] border border-grid] rounded text-xs font-semibold transition-colors"
+              class="px-3 py-1.5 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold transition-colors"
             >
               Exportar Excel (.csv)
             </button>
@@ -207,7 +207,7 @@
 
           <button
             onclick={() => (printPreviewOpen = true)}
-            class="px-3 py-1.5 bg-raised] hover:bg-grid] text-ink] border border-grid] rounded text-xs font-semibold transition-colors"
+            class="px-3 py-1.5 bg-raised hover:bg-grid text-ink border border-grid rounded text-xs font-semibold transition-colors"
           >
             Imprimir / Guardar PDF
           </button>
@@ -365,7 +365,7 @@
                   {#each d.slots as s, idx}
                     <tr class="border-b border-black">
                       {#if idx === 0}
-                        <td rowspan="2" class="border border-black font-bold bg-amber] text-xs md:text-sm py-2 px-2 align-middle">
+                        <td rowspan="2" class="border border-black font-bold bg-amber text-xs md:text-sm py-2 px-2 align-middle">
                           {d.day}
                         </td>
                       {/if}
@@ -406,7 +406,7 @@
                   {#each d.blocks as b, idx}
                     <tr class="border-b border-black">
                       {#if idx === 0}
-                        <td rowspan={d.blocks.length} class="border border-black font-bold bg-amber] text-xs md:text-sm py-2 px-2 align-middle">
+                        <td rowspan={d.blocks.length} class="border border-black font-bold bg-amber text-xs md:text-sm py-2 px-2 align-middle">
                           {d.day}
                         </td>
                       {/if}

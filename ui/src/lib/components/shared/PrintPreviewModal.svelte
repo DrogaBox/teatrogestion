@@ -121,14 +121,14 @@
         <ModalHeader title={title} subtitle={subtitle} onclose={onclose}>
           {#if dirty}
             <span
-              class="h-6 px-2 inline-flex items-center rounded bg-amber]/15 border border-amber]/50 text-amber] text-[10px] font-bold uppercase tracking-wider"
+              class="h-6 px-2 inline-flex items-center rounded bg-amber/15 border border-amber/50 text-amber text-[10px] font-bold uppercase tracking-wider"
             >
               Editado
             </span>
           {/if}
         </ModalHeader>
-        <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-grid] bg-panel]">
-          <p class="text-[11px] text-dim] font-mono min-w-0">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-grid bg-panel">
+          <p class="text-[11px] text-dim font-mono min-w-0">
             Edite el texto directamente sobre el documento. Los cambios valen solo para esta copia impresa.
           </p>
           <div class="flex items-center gap-2 shrink-0">
@@ -142,8 +142,8 @@
               Restablecer
             </button>
             {#if onsave}
-              <label class="flex items-center gap-1.5 text-[11px] text-dim] font-mono select-none" title="Los cambios se aplican además al registro con el guardado habitual de este documento">
-                <input type="checkbox" bind:checked={saveChecked} class="accent-amber]" />
+              <label class="flex items-center gap-1.5 text-[11px] text-dim font-mono select-none" title="Los cambios se aplican además al registro con el guardado habitual de este documento">
+                <input type="checkbox" bind:checked={saveChecked} class="accent-amber" />
                 Guardar cambios en el registro
               </label>
             {/if}
@@ -171,12 +171,12 @@
             {@html docHtml}
           </div>
         {:else}
-          <div class="p-10 text-center text-xs text-dim] font-mono">No hay documento para mostrar.</div>
+          <div class="p-10 text-center text-xs text-dim font-mono">No hay documento para mostrar.</div>
         {/if}
       </div>
 
       {#if errorMsg}
-        <div class="px-4 py-2 bg-red]/10 border-t border-red]/40 text-red] text-xs font-mono">{errorMsg}</div>
+        <div class="px-4 py-2 bg-red/10 border-t border-red/40 text-red text-xs font-mono">{errorMsg}</div>
       {/if}
     </div>
   </div>

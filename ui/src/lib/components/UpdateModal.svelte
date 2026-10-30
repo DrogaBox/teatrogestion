@@ -105,12 +105,12 @@
 
 {#if isOpen}
   <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 md:p-6" role="dialog" aria-modal="true" aria-label="Actualizaciones" use:modalBehavior={{ onclose: onClose }}>
-    <div class="tg-modal max-w-xl text-ink]">
+    <div class="tg-modal max-w-xl text-ink">
       <ModalHeader title="Actualizaciones" subtitle="Versión instalada: {status?.version ?? '…'}" onclose={onClose} />
 
       <div class="flex-1 overflow-y-auto p-5 space-y-4">
         {#if status && !status.platform}
-          <p class="text-sm text-dim]">La actualización automática solo está disponible en Windows, Linux y en el celular Android.</p>
+          <p class="text-sm text-dim">La actualización automática solo está disponible en Windows, Linux y en el celular Android.</p>
         {:else if status && !status.has_token}
           <div class="space-y-2">
             <p class="text-sm">Para buscar versiones nuevas hace falta el <strong>token de actualización</strong>. Se escribe una sola vez en este equipo.</p>
@@ -119,9 +119,9 @@
               bind:value={tokenInput}
               placeholder="Token de actualización"
               autocomplete="off"
-              class="w-full h-11 px-3 bg-void] border border-grid] focus:border-amber] rounded text-sm outline-none"
+              class="w-full h-11 px-3 bg-void border border-grid focus:border-amber rounded text-sm outline-none"
             />
-            <button type="button" disabled={savingToken || !tokenInput.trim()} onclick={saveToken} class="px-4 py-2.5 rounded bg-amber] hover:bg-amber] disabled:opacity-50 text-void] text-sm font-bold">
+            <button type="button" disabled={savingToken || !tokenInput.trim()} onclick={saveToken} class="px-4 py-2.5 rounded bg-amber hover:bg-amber disabled:opacity-50 text-void text-sm font-bold">
               {savingToken ? 'Comprobando…' : 'Guardar y buscar'}
             </button>
           </div>
@@ -129,30 +129,30 @@
           {#if info}
             <div class="space-y-3">
               <div class="flex items-baseline gap-2 flex-wrap">
-                <span class="px-2 py-0.5 rounded bg-green] text-void] text-xs font-bold font-mono">Versión nueva {info.version}</span>
-                <span class="text-xs text-dim] font-mono">{dateOf(info.published_at)} · {mb(info.asset_size)}</span>
+                <span class="px-2 py-0.5 rounded bg-green text-void text-xs font-bold font-mono">Versión nueva {info.version}</span>
+                <span class="text-xs text-dim font-mono">{dateOf(info.published_at)} · {mb(info.asset_size)}</span>
               </div>
               <h3 class="text-sm font-bold text-white">{info.name}</h3>
-              <div class="text-[13px] leading-relaxed whitespace-pre-wrap bg-void] border border-grid] rounded p-3 max-h-72 overflow-y-auto">{info.notes || 'Sin notas.'}</div>
-              <button type="button" disabled={phase === 'downloading' || phase === 'done'} onclick={install} class="w-full px-4 py-3 rounded bg-amber] hover:bg-amber] disabled:opacity-60 text-void] text-sm font-bold">
+              <div class="text-[13px] leading-relaxed whitespace-pre-wrap bg-void border border-grid rounded p-3 max-h-72 overflow-y-auto">{info.notes || 'Sin notas.'}</div>
+              <button type="button" disabled={phase === 'downloading' || phase === 'done'} onclick={install} class="w-full px-4 py-3 rounded bg-amber hover:bg-amber disabled:opacity-60 text-void text-sm font-bold">
                 {phase === 'downloading' ? 'Descargando y verificando…' : 'Descargar e instalar'}
               </button>
-              <p class="text-xs text-dim]">Sus datos y su licencia no se modifican. Antes de reemplazar el programa se guarda una copia de seguridad.</p>
+              <p class="text-xs text-dim">Sus datos y su licencia no se modifican. Antes de reemplazar el programa se guarda una copia de seguridad.</p>
             </div>
           {:else}
-            <button type="button" disabled={phase === 'checking'} onclick={check} class="px-4 py-2.5 rounded bg-raised] hover:bg-raised-hover] border border-grid] text-sm font-bold disabled:opacity-60">
+            <button type="button" disabled={phase === 'checking'} onclick={check} class="px-4 py-2.5 rounded bg-raised hover:bg-raised-hover border border-grid text-sm font-bold disabled:opacity-60">
               {phase === 'checking' ? 'Buscando…' : 'Buscar actualizaciones'}
             </button>
           {/if}
         {/if}
 
-        {#if message}<p class="text-sm text-green]">{message}</p>{/if}
-        {#if error}<p class="text-sm text-red]">{error}</p>{/if}
+        {#if message}<p class="text-sm text-green">{message}</p>{/if}
+        {#if error}<p class="text-sm text-red">{error}</p>{/if}
       </div>
 
       {#if status?.has_token}
         <div class="tg-modal-foot">
-          <button type="button" onclick={forgetToken} class="text-xs text-dim] hover:text-white underline">Quitar el token de este equipo</button>
+          <button type="button" onclick={forgetToken} class="text-xs text-dim hover:text-white underline">Quitar el token de este equipo</button>
           <button type="button" onclick={onClose} class="tg-btn">Cerrar</button>
         </div>
       {/if}

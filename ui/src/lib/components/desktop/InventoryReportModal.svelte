@@ -193,17 +193,17 @@
     <div class="tg-modal max-w-6xl relative print:bg-white print:border-none print:shadow-none print:p-0 print:max-h-none print:overflow-visible">
       
       <!-- Barra Superior (Oculta en Impresión) -->
-      <div class="bg-raised] border-b border-grid] px-4 py-2.5 shrink-0 flex items-center justify-between print:hidden">
+      <div class="bg-raised border-b border-grid px-4 py-2.5 shrink-0 flex items-center justify-between print:hidden">
         <div class="flex items-center gap-2.5">
-          <span class="text-[10px] font-mono font-bold text-amber] bg-void] px-2 py-0.5 rounded border border-grid]">INVENTARIO</span>
+          <span class="text-[10px] font-mono font-bold text-amber bg-void px-2 py-0.5 rounded border border-grid">INVENTARIO</span>
           <div>
-            <h2 class="text-xs font-bold text-ink] uppercase tracking-wider flex items-center gap-2">
+            <h2 class="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2">
               Inventario Oficial & Control de Depósito
-              <span class="text-[10px] font-mono text-dim]">
+              <span class="text-[10px] font-mono text-dim">
                 ({stockItems.length} ítems)
               </span>
             </h2>
-            <p class="text-[11px] text-dim]">
+            <p class="text-[11px] text-dim">
               Ballet Oficial de Córdoba • Teatro del Libertador San Martín
             </p>
           </div>
@@ -213,14 +213,14 @@
         <div class="flex items-center gap-2 flex-wrap">
           <button
             onclick={openNewItem}
-            class="px-2.5 py-1 bg-amber] hover:bg-amber] text-void] rounded text-xs font-bold transition-colors"
+            class="px-2.5 py-1 bg-amber hover:bg-amber text-void rounded text-xs font-bold transition-colors"
           >
             + Nuevo Ítem
           </button>
 
           <button
             onclick={exportExcel}
-            class="px-2.5 py-1 bg-raised] hover:bg-raised-hover] text-green] border border-green]/40 rounded text-xs font-bold transition-colors"
+            class="px-2.5 py-1 bg-raised hover:bg-raised-hover text-green border border-green/40 rounded text-xs font-bold transition-colors"
             title="Exportar a Microsoft Excel con acentos legibles (BOM UTF-8)"
           >
             Exportar Excel
@@ -228,7 +228,7 @@
 
           <button
             onclick={() => (printPreviewOpen = true)}
-            class="px-2.5 py-1 bg-raised] hover:bg-raised-hover] text-ink] border border-grid] rounded text-xs font-bold transition-colors"
+            class="px-2.5 py-1 bg-raised hover:bg-raised-hover text-ink border border-grid rounded text-xs font-bold transition-colors"
             title="Imprimir o Guardar en PDF con formato oficial"
           >
             Exportar PDF / Imprimir
@@ -248,7 +248,7 @@
       </div>
 
       <!-- Filtros Rápidos (Ocultos en Impresión) -->
-      <div class="bg-alt] px-4 py-2 border-b border-grid] print:hidden space-y-2">
+      <div class="bg-alt px-4 py-2 border-b border-grid print:hidden space-y-2">
         <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
           
           <!-- Buscador por texto -->
@@ -258,12 +258,12 @@
               bind:value={searchQuery}
               oninput={handleFilterChange}
               placeholder="Buscar por SKU, modelo, marca, color o talle..."
-              class="w-full h-8 pl-3 pr-8 bg-void] border border-grid] focus:border-amber] rounded text-xs font-bold text-ink] outline-none placeholder-dim]"
+              class="w-full h-8 pl-3 pr-8 bg-void border border-grid focus:border-amber rounded text-xs font-bold text-ink outline-none placeholder-dim"
             />
             {#if searchQuery}
               <button
                 onclick={() => { searchQuery = ''; handleFilterChange(); }}
-                class="absolute right-2 top-1.5 text-dim] hover:text-white text-xs"
+                class="absolute right-2 top-1.5 text-dim hover:text-white text-xs"
               >
                 ✕
               </button>
@@ -275,7 +275,7 @@
             <select
               bind:value={selectedCategory}
               onchange={handleFilterChange}
-              class="w-full h-8 px-2.5 bg-void] border border-grid] focus:border-amber] rounded text-xs font-bold text-ink] outline-none"
+              class="w-full h-8 px-2.5 bg-void border border-grid focus:border-amber rounded text-xs font-bold text-ink outline-none"
             >
               {#each categoryOptions as opt}
                 <option value={opt.value}>{opt.label}</option>
@@ -285,14 +285,14 @@
 
           <!-- Filtro de Stock Bajo / Alerta -->
           <div class="md:col-span-3 flex items-center">
-            <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-ink]">
+            <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-ink">
               <input
                 type="checkbox"
                 bind:checked={lowStockOnly}
                 onchange={handleFilterChange}
-                class="w-4 h-4 text-amber] rounded bg-void] border-grid]"
+                class="w-4 h-4 text-amber rounded bg-void border-grid"
               />
-              <span class="text-red] font-bold">
+              <span class="text-red font-bold">
                 Solo Alerta de Stock Bajo
               </span>
             </label>
@@ -300,22 +300,22 @@
         </div>
 
         <!-- Tarjetas de Resumen Rápido -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-grid] text-center">
-          <div class="bg-void] p-1.5 rounded border border-grid]">
-            <span class="text-[9px] text-dim] uppercase font-bold block">Stock Físico Total</span>
-            <span class="text-xs font-bold font-mono text-ink]">{totalFisico} un.</span>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-grid text-center">
+          <div class="bg-void p-1.5 rounded border border-grid">
+            <span class="text-[9px] text-dim uppercase font-bold block">Stock Físico Total</span>
+            <span class="text-xs font-bold font-mono text-ink">{totalFisico} un.</span>
           </div>
-          <div class="bg-void] p-1.5 rounded border border-grid]">
-            <span class="text-[9px] text-dim] uppercase font-bold block">Reservas Nominativas</span>
-            <span class="text-xs font-bold font-mono text-amber]">{totalReservado} un.</span>
+          <div class="bg-void p-1.5 rounded border border-grid">
+            <span class="text-[9px] text-dim uppercase font-bold block">Reservas Nominativas</span>
+            <span class="text-xs font-bold font-mono text-amber">{totalReservado} un.</span>
           </div>
-          <div class="bg-void] p-1.5 rounded border border-grid]">
-            <span class="text-[9px] text-dim] uppercase font-bold block">Libre Disponible</span>
-            <span class="text-xs font-bold font-mono text-green]">{totalDisponible} un.</span>
+          <div class="bg-void p-1.5 rounded border border-grid">
+            <span class="text-[9px] text-dim uppercase font-bold block">Libre Disponible</span>
+            <span class="text-xs font-bold font-mono text-green">{totalDisponible} un.</span>
           </div>
-          <div class="bg-void] p-1.5 rounded border border-grid]">
-            <span class="text-[9px] text-dim] uppercase font-bold block">Líneas en Alerta</span>
-            <span class="text-xs font-bold font-mono text-red]">{totalCritico} ítems</span>
+          <div class="bg-void p-1.5 rounded border border-grid">
+            <span class="text-[9px] text-dim uppercase font-bold block">Líneas en Alerta</span>
+            <span class="text-xs font-bold font-mono text-red">{totalCritico} ítems</span>
           </div>
         </div>
       </div>
@@ -323,7 +323,7 @@
       <!-- ================================================================= -->
       <!-- DOCUMENTO IMPRIMIBLE A4 / TABLA DE GESTIÓN OFICIAL                 -->
       <!-- ================================================================= -->
-      <div bind:this={printableEl} class="flex-1 overflow-y-auto p-4 text-ink] print:text-black print:overflow-visible">
+      <div bind:this={printableEl} class="flex-1 overflow-y-auto p-4 text-ink print:text-black print:overflow-visible">
         
         <!-- Encabezado Institucional Exclusivo de Impresión (PDF / Papel) -->
         <div class="hidden print:block text-center pb-4 mb-4 border-b-2 border-black">
@@ -340,18 +340,18 @@
         </div>
 
         {#if isLoading}
-          <div class="py-12 text-center text-dim] font-mono text-xs flex items-center justify-center gap-2">
+          <div class="py-12 text-center text-dim font-mono text-xs flex items-center justify-center gap-2">
             Cargando catálogo de depósito desde SQLite local...
           </div>
         {:else if stockItems.length === 0}
-          <div class="py-12 text-center bg-alt] rounded border border-grid] text-dim] text-xs">
+          <div class="py-12 text-center bg-alt rounded border border-grid text-dim text-xs">
             No se encontraron ítems de inventario para el criterio seleccionado.
           </div>
         {:else}
           <div class="overflow-x-auto print:overflow-visible">
             <table class="w-full text-left border-collapse text-xs print:text-[10px] print:border print:border-black">
               <thead class="print:table-header-group">
-                <tr class="bg-alt] border-b border-grid] text-dim] uppercase tracking-wider font-mono text-[10px] print:bg-slate-200 print:text-black print:border-black">
+                <tr class="bg-alt border-b border-grid text-dim uppercase tracking-wider font-mono text-[10px] print:bg-slate-200 print:text-black print:border-black">
                   <th class="py-2 px-3">Rubro</th>
                   <th class="py-2 px-3">Marca / Modelo</th>
                   <th class="py-2 px-3">Color / Mat.</th>
@@ -363,14 +363,14 @@
                   <th class="py-2 px-2 text-center print:hidden">Acción</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-grid]/60 print:divide-black">
+              <tbody class="divide-y divide-grid/60 print:divide-black">
                 {#each stockItems as it}
-                  <tr class="hover:bg-raised] transition-colors print:hover:bg-transparent print:break-inside-avoid {it.is_low_stock ? 'bg-red]/5 print:bg-slate-100' : 'print:bg-white'}">
+                  <tr class="hover:bg-raised transition-colors print:hover:bg-transparent print:break-inside-avoid {it.is_low_stock ? 'bg-red/5 print:bg-slate-100' : 'print:bg-white'}">
                     <!-- Rubro / Subcategoría -->
-                    <td class="py-2 px-3 font-bold text-ink] print:text-black">
+                    <td class="py-2 px-3 font-bold text-ink print:text-black">
                       <div class="flex items-center gap-1.5">
                         {#if it.is_low_stock}
-                          <span class="text-red] text-[10px] font-mono font-bold print:hidden">[ALERTA]</span>
+                          <span class="text-red text-[10px] font-mono font-bold print:hidden">[ALERTA]</span>
                           <span class="hidden print:inline-block font-mono font-black text-[8px] border border-black px-1 rounded bg-white">ALERTA</span>
                         {/if}
                         <span class="text-[11px] font-mono">{it.subcategory}</span>
@@ -379,46 +379,46 @@
 
                     <!-- Marca y Modelo -->
                     <td class="py-2 px-3">
-                      <div class="font-bold text-ink] print:text-black">{it.brand} {it.model_name}</div>
+                      <div class="font-bold text-ink print:text-black">{it.brand} {it.model_name}</div>
                       {#if it.raw_factory_code}
-                        <div class="text-[10px] font-mono text-amber] print:text-slate-700">{it.raw_factory_code}</div>
+                        <div class="text-[10px] font-mono text-amber print:text-slate-700">{it.raw_factory_code}</div>
                       {:else}
-                        <div class="text-[10px] font-mono text-dim] print:text-slate-600">{it.sku_code}</div>
+                        <div class="text-[10px] font-mono text-dim print:text-slate-600">{it.sku_code}</div>
                       {/if}
                     </td>
 
                     <!-- Color y Material -->
-                    <td class="py-2 px-3 text-dim] print:text-black">
+                    <td class="py-2 px-3 text-dim print:text-black">
                       <div>{it.color}</div>
-                      <div class="text-[10px] text-dim] print:text-slate-600">{it.material}</div>
+                      <div class="text-[10px] text-dim print:text-slate-600">{it.material}</div>
                     </td>
 
                     <!-- Talle y Ancho -->
-                    <td class="py-2 px-3 font-mono font-bold text-ink] print:text-black">
+                    <td class="py-2 px-3 font-mono font-bold text-ink print:text-black">
                       <span>{it.size_value}</span>
                       {#if it.width_value}
-                        <span class="text-amber] print:text-black">/{it.width_value}</span>
+                        <span class="text-amber print:text-black">/{it.width_value}</span>
                       {/if}
-                      <span class="text-[10px] text-dim] block font-normal">({it.size_system})</span>
+                      <span class="text-[10px] text-dim block font-normal">({it.size_system})</span>
                     </td>
 
                     <!-- Stock Físico -->
-                    <td class="py-2 px-2 text-center font-mono font-bold text-ink] print:text-black">
+                    <td class="py-2 px-2 text-center font-mono font-bold text-ink print:text-black">
                       {it.physical_qty}
                     </td>
 
                     <!-- Stock Reservado -->
-                    <td class="py-2 px-2 text-center font-mono font-bold {it.reserved_qty > 0 ? 'text-amber]' : 'text-dim]'} print:text-black">
+                    <td class="py-2 px-2 text-center font-mono font-bold {it.reserved_qty > 0 ? 'text-amber' : 'text-dim'} print:text-black">
                       {it.reserved_qty}
                     </td>
 
                     <!-- Libre Disponible -->
-                    <td class="py-2 px-2 text-center font-mono font-bold {it.free_available_qty > 0 ? 'text-green]' : 'text-red]'} print:text-black">
+                    <td class="py-2 px-2 text-center font-mono font-bold {it.free_available_qty > 0 ? 'text-green' : 'text-red'} print:text-black">
                       {it.free_available_qty}
                     </td>
 
                     <!-- Ubicación en Estante / Gaveta -->
-                    <td class="py-2 px-3 text-[11px] text-dim] font-mono print:text-black">
+                    <td class="py-2 px-3 text-[11px] text-dim font-mono print:text-black">
                       {it.storage_bin_location || '—'}
                     </td>
 
@@ -427,14 +427,14 @@
                       <div class="flex items-center justify-center gap-1">
                         <button
                           onclick={() => openDirectDeliver(it)}
-                          class="px-2 py-0.5 rounded bg-raised] hover:bg-green]/20 text-green] text-xs font-mono border border-grid]"
+                          class="px-2 py-0.5 rounded bg-raised hover:bg-green/20 text-green text-xs font-mono border border-grid"
                           title="Entregar o asignar este ítem a un bailarín o agente"
                         >
                           Entregar
                         </button>
                         <button
                           onclick={() => openEditItem(it)}
-                          class="px-2 py-0.5 rounded bg-raised] hover:bg-grid] text-ink] text-xs font-mono border border-grid]"
+                          class="px-2 py-0.5 rounded bg-raised hover:bg-grid text-ink text-xs font-mono border border-grid"
                           title="Modificar stock o ubicación"
                         >
                           Editar
@@ -500,27 +500,27 @@
       <ModalHeader title="Entregar / Asignar Ítem" subtitle="{deliverItem.brand} {deliverItem.model_name}" onclose={() => showDeliverModal = false} />
 
       <div class="tg-modal-body space-y-3">
-        <div class="bg-void] p-3 rounded border border-grid] text-xs space-y-1">
+        <div class="bg-void p-3 rounded border border-grid text-xs space-y-1">
           <div class="flex justify-between">
-            <span class="text-dim]">Rubro:</span>
-            <span class="font-medium text-ink]">{deliverItem.subcategory}</span>
+            <span class="text-dim">Rubro:</span>
+            <span class="font-medium text-ink">{deliverItem.subcategory}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-dim]">Talle / Ancho:</span>
-            <span class="font-mono text-ink]">{deliverItem.size_value} {deliverItem.width_value || ''}</span>
+            <span class="text-dim">Talle / Ancho:</span>
+            <span class="font-mono text-ink">{deliverItem.size_value} {deliverItem.width_value || ''}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-dim]">Libres en depósito:</span>
-            <span class="font-mono font-bold text-green]">{deliverItem.free_available_qty} unidades</span>
+            <span class="text-dim">Libres en depósito:</span>
+            <span class="font-mono font-bold text-green">{deliverItem.free_available_qty} unidades</span>
           </div>
         </div>
 
         <div>
-          <label for="deliver-dest-select" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Destinatario (Bailarín / Agente)</label>
+          <label for="deliver-dest-select" class="block text-[10px] font-semibold uppercase tracking-wider text-dim mb-1">Destinatario (Bailarín / Agente)</label>
           <select
             id="deliver-dest-select"
             bind:value={deliverPersonnelId}
-            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-medium text-ink] outline-none focus:border-amber]"
+            class="w-full h-10 px-3 bg-void border border-grid rounded text-xs font-medium text-ink outline-none focus:border-amber"
           >
             {#each personnelList as p}
               <option value={p.id}>
@@ -531,24 +531,24 @@
         </div>
 
         <div>
-          <label for="deliver-qty-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Cantidad a Entregar</label>
+          <label for="deliver-qty-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim mb-1">Cantidad a Entregar</label>
           <input
             id="deliver-qty-input"
             type="number"
             min="1"
             max={deliverItem.free_available_qty || 1}
             bind:value={deliverQty}
-            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs font-bold text-ink] font-mono text-center outline-none focus:border-amber]"
+            class="w-full h-10 px-3 bg-void border border-grid rounded text-xs font-bold text-ink font-mono text-center outline-none focus:border-amber"
           />
         </div>
 
         <div>
-          <label for="deliver-notes-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim] mb-1">Observaciones / Destino</label>
+          <label for="deliver-notes-input" class="block text-[10px] font-semibold uppercase tracking-wider text-dim mb-1">Observaciones / Destino</label>
           <input
             id="deliver-notes-input"
             type="text"
             bind:value={deliverNotes}
-            class="w-full h-10 px-3 bg-void] border border-grid] rounded text-xs text-ink] outline-none focus:border-amber]"
+            class="w-full h-10 px-3 bg-void border border-grid rounded text-xs text-ink outline-none focus:border-amber"
           />
         </div>
       </div>

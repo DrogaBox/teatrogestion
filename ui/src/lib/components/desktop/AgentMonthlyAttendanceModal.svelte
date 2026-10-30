@@ -173,27 +173,27 @@
     <div class="tg-modal max-w-6xl relative print:bg-white print:border-none print:shadow-none print:p-0 print:max-h-none print:overflow-visible p-4 md:p-6">
       
       <!-- Barra Superior (No imprimible) -->
-      <div class="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-grid] print:hidden gap-3">
+      <div class="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-grid print:hidden gap-3">
         <div>
-          <h2 class="text-sm font-semibold text-ink] uppercase tracking-wide">
+          <h2 class="text-sm font-semibold text-ink uppercase tracking-wide">
             Planilla Mensual de Asistencia & Novedades para RRHH
           </h2>
-          <p class="text-xs text-dim] mt-0.5">
+          <p class="text-xs text-dim mt-0.5">
             Cómputo individual de asistencia, tardanzas (TC), carpetas médicas y presentismo mensual
           </p>
         </div>
 
         <!-- Conmutador Individual vs Resumen General -->
-        <div class="inline-flex bg-void] p-1 rounded border border-grid]">
+        <div class="inline-flex bg-void p-1 rounded border border-grid">
           <button
             onclick={() => handleTabChange('individual')}
-            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'individual' ? 'bg-amber] text-black font-semibold' : 'text-dim] hover:text-ink]'}"
+            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'individual' ? 'bg-amber text-black font-semibold' : 'text-dim hover:text-ink'}"
           >
             Planilla por Agente
           </button>
           <button
             onclick={() => handleTabChange('summary')}
-            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'summary' ? 'bg-amber] text-black font-semibold' : 'text-dim] hover:text-ink]'}"
+            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'summary' ? 'bg-amber text-black font-semibold' : 'text-dim hover:text-ink'}"
           >
             Resumen General Compañía (RRHH)
           </button>
@@ -204,14 +204,14 @@
           {#if activeTab === 'individual'}
             <button
               onclick={exportIndividualCsv}
-              class="px-3 py-1.5 bg-raised] hover:bg-grid] text-green] border border-grid] rounded text-xs font-semibold transition-colors"
+              class="px-3 py-1.5 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold transition-colors"
             >
               Exportar Excel (.csv)
             </button>
           {:else}
             <button
               onclick={exportSummaryCsv}
-              class="px-3 py-1.5 bg-raised] hover:bg-grid] text-green] border border-grid] rounded text-xs font-semibold transition-colors"
+              class="px-3 py-1.5 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold transition-colors"
             >
               Exportar Resumen RRHH
             </button>
@@ -219,7 +219,7 @@
 
           <button
             onclick={() => (printPreviewOpen = true)}
-            class="px-3 py-1.5 bg-raised] hover:bg-grid] text-ink] border border-grid] rounded text-xs font-semibold transition-colors"
+            class="px-3 py-1.5 bg-raised hover:bg-grid text-ink border border-grid rounded text-xs font-semibold transition-colors"
           >
             Imprimir / PDF Oficial
           </button>
@@ -238,15 +238,15 @@
       </div>
 
       <!-- Barra de Filtros: Selección de Agente, Mes y Año (No imprimible) -->
-      <div class="bg-void] p-3 rounded border border-grid] mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
+      <div class="bg-void p-3 rounded border border-grid mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
         {#if activeTab === 'individual'}
           <div class="flex items-center gap-2 flex-1 min-w-[280px]">
-            <label for="filter-agent-select" class="text-xs font-semibold text-dim] uppercase tracking-wider shrink-0">Agente:</label>
+            <label for="filter-agent-select" class="text-xs font-semibold text-dim uppercase tracking-wider shrink-0">Agente:</label>
             <select
               id="filter-agent-select"
               bind:value={selectedPersonnelId}
               onchange={loadSheet}
-              class="w-full h-9 px-3 bg-panel] border border-grid] rounded text-xs font-medium text-ink] outline-none focus:border-amber]"
+              class="w-full h-9 px-3 bg-panel border border-grid rounded text-xs font-medium text-ink outline-none focus:border-amber"
             >
               {#each personnelList as p}
                 <option value={p.id}>
@@ -259,12 +259,12 @@
 
         <div class="flex items-center gap-3">
           <div class="flex items-center gap-1.5">
-            <label for="filter-month-select" class="text-xs font-semibold text-dim] uppercase tracking-wider">Mes:</label>
+            <label for="filter-month-select" class="text-xs font-semibold text-dim uppercase tracking-wider">Mes:</label>
             <select
               id="filter-month-select"
               bind:value={selectedMonth}
               onchange={() => { if (activeTab === 'individual') loadSheet(); else loadCompanySummary(); }}
-              class="h-9 px-3 bg-panel] border border-grid] rounded text-xs font-medium text-ink] outline-none focus:border-amber]"
+              class="h-9 px-3 bg-panel border border-grid rounded text-xs font-medium text-ink outline-none focus:border-amber"
             >
               {#each months as m}
                 <option value={m.value}>{m.name}</option>
@@ -273,13 +273,13 @@
           </div>
 
           <div class="flex items-center gap-1.5">
-            <label for="filter-year-input" class="text-xs font-semibold text-dim] uppercase tracking-wider">Año:</label>
+            <label for="filter-year-input" class="text-xs font-semibold text-dim uppercase tracking-wider">Año:</label>
             <input
               id="filter-year-input"
               type="number"
               bind:value={selectedYear}
               onchange={() => { if (activeTab === 'individual') loadSheet(); else loadCompanySummary(); }}
-              class="h-9 w-24 px-2.5 bg-panel] border border-grid] rounded text-xs font-mono font-semibold text-amber] text-center outline-none focus:border-amber]"
+              class="h-9 w-24 px-2.5 bg-panel border border-grid rounded text-xs font-mono font-semibold text-amber text-center outline-none focus:border-amber"
             />
           </div>
         </div>

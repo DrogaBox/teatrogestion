@@ -131,7 +131,7 @@
     class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 md:p-6 overflow-y-auto"
     use:modalBehavior={{ onclose: onClose, backdrop: false }}
   >
-    <div class="tg-modal max-w-xl text-ink]">
+    <div class="tg-modal max-w-xl text-ink">
 
       <!-- Encabezado del Modal -->
       <ModalHeader
@@ -141,7 +141,7 @@
       />
 
       {#if errorMessage}
-        <div class="mb-4 p-3 rounded bg-red]/10 border border-red]/40 text-red] text-xs font-medium">
+        <div class="mb-4 p-3 rounded bg-red/10 border border-red/40 text-red text-xs font-medium">
           {errorMessage}
         </div>
       {/if}
@@ -151,14 +151,14 @@
         
         <!-- Rubro / Subcategoría -->
         <div>
-          <label class="block text-dim] font-semibold mb-1 uppercase tracking-wider text-[10px]" for="subcategory-select">
+          <label class="block text-dim font-semibold mb-1 uppercase tracking-wider text-[10px]" for="subcategory-select">
             Rubro / Subcategoría *
           </label>
           <select
             id="subcategory-select"
             value={subcategory}
             onchange={(e) => onSubcategoryChange((e.target as HTMLSelectElement).value)}
-            class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded font-medium text-ink] outline-none"
+            class="w-full h-10 px-3 bg-void border border-grid focus:border-amber rounded font-medium text-ink outline-none"
           >
             <option value="CALZA_MASCULINA">Calzas de Varón (Con/Sin Pie)</option>
             <option value="SUSPENSOR_MASCULINO">Suspensores de Varón (Dance Belts)</option>
@@ -177,24 +177,24 @@
         <!-- Marca y Modelo -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="brand-input">Marca *</label>
+            <label class="block text-dim font-semibold mb-1 text-[10px] uppercase tracking-wider" for="brand-input">Marca *</label>
             <input
               id="brand-input"
               type="text"
               bind:value={brand}
               placeholder="Capezio, Bloch, Sansha, So Danca..."
-              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-ink] font-medium outline-none"
+              class="w-full h-10 px-3 bg-void border border-grid focus:border-amber rounded text-ink font-medium outline-none"
               required
             />
           </div>
           <div>
-            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="model-input">Modelo / Descripción *</label>
+            <label class="block text-dim font-semibold mb-1 text-[10px] uppercase tracking-wider" for="model-input">Modelo / Descripción *</label>
             <input
               id="model-input"
               type="text"
               bind:value={modelName}
               placeholder="Ej: M9000, Pro 1C, Neo-Flex, Ultra Soft..."
-              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-ink] font-medium outline-none"
+              class="w-full h-10 px-3 bg-void border border-grid focus:border-amber rounded text-ink font-medium outline-none"
               required
             />
           </div>
@@ -203,22 +203,22 @@
         <!-- Color y Material -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="color-input">Color *</label>
+            <label class="block text-dim font-semibold mb-1 text-[10px] uppercase tracking-wider" for="color-input">Color *</label>
             <input
               id="color-input"
               type="text"
               bind:value={color}
               placeholder="Blanco, Negro, Piel, Rosa, Gris, Marrón..."
-              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-ink] font-medium outline-none"
+              class="w-full h-10 px-3 bg-void border border-grid focus:border-amber rounded text-ink font-medium outline-none"
               required
             />
           </div>
           <div>
-            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="material-select">Material *</label>
+            <label class="block text-dim font-semibold mb-1 text-[10px] uppercase tracking-wider" for="material-select">Material *</label>
             <select
               id="material-select"
               bind:value={material}
-              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded font-medium text-ink] outline-none"
+              class="w-full h-10 px-3 bg-void border border-grid focus:border-amber rounded font-medium text-ink outline-none"
             >
               <option value="ALGODON_LYCRA">Algodón con Lycra</option>
               <option value="MICROFIBRA">Microfibra</option>
@@ -236,11 +236,11 @@
         <!-- Sistema de Talle, Talle y Ancho -->
         <div class="grid grid-cols-3 gap-2">
           <div>
-            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="size-system-select">Sistema</label>
+            <label class="block text-dim font-semibold mb-1 text-[10px] uppercase tracking-wider" for="size-system-select">Sistema</label>
             <select
               id="size-system-select"
               bind:value={sizeSystem}
-              class="w-full h-10 px-2 bg-void] border border-grid] focus:border-amber] rounded font-medium text-ink] outline-none text-xs"
+              class="w-full h-10 px-2 bg-void border border-grid focus:border-amber rounded font-medium text-ink outline-none text-xs"
             >
               <option value="ALPHA">ALPHA (S, M, L)</option>
               <option value="US">US (Calzado USA)</option>
@@ -249,24 +249,24 @@
             </select>
           </div>
           <div>
-            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="size-value-input">Talle *</label>
+            <label class="block text-dim font-semibold mb-1 text-[10px] uppercase tracking-wider" for="size-value-input">Talle *</label>
             <input
               id="size-value-input"
               type="text"
               bind:value={sizeValue}
               placeholder="M, 8, 39, L/XL..."
-              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-ink] font-mono outline-none"
+              class="w-full h-10 px-3 bg-void border border-grid focus:border-amber rounded text-ink font-mono outline-none"
               required
             />
           </div>
           <div>
-            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="width-value-input">Ancho</label>
+            <label class="block text-dim font-semibold mb-1 text-[10px] uppercase tracking-wider" for="width-value-input">Ancho</label>
             <input
               id="width-value-input"
               type="text"
               bind:value={widthValue}
               placeholder="M, W, C, X..."
-              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-ink] font-mono outline-none"
+              class="w-full h-10 px-3 bg-void border border-grid focus:border-amber rounded text-ink font-mono outline-none"
             />
           </div>
         </div>
@@ -274,35 +274,35 @@
         <!-- Cantidades y Ubicación -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
           <div>
-            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="physical-qty-input">Stock Físico</label>
+            <label class="block text-dim font-semibold mb-1 text-[10px] uppercase tracking-wider" for="physical-qty-input">Stock Físico</label>
             <input
               id="physical-qty-input"
               type="number"
               min="0"
               bind:value={physicalQty}
-              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-amber] font-mono font-bold outline-none text-sm"
+              class="w-full h-10 px-3 bg-void border border-grid focus:border-amber rounded text-amber font-mono font-bold outline-none text-sm"
               required
             />
           </div>
           <div>
-            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="min-alert-qty-input">Alerta Mínima</label>
+            <label class="block text-dim font-semibold mb-1 text-[10px] uppercase tracking-wider" for="min-alert-qty-input">Alerta Mínima</label>
             <input
               id="min-alert-qty-input"
               type="number"
               min="0"
               bind:value={minAlertQty}
-              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-ink] font-mono outline-none"
+              class="w-full h-10 px-3 bg-void border border-grid focus:border-amber rounded text-ink font-mono outline-none"
               required
             />
           </div>
           <div>
-            <label class="block text-dim] font-semibold mb-1 text-[10px] uppercase tracking-wider" for="storage-bin-input">Estante / Gaveta</label>
+            <label class="block text-dim font-semibold mb-1 text-[10px] uppercase tracking-wider" for="storage-bin-input">Estante / Gaveta</label>
             <input
               id="storage-bin-input"
               type="text"
               bind:value={storageBinLocation}
               placeholder="Ej: Gaveta Calzas 01..."
-              class="w-full h-10 px-3 bg-void] border border-grid] focus:border-amber] rounded text-ink] outline-none text-xs"
+              class="w-full h-10 px-3 bg-void border border-grid focus:border-amber rounded text-ink outline-none text-xs"
             />
           </div>
         </div>

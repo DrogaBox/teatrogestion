@@ -433,36 +433,36 @@
   }
 </script>
 
-<div class="bg-panel] border border-grid] rounded p-3 shadow-md">
+<div class="bg-panel border border-grid rounded p-3 shadow-md">
   <!-- Encabezado de la Grilla y Acciones -->
-  <div class="flex flex-wrap items-center justify-between pb-2.5 mb-3 border-b border-grid] gap-2">
+  <div class="flex flex-wrap items-center justify-between pb-2.5 mb-3 border-b border-grid gap-2">
     <div>
-      <h3 class="text-sm font-bold uppercase text-ink] tracking-wide">
+      <h3 class="text-sm font-bold uppercase text-ink tracking-wide">
         Grilla Diaria de Ensayos
       </h3>
-      <div class="text-[11px] text-dim] mt-0.5">
+      <div class="text-[11px] text-dim mt-0.5">
         Distribución por salas, control de repartos nominales y referencia para TeatroCue
       </div>
     </div>
 
     <div class="flex items-center gap-2 flex-wrap">
       <!-- Filtro de Salas / Gira -->
-      <div class="bg-void] p-0.5 rounded border border-grid] inline-flex text-xs">
+      <div class="bg-void p-0.5 rounded border border-grid inline-flex text-xs">
         <button
           onclick={() => roomFilter = 'THEATER'}
-          class="px-2.5 py-1 rounded font-bold transition-colors {roomFilter === 'THEATER' ? 'bg-amber] text-void]' : 'text-dim] hover:text-ink]'}"
+          class="px-2.5 py-1 rounded font-bold transition-colors {roomFilter === 'THEATER' ? 'bg-amber text-void' : 'text-dim hover:text-ink'}"
         >
           Salas del Teatro
         </button>
         <button
           onclick={() => roomFilter = 'TOUR'}
-          class="px-2.5 py-1 rounded font-bold transition-colors {roomFilter === 'TOUR' ? 'bg-cyan] text-void]' : 'text-dim] hover:text-ink]'}"
+          class="px-2.5 py-1 rounded font-bold transition-colors {roomFilter === 'TOUR' ? 'bg-cyan text-void' : 'text-dim hover:text-ink'}"
         >
           Gira / Logística
         </button>
         <button
           onclick={() => roomFilter = 'ALL'}
-          class="px-2.5 py-1 rounded font-bold transition-colors {roomFilter === 'ALL' ? 'bg-raised] text-ink]' : 'text-dim] hover:text-ink]'}"
+          class="px-2.5 py-1 rounded font-bold transition-colors {roomFilter === 'ALL' ? 'bg-raised text-ink' : 'text-dim hover:text-ink'}"
         >
           Todas ({allRooms.length})
         </button>
@@ -470,7 +470,7 @@
 
       <button
         onclick={() => openCreateModal('SALA_1')}
-        class="h-8 px-3 bg-amber] hover:bg-amber]/90 text-void] font-bold text-xs uppercase rounded flex items-center gap-1.5 transition-colors"
+        class="h-8 px-3 bg-amber hover:bg-amber/90 text-void font-bold text-xs uppercase rounded flex items-center gap-1.5 transition-colors"
       >
         <span>+ Citar Ensayo</span>
       </button>
@@ -481,16 +481,16 @@
   <div class="grid grid-cols-1 md:grid-cols-2 {visibleRooms.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-3">
     {#each visibleRooms as rm}
       {@const roomBlocks = blocks.filter(b => b.room === rm.code)}
-      <div class="bg-void] border border-grid] rounded p-2.5 flex flex-col min-h-[220px]">
+      <div class="bg-void border border-grid rounded p-2.5 flex flex-col min-h-[220px]">
         <!-- Encabezado de Columna de Sala -->
-        <div class="pb-2 mb-2.5 border-b border-grid] flex items-center justify-between">
+        <div class="pb-2 mb-2.5 border-b border-grid flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full {rm.code === 'SALA_1' ? 'bg-green]' : rm.code === 'SALA_2' ? 'bg-cyan]' : rm.code === 'SALA_3' ? 'bg-amber]' : rm.code === 'ESCENARIO' ? 'bg-red]' : 'bg-dim]'}"></span>
-            <span class="font-bold text-xs text-ink]">{rm.name}</span>
+            <span class="w-2.5 h-2.5 rounded-full {rm.code === 'SALA_1' ? 'bg-green' : rm.code === 'SALA_2' ? 'bg-cyan' : rm.code === 'SALA_3' ? 'bg-amber' : rm.code === 'ESCENARIO' ? 'bg-red' : 'bg-dim'}"></span>
+            <span class="font-bold text-xs text-ink">{rm.name}</span>
           </div>
           <button
             onclick={() => openCreateModal(rm.code)}
-            class="text-[10px] text-dim] hover:text-amber] bg-panel] hover:bg-raised] px-2 py-0.5 rounded font-mono border border-grid] transition-colors"
+            class="text-[10px] text-dim hover:text-amber bg-panel hover:bg-raised px-2 py-0.5 rounded font-mono border border-grid transition-colors"
             title="Citar en esta sala"
           >
             + Citar
@@ -500,7 +500,7 @@
         <!-- Bloques en esta sala -->
         <div class="space-y-2 flex-1">
           {#if roomBlocks.length === 0}
-            <div class="text-center py-8 text-xs text-dim] font-mono italic">
+            <div class="text-center py-8 text-xs text-dim font-mono italic">
               Sin ensayos en {rm.name}
             </div>
           {:else}
@@ -508,25 +508,25 @@
               {@const blockConflicts = getBlockConflicts(b.id)}
               {@const hasConflict = blockConflicts.length > 0}
               
-              <div class="bg-panel] border {hasConflict ? 'border-red] bg-void]' : 'border-grid] hover:border-dim]'} rounded p-2.5 transition-colors">
+              <div class="bg-panel border {hasConflict ? 'border-red bg-void' : 'border-grid hover:border-dim'} rounded p-2.5 transition-colors">
                 
                 <!-- Horario & Acciones -->
                 <div class="flex items-center justify-between mb-1.5">
-                  <div class="font-mono text-xs font-bold {hasConflict ? 'text-red]' : 'text-amber]'} px-1.5 py-0.5 rounded bg-void] border border-grid]">
+                  <div class="font-mono text-xs font-bold {hasConflict ? 'text-red' : 'text-amber'} px-1.5 py-0.5 rounded bg-void border border-grid">
                     {b.start_time} - {b.end_time}
                   </div>
                   
                   <div class="flex items-center gap-1">
                     <button
                       onclick={() => openEditModal(b)}
-                      class="text-dim] hover:text-amber] text-xs px-1.5 py-0.5 rounded hover:bg-raised] transition-colors font-medium"
+                      class="text-dim hover:text-amber text-xs px-1.5 py-0.5 rounded hover:bg-raised transition-colors font-medium"
                       title="Modificar citación"
                     >
                       Editar
                     </button>
                     <button
                       onclick={() => removeBlock(b.id)}
-                      class="text-dim] hover:text-red] text-xs px-1.5 py-0.5 rounded hover:bg-raised] transition-colors font-mono"
+                      class="text-dim hover:text-red text-xs px-1.5 py-0.5 rounded hover:bg-raised transition-colors font-mono"
                       title="Eliminar citación"
                     >
                       ✕
@@ -555,39 +555,39 @@
                 </div>
 
                 <!-- Columna SONIDO para TeatroCue y Acompañamiento -->
-                <div class="space-y-1 text-xs pt-1.5 border-t border-grid]">
+                <div class="space-y-1 text-xs pt-1.5 border-t border-grid">
                   <div class="flex items-center justify-between text-[11px]">
-                    <div class="flex items-center gap-1.5 text-cyan] font-mono font-medium truncate">
-                      <span class="text-[9px] uppercase px-1 py-0.2 rounded bg-raised] text-cyan] border border-grid] font-bold">
+                    <div class="flex items-center gap-1.5 text-cyan font-mono font-medium truncate">
+                      <span class="text-[9px] uppercase px-1 py-0.2 rounded bg-raised text-cyan border border-grid font-bold">
                         {b.pianist_name ? 'PIANO' : 'SONIDO'}
                       </span>
                       <span class="truncate">{b.sound_requirement}</span>
                     </div>
                   </div>
 
-                  <div class="flex items-center justify-between text-[10px] text-dim]">
+                  <div class="flex items-center justify-between text-[10px] text-dim">
                     <div>
-                      Mtro: <span class="text-ink] font-semibold">{b.master_name ? b.master_name.split(',')[0] : 'Sin asignar'}</span>
+                      Mtro: <span class="text-ink font-semibold">{b.master_name ? b.master_name.split(',')[0] : 'Sin asignar'}</span>
                     </div>
                     {#if b.pianist_name}
                       <div>
-                        Pno: <span class="text-ink] font-semibold">{b.pianist_name.split(',')[0]}</span>
+                        Pno: <span class="text-ink font-semibold">{b.pianist_name.split(',')[0]}</span>
                       </div>
                     {/if}
                   </div>
                   {#if b.sound_tech_name}
-                    <div class="text-[10px] text-dim]">
-                      Sonido: <span class="text-cyan] font-semibold">{b.sound_tech_name.split(',')[0]}</span>
+                    <div class="text-[10px] text-dim">
+                      Sonido: <span class="text-cyan font-semibold">{b.sound_tech_name.split(',')[0]}</span>
                     </div>
                   {/if}
                 </div>
 
                 <!-- Alerta Visual si hay Cruce / Colisión -->
                 {#if hasConflict}
-                  <div class="mt-2 p-2 rounded bg-red]/10 border border-red]/40 text-[10px] text-red] space-y-1">
+                  <div class="mt-2 p-2 rounded bg-red/10 border border-red/40 text-[10px] text-red space-y-1">
                     {#each blockConflicts as c}
-                      <div class="flex items-center gap-1.5 font-semibold text-red]">
-                        <span class="w-1.5 h-1.5 rounded-full bg-red] shrink-0"></span>
+                      <div class="flex items-center gap-1.5 font-semibold text-red">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red shrink-0"></span>
                         {#if c.conflict_type === 'PERSON_DOUBLE_BOOKED'}
                           <span>Cruce: {c.person_name} ({c.overlap_start}-{c.overlap_end})</span>
                         {:else if c.conflict_type === 'ROOM_DOUBLE_BOOKED'}
@@ -631,12 +631,12 @@
 
       <!-- Alertas de Colisión en Tiempo Real dentro del Modal -->
       {#if liveCollisionWarnings.length > 0}
-        <div class="m-3 mb-0 p-2.5 bg-void] border border-red] rounded text-xs text-red] space-y-1 shrink-0">
-          <div class="font-bold text-red] uppercase text-[11px]">
+        <div class="m-3 mb-0 p-2.5 bg-void border border-red rounded text-xs text-red space-y-1 shrink-0">
+          <div class="font-bold text-red uppercase text-[11px]">
             Colisión Detectada
           </div>
           {#each liveCollisionWarnings as w}
-            <div class="pl-2 border-l-2 border-red] text-[11px]">{w}</div>
+            <div class="pl-2 border-l-2 border-red text-[11px]">{w}</div>
           {/each}
         </div>
       {/if}
@@ -647,8 +647,8 @@
         <!-- Fila 1: Sala, Horario Inicio y Horario Fin -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <div>
-            <label for="modal-block-room" class="block text-[10px] font-bold uppercase text-dim] mb-1">Sala / Ubicación</label>
-            <select id="modal-block-room" bind:value={selectedRoom} class="w-full h-9 px-2.5 bg-void] border border-grid] rounded text-xs text-ink]">
+            <label for="modal-block-room" class="block text-[10px] font-bold uppercase text-dim mb-1">Sala / Ubicación</label>
+            <select id="modal-block-room" bind:value={selectedRoom} class="w-full h-9 px-2.5 bg-void border border-grid rounded text-xs text-ink">
               <optgroup label="Salas del Teatro">
                 <option value="SALA_1">Sala 1</option>
                 <option value="SALA_2">Sala 2</option>
@@ -664,24 +664,24 @@
           </div>
 
           <div>
-            <label for="modal-block-start" class="block text-[10px] font-bold uppercase text-dim] mb-1">Hora Inicio</label>
-            <input id="modal-block-start" type="text" bind:value={startTime} placeholder="HH:MM" class="w-full h-9 px-2.5 bg-void] border border-grid] rounded text-xs font-mono font-bold text-ink] text-center" />
+            <label for="modal-block-start" class="block text-[10px] font-bold uppercase text-dim mb-1">Hora Inicio</label>
+            <input id="modal-block-start" type="text" bind:value={startTime} placeholder="HH:MM" class="w-full h-9 px-2.5 bg-void border border-grid rounded text-xs font-mono font-bold text-ink text-center" />
           </div>
 
           <div>
-            <label for="modal-block-end" class="block text-[10px] font-bold uppercase text-dim] mb-1">Hora Fin</label>
-            <input id="modal-block-end" type="text" bind:value={endTime} placeholder="HH:MM" class="w-full h-9 px-2.5 bg-void] border border-grid] rounded text-xs font-mono font-bold text-ink] text-center" />
+            <label for="modal-block-end" class="block text-[10px] font-bold uppercase text-dim mb-1">Hora Fin</label>
+            <input id="modal-block-end" type="text" bind:value={endTime} placeholder="HH:MM" class="w-full h-9 px-2.5 bg-void border border-grid rounded text-xs font-mono font-bold text-ink text-center" />
           </div>
         </div>
 
         <!-- Selección Rápida de Reparto Planificado de Obra (1-Touch Casting) -->
         {#if worksWithCasts.length > 0}
-          <div class="bg-void] p-2.5 rounded border border-grid]">
+          <div class="bg-void p-2.5 rounded border border-grid">
             <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-amber]">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-amber">
                 Repartos Planificados de Obras (Auto-Completar Citación)
               </span>
-              <span class="text-[9px] text-dim] font-mono">1-Touch: pasaje, sonido y elenco</span>
+              <span class="text-[9px] text-dim font-mono">1-Touch: pasaje, sonido y elenco</span>
             </div>
             <div class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
               {#each worksWithCasts as w}
@@ -689,12 +689,12 @@
                   <button
                     type="button"
                     onclick={() => applyPlannedCasting(w, plan)}
-                    class="text-[11px] bg-raised] hover:bg-raised-hover] text-ink] hover:text-amber] border border-grid] px-2 py-0.5 rounded transition-colors flex items-center gap-1 font-mono"
+                    class="text-[11px] bg-raised hover:bg-raised-hover text-ink hover:text-amber border border-grid px-2 py-0.5 rounded transition-colors flex items-center gap-1 font-mono"
                     title="{w.title} - {plan.tier_name}: {plan.cast_label}"
                   >
-                    <span class="text-amber] font-bold">{w.title}:</span>
+                    <span class="text-amber font-bold">{w.title}:</span>
                     <span>{plan.passage_name || plan.tier_name}</span>
-                    <span class="text-[9px] text-dim]">[{plan.members.length} citados]</span>
+                    <span class="text-[9px] text-dim">[{plan.members.length} citados]</span>
                   </button>
                 {/each}
               {/each}
@@ -704,14 +704,14 @@
 
         <!-- Fila 2: Pasaje / Obra y Presets Rápidos -->
         <div>
-          <label for="modal-block-passage" class="block text-[10px] font-bold uppercase text-dim] mb-1">Pasaje / Obra / Detalle</label>
-          <input id="modal-block-passage" type="text" bind:value={passageName} class="w-full h-9 px-2.5 bg-void] border border-grid] rounded text-xs font-bold text-ink] mb-1.5" />
+          <label for="modal-block-passage" class="block text-[10px] font-bold uppercase text-dim mb-1">Pasaje / Obra / Detalle</label>
+          <input id="modal-block-passage" type="text" bind:value={passageName} class="w-full h-9 px-2.5 bg-void border border-grid rounded text-xs font-bold text-ink mb-1.5" />
           <div class="flex flex-wrap gap-1">
             {#each worksPresets as wp}
               <button
                 type="button"
                 onclick={() => selectPreset(wp)}
-                class="text-[10px] bg-raised] hover:bg-raised-hover] text-dim] hover:text-ink] px-2 py-0.5 rounded border border-grid] transition-colors"
+                class="text-[10px] bg-raised hover:bg-raised-hover text-dim hover:text-ink px-2 py-0.5 rounded border border-grid transition-colors"
               >
                 {wp.name}
               </button>
@@ -720,35 +720,35 @@
         </div>
 
         <!-- Fila 3: Acompañamiento Musical (Pianistas, Sonidistas TeatroCue, Orquesta) -->
-        <div class="bg-void] p-2.5 rounded border border-grid]">
-          <span class="block text-[10px] font-bold uppercase text-dim] mb-2">Acompañamiento Musical & Sonido</span>
+        <div class="bg-void p-2.5 rounded border border-grid">
+          <span class="block text-[10px] font-bold uppercase text-dim mb-2">Acompañamiento Musical & Sonido</span>
           
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-2.5">
             <button
               type="button"
               onclick={() => handleSoundTypeChange('teatrocue')}
-              class="py-1.5 px-2 rounded text-xs font-bold transition-colors border {soundType === 'teatrocue' ? 'bg-void] text-cyan] border-cyan]' : 'bg-raised] text-dim] border-grid]'}"
+              class="py-1.5 px-2 rounded text-xs font-bold transition-colors border {soundType === 'teatrocue' ? 'bg-void text-cyan border-cyan' : 'bg-raised text-dim border-grid'}"
             >
               Pista TeatroCue
             </button>
             <button
               type="button"
               onclick={() => handleSoundTypeChange('pianist')}
-              class="py-1.5 px-2 rounded text-xs font-bold transition-colors border {soundType === 'pianist' ? 'bg-raised] text-amber] border-amber]' : 'bg-raised] text-dim] border-grid]'}"
+              class="py-1.5 px-2 rounded text-xs font-bold transition-colors border {soundType === 'pianist' ? 'bg-raised text-amber border-amber' : 'bg-raised text-dim border-grid'}"
             >
               Pianista
             </button>
             <button
               type="button"
               onclick={() => handleSoundTypeChange('orchestra')}
-              class="py-1.5 px-2 rounded text-xs font-bold transition-colors border {soundType === 'orchestra' ? 'bg-void] text-violet] border-violet]' : 'bg-raised] text-dim] border-grid]'}"
+              class="py-1.5 px-2 rounded text-xs font-bold transition-colors border {soundType === 'orchestra' ? 'bg-void text-violet border-violet' : 'bg-raised text-dim border-grid'}"
             >
               Orquesta
             </button>
             <button
               type="button"
               onclick={() => handleSoundTypeChange('silence')}
-              class="py-1.5 px-2 rounded text-xs font-bold transition-colors border {soundType === 'silence' ? 'bg-raised] text-ink] border-dim]' : 'bg-raised] text-dim] border-grid]'}"
+              class="py-1.5 px-2 rounded text-xs font-bold transition-colors border {soundType === 'silence' ? 'bg-raised text-ink border-dim' : 'bg-raised text-dim border-grid'}"
             >
               Silencio / Conteo
             </button>
@@ -756,41 +756,41 @@
 
           {#if soundType === 'teatrocue'}
             <div>
-              <label for="modal-block-cue" class="block text-[10px] font-mono uppercase text-cyan] mb-1">Referencia de Cabina TeatroCue / Pista</label>
-              <input id="modal-block-cue" type="text" bind:value={soundReq} class="w-full h-8 px-2.5 bg-panel] border border-grid] rounded text-xs font-mono font-bold text-cyan]" />
+              <label for="modal-block-cue" class="block text-[10px] font-mono uppercase text-cyan mb-1">Referencia de Cabina TeatroCue / Pista</label>
+              <input id="modal-block-cue" type="text" bind:value={soundReq} class="w-full h-8 px-2.5 bg-panel border border-grid rounded text-xs font-mono font-bold text-cyan" />
             </div>
           {:else if soundType === 'pianist'}
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
-                <label for="modal-block-pianist" class="block text-[10px] font-bold uppercase text-amber] mb-1">Pianista a Cargo</label>
-                <select id="modal-block-pianist" bind:value={selectedPianistId} class="w-full h-8 px-2 bg-panel] border border-grid] rounded text-xs font-bold text-ink]">
+                <label for="modal-block-pianist" class="block text-[10px] font-bold uppercase text-amber mb-1">Pianista a Cargo</label>
+                <select id="modal-block-pianist" bind:value={selectedPianistId} class="w-full h-8 px-2 bg-panel border border-grid rounded text-xs font-bold text-ink">
                   {#each pianists as p}
                     <option value={p.id}>{p.last_name}, {p.first_name}</option>
                   {/each}
                 </select>
               </div>
               <div>
-                <label for="modal-block-piano-req" class="block text-[10px] font-bold uppercase text-dim] mb-1">Detalle / Piano</label>
-                <input id="modal-block-piano-req" type="text" bind:value={soundReq} class="w-full h-8 px-2.5 bg-panel] border border-grid] rounded text-xs font-bold text-ink]" />
+                <label for="modal-block-piano-req" class="block text-[10px] font-bold uppercase text-dim mb-1">Detalle / Piano</label>
+                <input id="modal-block-piano-req" type="text" bind:value={soundReq} class="w-full h-8 px-2.5 bg-panel border border-grid rounded text-xs font-bold text-ink" />
               </div>
             </div>
           {:else if soundType === 'orchestra'}
             <div>
-              <label for="modal-block-orch-req" class="block text-[10px] font-bold uppercase text-violet] mb-1">Requerimiento de Orquesta en Foso</label>
-              <input id="modal-block-orch-req" type="text" bind:value={soundReq} class="w-full h-8 px-2.5 bg-panel] border border-grid] rounded text-xs font-bold text-ink]" />
+              <label for="modal-block-orch-req" class="block text-[10px] font-bold uppercase text-violet mb-1">Requerimiento de Orquesta en Foso</label>
+              <input id="modal-block-orch-req" type="text" bind:value={soundReq} class="w-full h-8 px-2.5 bg-panel border border-grid rounded text-xs font-bold text-ink" />
             </div>
           {:else}
             <div>
-              <label for="modal-block-mod-req" class="block text-[10px] font-bold uppercase text-dim] mb-1">Modalidad de Ensayo</label>
-              <input id="modal-block-mod-req" type="text" bind:value={soundReq} class="w-full h-8 px-2.5 bg-panel] border border-grid] rounded text-xs font-bold text-ink]" />
+              <label for="modal-block-mod-req" class="block text-[10px] font-bold uppercase text-dim mb-1">Modalidad de Ensayo</label>
+              <input id="modal-block-mod-req" type="text" bind:value={soundReq} class="w-full h-8 px-2.5 bg-panel border border-grid rounded text-xs font-bold text-ink" />
             </div>
           {/if}
         </div>
 
         <!-- Responsable de sonido -->
         <div>
-          <label for="modal-block-soundtech" class="block text-[10px] font-bold uppercase text-cyan] mb-1">Sonidista a cargo</label>
-          <select id="modal-block-soundtech" bind:value={soundTechId} class="w-full h-9 px-2.5 bg-void] border border-grid] rounded text-xs font-bold text-ink]">
+          <label for="modal-block-soundtech" class="block text-[10px] font-bold uppercase text-cyan mb-1">Sonidista a cargo</label>
+          <select id="modal-block-soundtech" bind:value={soundTechId} class="w-full h-9 px-2.5 bg-void border border-grid rounded text-xs font-bold text-ink">
             <option value="">Sin asignar</option>
             {#each soundTechs as t}
               <option value={t.id}>{t.last_name}, {t.first_name}</option>
@@ -800,8 +800,8 @@
 
         <!-- Fila 4: Maestro/a a Cargo -->
         <div>
-          <label for="modal-block-master" class="block text-[10px] font-bold uppercase text-dim] mb-1">Maestro/a a Cargo</label>
-          <select id="modal-block-master" bind:value={masterId} class="w-full h-9 px-2.5 bg-void] border border-grid] rounded text-xs font-bold text-ink]">
+          <label for="modal-block-master" class="block text-[10px] font-bold uppercase text-dim mb-1">Maestro/a a Cargo</label>
+          <select id="modal-block-master" bind:value={masterId} class="w-full h-9 px-2.5 bg-void border border-grid rounded text-xs font-bold text-ink">
             {#each masters as m}
               <option value={m.id}>{m.last_name}, {m.first_name}</option>
             {/each}
@@ -810,12 +810,12 @@
         </div>
 
         <!-- Fila 5: Control de Reparto y Citados (Bailarines) -->
-        <div class="bg-void] p-2.5 rounded border border-grid]">
+        <div class="bg-void p-2.5 rounded border border-grid">
           <div class="flex items-center justify-between mb-1.5">
-            <label for="modal-block-castline" class="text-[10px] font-bold uppercase text-amber]">
+            <label for="modal-block-castline" class="text-[10px] font-bold uppercase text-amber">
               Línea Visible de Reparto de Estudio
             </label>
-            <span class="text-[10px] text-dim] font-mono">
+            <span class="text-[10px] text-dim font-mono">
               {selectedDancerIds.length} citados
             </span>
           </div>
@@ -825,18 +825,18 @@
             type="text"
             bind:value={castLine}
             placeholder="ej. Álvarez/Marcato - Morchio C/Gil"
-            class="w-full h-9 px-2.5 bg-panel] border border-grid] rounded text-xs font-mono font-bold text-amber] mb-2"
+            class="w-full h-9 px-2.5 bg-panel border border-grid rounded text-xs font-mono font-bold text-amber mb-2"
           />
 
           <!-- Selector Rápido de Bailarines del Padrón -->
-          <div class="mt-2 pt-2 border-t border-grid]">
+          <div class="mt-2 pt-2 border-t border-grid">
             <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[10px] font-bold uppercase text-dim]">Seleccionar del Padrón:</span>
+              <span class="text-[10px] font-bold uppercase text-dim">Seleccionar del Padrón:</span>
               <input
                 type="text"
                 placeholder="Buscar bailarín..."
                 bind:value={dancerSearch}
-                class="h-7 px-2 bg-panel] border border-grid] rounded text-[10px] text-ink] w-40 font-mono"
+                class="h-7 px-2 bg-panel border border-grid rounded text-[10px] text-ink w-40 font-mono"
               />
             </div>
 
@@ -846,7 +846,7 @@
                 <button
                   type="button"
                   onclick={() => toggleDancer(d.id)}
-                  class="text-[10px] px-2 py-0.5 rounded font-mono transition-colors border {isSelected ? 'bg-amber] text-void] border-amber] font-bold' : 'bg-raised] text-dim] hover:text-ink] border-grid]'}"
+                  class="text-[10px] px-2 py-0.5 rounded font-mono transition-colors border {isSelected ? 'bg-amber text-void border-amber font-bold' : 'bg-raised text-dim hover:text-ink border-grid'}"
                 >
                   {d.last_name}
                 </button>
@@ -857,13 +857,13 @@
 
         <!-- Opciones Adicionales -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-          <label class="flex items-center gap-2 text-xs text-ink] cursor-pointer bg-void] p-2 rounded border border-grid]">
-            <input type="checkbox" bind:checked={isToConfirm} class="h-3.5 w-3.5 rounded accent-amber]" />
+          <label class="flex items-center gap-2 text-xs text-ink cursor-pointer bg-void p-2 rounded border border-grid">
+            <input type="checkbox" bind:checked={isToConfirm} class="h-3.5 w-3.5 rounded accent-amber" />
             <span>Ensayo a confirmar</span>
           </label>
 
-          <label class="flex items-center gap-2 text-xs text-ink] cursor-pointer bg-void] p-2 rounded border border-grid]">
-            <input type="checkbox" bind:checked={allowSharedRoom} class="h-3.5 w-3.5 rounded accent-cyan]" />
+          <label class="flex items-center gap-2 text-xs text-ink cursor-pointer bg-void p-2 rounded border border-grid">
+            <input type="checkbox" bind:checked={allowSharedRoom} class="h-3.5 w-3.5 rounded accent-cyan" />
             <span>Permitir sala compartida</span>
           </label>
         </div>

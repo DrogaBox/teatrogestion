@@ -186,9 +186,9 @@
 
   function getRegimeTag(regime?: WorkRegime): { label: string; color: string } {
     switch (regime) {
-      case 'PRE_FUNCTION': return { label: 'Función', color: 'text-red]' };
-      case 'EXTRAORDINARY': return { label: 'Doble T.', color: 'text-amber]' };
-      default: return { label: 'Ordinario', color: 'text-dim]' };
+      case 'PRE_FUNCTION': return { label: 'Función', color: 'text-red' };
+      case 'EXTRAORDINARY': return { label: 'Doble T.', color: 'text-amber' };
+      default: return { label: 'Ordinario', color: 'text-dim' };
     }
   }
 
@@ -202,31 +202,31 @@
 
 <div class="space-y-3">
   <!-- Barra de Herramientas y Navegación de Mes -->
-  <div class="bg-panel] border border-grid] rounded p-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+  <div class="bg-panel border border-grid rounded p-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
     
     <!-- Navegación del Mes -->
     <div class="flex items-center gap-1.5">
       <button
         onclick={() => shiftMonth(-1)}
-        class="h-8 px-2.5 bg-raised] hover:bg-raised-hover] text-ink] border border-grid] rounded font-mono active:scale-95"
+        class="h-8 px-2.5 bg-raised hover:bg-raised-hover text-ink border border-grid rounded font-mono active:scale-95"
         title="Mes anterior"
       >
         ◀
       </button>
       <button
         onclick={goToCurrentMonth}
-        class="h-8 px-3 bg-raised] hover:bg-raised-hover] text-amber] border border-grid] rounded font-bold"
+        class="h-8 px-3 bg-raised hover:bg-raised-hover text-amber border border-grid rounded font-bold"
       >
         Mes Actual
       </button>
       <button
         onclick={() => shiftMonth(1)}
-        class="h-8 px-2.5 bg-raised] hover:bg-raised-hover] text-ink] border border-grid] rounded font-mono active:scale-95"
+        class="h-8 px-2.5 bg-raised hover:bg-raised-hover text-ink border border-grid rounded font-mono active:scale-95"
         title="Mes siguiente"
       >
         ▶
       </button>
-      <span class="ml-2 font-mono text-ink] text-sm font-black tracking-wide">
+      <span class="ml-2 font-mono text-ink text-sm font-black tracking-wide">
         {monthName} {year}
       </span>
     </div>
@@ -234,36 +234,36 @@
     <!-- Métricas del Mes (Estilo TeatroCue) -->
     <div class="flex items-center gap-4 text-[11px] font-mono">
       <div>
-        <span class="text-dim]">Ensayos:</span>
-        <span class="font-bold text-amber] ml-1">{totalBlocksInMonth}</span>
+        <span class="text-dim">Ensayos:</span>
+        <span class="font-bold text-amber ml-1">{totalBlocksInMonth}</span>
       </div>
       <div>
-        <span class="text-dim]">Días c/ensayos:</span>
-        <span class="font-bold text-green] ml-1">{daysWithRehearsals}</span>
+        <span class="text-dim">Días c/ensayos:</span>
+        <span class="font-bold text-green ml-1">{daysWithRehearsals}</span>
       </div>
       <div>
-        <span class="text-dim]">Doble Turno:</span>
-        <span class="font-bold text-cyan] ml-1">{daysDoubleTurn}</span>
+        <span class="text-dim">Doble Turno:</span>
+        <span class="font-bold text-cyan ml-1">{daysDoubleTurn}</span>
       </div>
       <div>
-        <span class="text-dim]">Funciones:</span>
-        <span class="font-bold text-red] ml-1">{daysPerformance}</span>
+        <span class="text-dim">Funciones:</span>
+        <span class="font-bold text-red ml-1">{daysPerformance}</span>
       </div>
     </div>
   </div>
 
   <!-- Rejilla Calendario: 7 Columnas -->
-  <div class="bg-panel] border border-grid] rounded overflow-hidden shadow-sm">
+  <div class="bg-panel border border-grid rounded overflow-hidden shadow-sm">
     
     <!-- Encabezados de Días de la Semana -->
-    <div class="grid grid-cols-7 bg-alt] border-b border-grid] text-center text-[10px] font-mono font-bold text-dim] py-1.5">
+    <div class="grid grid-cols-7 bg-alt border-b border-grid text-center text-[10px] font-mono font-bold text-dim py-1.5">
       {#each WEEK_HEADERS as wh}
         <div>{wh}</div>
       {/each}
     </div>
 
     <!-- Celdas del Calendario -->
-    <div class="grid grid-cols-7 gap-px bg-grid]">
+    <div class="grid grid-cols-7 gap-px bg-grid">
       {#each calendarDays as day}
         {@const rTag = getRegimeTag(day.summary?.regime)}
         <div
@@ -271,11 +271,11 @@
           tabindex="0"
           onclick={() => handleSelectDay(day)}
           onkeydown={(e) => { if (e.key === 'Enter') handleSelectDay(day); }}
-          class="min-h-[90px] md:min-h-[110px] p-2 flex flex-col justify-between transition-colors cursor-pointer text-left {day.isCurrentMonth ? 'bg-panel] hover:bg-raised]' : 'bg-void] text-dim]'} {day.isSelected ? 'ring-2 ring-amber] ring-inset' : ''}"
+          class="min-h-[90px] md:min-h-[110px] p-2 flex flex-col justify-between transition-colors cursor-pointer text-left {day.isCurrentMonth ? 'bg-panel hover:bg-raised' : 'bg-void text-dim'} {day.isSelected ? 'ring-2 ring-amber ring-inset' : ''}"
         >
           <!-- Fila Superior: Número de Día y Régimen -->
           <div class="flex items-start justify-between">
-            <span class="text-xs font-mono font-bold {day.isToday ? 'px-1.5 py-0.5 rounded bg-amber] text-void] font-black' : day.isCurrentMonth ? 'text-ink]' : 'text-dim]'}">
+            <span class="text-xs font-mono font-bold {day.isToday ? 'px-1.5 py-0.5 rounded bg-amber text-void font-black' : day.isCurrentMonth ? 'text-ink' : 'text-dim'}">
               {day.dayNumber}
             </span>
 
@@ -289,29 +289,29 @@
           <!-- Información de Actividad -->
           <div class="my-1 space-y-1">
             {#if day.summary && day.summary.rehearsal_blocks_count > 0}
-              <div class="text-[10px] font-mono bg-raised] border border-grid] px-1.5 py-0.5 rounded text-amber] truncate">
+              <div class="text-[10px] font-mono bg-raised border border-grid px-1.5 py-0.5 rounded text-amber truncate">
                 {day.summary.rehearsal_blocks_count} {day.summary.rehearsal_blocks_count === 1 ? 'ensayo' : 'ensayos'}
               </div>
             {/if}
 
             {#if day.summary && day.summary.morning_classes_count > 0}
-              <div class="text-[9px] font-mono text-green] truncate">
+              <div class="text-[9px] font-mono text-green truncate">
                 ✓ Clases 09:00
               </div>
             {/if}
           </div>
 
           <!-- Acciones Rápidas al Clic -->
-          <div class="flex items-center justify-between pt-1 border-t border-grid]/60 text-[9px] font-mono">
+          <div class="flex items-center justify-between pt-1 border-t border-grid/60 text-[9px] font-mono">
             <button
               onclick={(e) => { e.stopPropagation(); onSwitchToDailyView(day.date); }}
-              class="text-cyan] hover:underline"
+              class="text-cyan hover:underline"
             >
               Diaria ➔
             </button>
             <button
               onclick={(e) => { e.stopPropagation(); onSwitchToWeeklyView(day.date); }}
-              class="text-dim] hover:text-ink]"
+              class="text-dim hover:text-ink"
             >
               Semana
             </button>

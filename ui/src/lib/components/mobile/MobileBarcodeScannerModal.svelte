@@ -512,7 +512,7 @@
       <div class="flex-1 overflow-y-auto p-4 space-y-3">
         
         <!-- Visor de Cámara con Retícula TeatroCue -->
-        <div class="relative bg-black rounded border {scanSuccessFlash ? 'border-green] ring-2 ring-green]' : 'border-grid]'} aspect-video flex items-center justify-center overflow-hidden transition-all duration-300">
+        <div class="relative bg-black rounded border {scanSuccessFlash ? 'border-green ring-2 ring-green' : 'border-grid'} aspect-video flex items-center justify-center overflow-hidden transition-all duration-300">
           <video
             bind:this={videoElement}
             autoplay
@@ -522,19 +522,19 @@
           ></video>
 
           {#if hasCameraError}
-            <div class="absolute inset-0 bg-void]/95 flex flex-col items-center justify-center p-4 text-center space-y-2">
-              <span class="text-xs text-red] font-bold">{cameraErrorMessage}</span>
-              <p class="text-[11px] text-dim]">Puedes tomar una foto directamente con el botón de abajo o ingresar el código a mano.</p>
+            <div class="absolute inset-0 bg-void/95 flex flex-col items-center justify-center p-4 text-center space-y-2">
+              <span class="text-xs text-red font-bold">{cameraErrorMessage}</span>
+              <p class="text-[11px] text-dim">Puedes tomar una foto directamente con el botón de abajo o ingresar el código a mano.</p>
             </div>
           {:else}
             <!-- Retícula de Escaneo Láser TeatroCue -->
-            <div class="absolute inset-x-8 inset-y-6 border border-amber]/70 rounded pointer-events-none flex flex-col justify-between p-2">
-              <div class="flex justify-between text-[10px] text-amber] font-mono">
+            <div class="absolute inset-x-8 inset-y-6 border border-amber/70 rounded pointer-events-none flex flex-col justify-between p-2">
+              <div class="flex justify-between text-[10px] text-amber font-mono">
                 <span>[SCANNER ACTIVO]</span>
                 <span>EAN/SKU</span>
               </div>
-              <div class="w-full h-0.5 bg-amber] animate-pulse shadow-[0_0_8px_#ffb31a]"></div>
-              <div class="text-center text-[10px] text-amber] font-mono">
+              <div class="w-full h-0.5 bg-amber animate-pulse shadow-[0_0_8px_#ffb31a]"></div>
+              <div class="text-center text-[10px] text-amber font-mono">
                 Alinea el código dentro del marco
               </div>
             </div>
@@ -544,7 +544,7 @@
               <button
                 type="button"
                 onclick={toggleTorch}
-                class="absolute top-2 right-2 px-2 py-1 rounded text-[10px] font-mono font-bold transition-colors shadow-md {isTorchOn ? 'bg-amber] text-void]' : 'bg-raised]/80 text-ink] border border-grid]'}"
+                class="absolute top-2 right-2 px-2 py-1 rounded text-[10px] font-mono font-bold transition-colors shadow-md {isTorchOn ? 'bg-amber text-void' : 'bg-raised/80 text-ink border border-grid'}"
                 title="Encender o apagar flash"
               >
                 {isTorchOn ? '[LINTERNA: ON]' : '[LINTERNA: OFF]'}
@@ -559,14 +559,14 @@
             type="button"
             disabled={isDetecting || hasCameraError}
             onclick={captureAndScanNow}
-            class="py-2 px-2 bg-raised] hover:bg-raised-hover] text-amber] border border-grid] rounded text-xs font-mono font-bold transition-colors flex items-center justify-center gap-1.5"
+            class="py-2 px-2 bg-raised hover:bg-raised-hover text-amber border border-grid rounded text-xs font-mono font-bold transition-colors flex items-center justify-center gap-1.5"
             title="Fuerza el escaneo inmediato en máxima resolución del cuadro en pantalla"
           >
             <span>{isDetecting ? 'Analizando...' : 'Escanear Cuadro'}</span>
           </button>
 
           <!-- Disparador Directo de Cámara Nativa con capture="environment" -->
-          <label class="py-2 px-2 bg-raised] hover:bg-raised-hover] text-cyan] border border-grid] rounded text-xs font-mono font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer text-center">
+          <label class="py-2 px-2 bg-raised hover:bg-raised-hover text-cyan border border-grid rounded text-xs font-mono font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer text-center">
             <span>Tomar Foto Directa</span>
             <input
               type="file"
@@ -581,11 +581,11 @@
         <!-- Selector de Cámara si hay más de 1 dispositivo -->
         {#if videoDevices.length > 1}
           <div class="flex items-center gap-2">
-            <span class="text-[10px] font-mono uppercase text-dim] shrink-0">Cámara:</span>
+            <span class="text-[10px] font-mono uppercase text-dim shrink-0">Cámara:</span>
             <select
               bind:value={selectedDeviceId}
               onchange={handleDeviceChange}
-              class="flex-1 h-8 px-2 bg-void] border border-grid] rounded text-xs text-ink]"
+              class="flex-1 h-8 px-2 bg-void border border-grid rounded text-xs text-ink"
             >
               {#each videoDevices as d}
                 <option value={d.deviceId}>{d.label || `Cámara ${d.deviceId.slice(0, 5)}`}</option>
@@ -601,11 +601,11 @@
               type="text"
               bind:value={manualCode}
               placeholder="Escribe código (ej: 7790001001, GM-EUR...)"
-              class="flex-1 h-9 px-3 bg-void] border border-grid] rounded text-xs font-mono font-bold text-ink] outline-none focus:border-amber]"
+              class="flex-1 h-9 px-3 bg-void border border-grid rounded text-xs font-mono font-bold text-ink outline-none focus:border-amber"
             />
             <button
               type="submit"
-              class="h-9 px-3 bg-raised] hover:bg-raised-hover] text-ink] font-bold text-xs rounded border border-grid]"
+              class="h-9 px-3 bg-raised hover:bg-raised-hover text-ink font-bold text-xs rounded border border-grid"
             >
               Buscar
             </button>
@@ -614,85 +614,85 @@
 
         <!-- RESULTADO DEL ESCANEO -->
         {#if isSearching}
-          <div class="p-4 text-center text-dim] font-mono text-xs">
+          <div class="p-4 text-center text-dim font-mono text-xs">
             Buscando en base de datos SQLite WAL local...
           </div>
         {:else if scannedBarcode}
           {#if matchedItem}
             <!-- Ítem Encontrado -->
-            <div class="bg-void] border border-green] rounded p-3 space-y-2.5">
+            <div class="bg-void border border-green rounded p-3 space-y-2.5">
               <div class="flex items-start justify-between gap-2">
                 <div>
-                  <span class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-void] text-green] border border-green]/40">
+                  <span class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-void text-green border border-green/40">
                     Ítem Registrado en Depósito
                   </span>
-                  <h3 class="text-sm font-bold text-ink] mt-1">{matchedItem.brand} {matchedItem.model_name}</h3>
-                  <div class="text-xs text-amber] font-mono">{matchedItem.raw_factory_code || matchedItem.sku_code}</div>
+                  <h3 class="text-sm font-bold text-ink mt-1">{matchedItem.brand} {matchedItem.model_name}</h3>
+                  <div class="text-xs text-amber font-mono">{matchedItem.raw_factory_code || matchedItem.sku_code}</div>
                 </div>
 
                 <div class="text-right font-mono">
-                  <div class="text-[9px] text-dim] uppercase font-bold">Stock Físico</div>
-                  <div class="text-lg font-black text-ink]">{matchedItem.physical_qty}</div>
-                  <div class="text-[10px] text-green]">{matchedItem.free_available_qty} libres</div>
+                  <div class="text-[9px] text-dim uppercase font-bold">Stock Físico</div>
+                  <div class="text-lg font-black text-ink">{matchedItem.physical_qty}</div>
+                  <div class="text-[10px] text-green">{matchedItem.free_available_qty} libres</div>
                 </div>
               </div>
 
               <!-- Ficha Técnica Rápida -->
-              <div class="grid grid-cols-3 gap-2 bg-panel] p-2 rounded border border-grid] text-[11px]">
+              <div class="grid grid-cols-3 gap-2 bg-panel p-2 rounded border border-grid text-[11px]">
                 <div>
-                  <span class="text-dim] block text-[9px] uppercase font-mono">Talle / Ancho</span>
-                  <span class="font-bold text-ink] font-mono">{matchedItem.size_value} {matchedItem.width_value || ''}</span>
+                  <span class="text-dim block text-[9px] uppercase font-mono">Talle / Ancho</span>
+                  <span class="font-bold text-ink font-mono">{matchedItem.size_value} {matchedItem.width_value || ''}</span>
                 </div>
                 <div>
-                  <span class="text-dim] block text-[9px] uppercase font-mono">Color</span>
-                  <span class="text-ink]">{matchedItem.color}</span>
+                  <span class="text-dim block text-[9px] uppercase font-mono">Color</span>
+                  <span class="text-ink">{matchedItem.color}</span>
                 </div>
                 <div>
-                  <span class="text-dim] block text-[9px] uppercase font-mono">Ubicación</span>
-                  <span class="text-ink] font-mono truncate">{matchedItem.storage_bin_location || '—'}</span>
+                  <span class="text-dim block text-[9px] uppercase font-mono">Ubicación</span>
+                  <span class="text-ink font-mono truncate">{matchedItem.storage_bin_location || '—'}</span>
                 </div>
               </div>
 
               {#if stockUpdatedSuccess}
-                <div class="p-2 rounded bg-void] border border-green] text-green] text-xs text-center font-mono">
+                <div class="p-2 rounded bg-void border border-green text-green text-xs text-center font-mono">
                   ✓ Stock físico actualizado correctamente en SQLite WAL.
                 </div>
               {/if}
 
               <!-- ACCIONES INMEDIATAS -->
-              <div class="space-y-1.5 pt-1 border-t border-grid]">
+              <div class="space-y-1.5 pt-1 border-t border-grid">
                 {#if onDeliverItem}
                   <button
                     onclick={() => {
                       if (matchedItem) onDeliverItem(matchedItem);
                       onClose();
                     }}
-                    class="w-full py-2 bg-amber] hover:bg-amber]/90 text-void] rounded font-bold text-xs uppercase"
+                    class="w-full py-2 bg-amber hover:bg-amber/90 text-void rounded font-bold text-xs uppercase"
                   >
                     Entregar a Bailarín / Personal
                   </button>
                 {/if}
 
                 <div class="flex items-center gap-1.5">
-                  <span class="text-xs text-dim] font-mono shrink-0">Sumar Stock:</span>
+                  <span class="text-xs text-dim font-mono shrink-0">Sumar Stock:</span>
                   <button
                     disabled={isUpdatingStock}
                     onclick={() => addPhysicalStock(1)}
-                    class="flex-1 py-1.5 bg-raised] hover:bg-raised-hover] text-ink] rounded text-xs font-mono border border-grid]"
+                    class="flex-1 py-1.5 bg-raised hover:bg-raised-hover text-ink rounded text-xs font-mono border border-grid"
                   >
                     +1
                   </button>
                   <button
                     disabled={isUpdatingStock}
                     onclick={() => addPhysicalStock(5)}
-                    class="flex-1 py-1.5 bg-raised] hover:bg-raised-hover] text-ink] rounded text-xs font-mono border border-grid]"
+                    class="flex-1 py-1.5 bg-raised hover:bg-raised-hover text-ink rounded text-xs font-mono border border-grid"
                   >
                     +5
                   </button>
                   <button
                     disabled={isUpdatingStock}
                     onclick={() => addPhysicalStock(10)}
-                    class="flex-1 py-1.5 bg-raised] hover:bg-raised-hover] text-ink] rounded text-xs font-mono border border-grid]"
+                    class="flex-1 py-1.5 bg-raised hover:bg-raised-hover text-ink rounded text-xs font-mono border border-grid"
                   >
                     +10
                   </button>
@@ -700,13 +700,13 @@
 
                 <button
                   onclick={copySupplierOrder}
-                  class="w-full py-1.5 bg-raised] hover:bg-raised-hover] text-cyan] border border-grid] rounded text-xs font-bold"
+                  class="w-full py-1.5 bg-raised hover:bg-raised-hover text-cyan border border-grid rounded text-xs font-bold"
                 >
                   Copiar Pedido al Proveedor (WhatsApp / Email)
                 </button>
 
                 {#if copiedToast}
-                  <div class="p-2 rounded bg-void] border border-cyan] text-cyan] text-xs text-center font-mono">
+                  <div class="p-2 rounded bg-void border border-cyan text-cyan text-xs text-center font-mono">
                     ✓ Ficha de pedido copiada al portapapeles.
                   </div>
                 {/if}
@@ -714,10 +714,10 @@
             </div>
           {:else}
             <!-- Ítem NO Encontrado -->
-            <div class="bg-void] border border-amber]/40 rounded p-4 text-center space-y-2">
-              <h4 class="text-xs font-bold text-ink]">Código no registrado en el depósito</h4>
-              <div class="text-xs font-mono text-amber]">{scannedBarcode}</div>
-              <p class="text-[11px] text-dim]">
+            <div class="bg-void border border-amber/40 rounded p-4 text-center space-y-2">
+              <h4 class="text-xs font-bold text-ink">Código no registrado en el depósito</h4>
+              <div class="text-xs font-mono text-amber">{scannedBarcode}</div>
+              <p class="text-[11px] text-dim">
                 Este código no coincide con ningún producto existente en el catálogo local.
               </p>
               {#if onNewProductWithBarcode}
@@ -726,7 +726,7 @@
                     onNewProductWithBarcode(scannedBarcode);
                     onClose();
                   }}
-                  class="px-4 py-2 bg-amber] hover:bg-amber]/90 text-void] font-bold rounded text-xs uppercase"
+                  class="px-4 py-2 bg-amber hover:bg-amber/90 text-void font-bold rounded text-xs uppercase"
                 >
                   + Dar de Alta Producto con este Código
                 </button>

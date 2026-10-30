@@ -304,32 +304,32 @@
       <!-- ================================================================= -->
       <!-- BARRA DE HERRAMIENTAS SUPERIOR (NO IMPRIMIBLE)                    -->
       <!-- ================================================================= -->
-      <div class="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-grid] print:hidden gap-3">
+      <div class="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-grid print:hidden gap-3">
         <div>
           <div class="flex items-center gap-2">
-            <h2 class="text-xs font-semibold text-amber] uppercase tracking-wider font-mono">
+            <h2 class="text-xs font-semibold text-amber uppercase tracking-wider font-mono">
               [SOLÍSTICOS & PLUS POR PRESTACIÓN DE ROL]
             </h2>
-            <span class="text-[10px] text-dim] font-mono border border-grid] px-1.5 py-0.5 rounded">
+            <span class="text-[10px] text-dim font-mono border border-grid px-1.5 py-0.5 rounded">
               Ballet Oficial de Córdoba
             </span>
           </div>
-          <p class="text-[11px] text-dim] mt-0.5">
+          <p class="text-[11px] text-dim mt-0.5">
             Certificación formal para liquidación de solísticos y roles principales (Agencia Córdoba Cultura)
           </p>
         </div>
 
         <!-- Conmutador de Pestañas -->
-        <div class="inline-flex bg-void] p-1 rounded border border-grid]">
+        <div class="inline-flex bg-void p-1 rounded border border-grid">
           <button
             onclick={() => activeTab = 'document'}
-            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'document' ? 'bg-amber] text-black font-semibold' : 'text-dim] hover:text-ink]'}"
+            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'document' ? 'bg-amber text-black font-semibold' : 'text-dim hover:text-ink'}"
           >
             Nota Oficial A4
           </button>
           <button
             onclick={() => activeTab = 'editor'}
-            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'editor' ? 'bg-amber] text-black font-semibold' : 'text-dim] hover:text-ink]'}"
+            class="px-3 py-1 rounded text-xs font-medium transition-colors {activeTab === 'editor' ? 'bg-amber text-black font-semibold' : 'text-dim hover:text-ink'}"
           >
             Editar Datos / Items
           </button>
@@ -340,28 +340,28 @@
           {#if activeTab === 'document'}
             <button
               onclick={() => activeTab = 'editor'}
-              class="px-3 py-1.5 bg-raised] hover:bg-grid] text-amber] border border-amber]/40 rounded text-xs font-semibold font-mono transition-colors flex items-center gap-1.5"
+              class="px-3 py-1.5 bg-raised hover:bg-grid text-amber border border-amber/40 rounded text-xs font-semibold font-mono transition-colors flex items-center gap-1.5"
               title="Editar los datos, obra o bailarines de esta nota"
             >
               ✎ Editar Datos
             </button>
             <button
               onclick={() => (printPreviewOpen = true)}
-              class="px-3 py-1.5 bg-raised] hover:bg-grid] text-green] border border-grid] rounded text-xs font-semibold font-mono transition-colors flex items-center gap-1.5"
+              class="px-3 py-1.5 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold font-mono transition-colors flex items-center gap-1.5"
             >
               Imprimir / Guardar PDF
             </button>
           {:else}
             <button
               onclick={() => activeTab = 'document'}
-              class="px-3 py-1.5 bg-raised] hover:bg-grid] text-ink] border border-grid] rounded text-xs font-semibold font-mono transition-colors"
+              class="px-3 py-1.5 bg-raised hover:bg-grid text-ink border border-grid rounded text-xs font-semibold font-mono transition-colors"
             >
               Ver Nota A4
             </button>
             <button
               onclick={handleSave}
               disabled={isSaving}
-              class="px-3 py-1.5 bg-amber] hover:bg-amber] text-black rounded text-xs font-semibold font-mono transition-colors disabled:opacity-50"
+              class="px-3 py-1.5 bg-amber hover:bg-amber text-black rounded text-xs font-semibold font-mono transition-colors disabled:opacity-50"
             >
               {isSaving ? 'Guardando...' : 'Guardar Certificación'}
             </button>
@@ -381,9 +381,9 @@
       </div>
 
       <!-- Selector de Expediente / Certificación Guardada (No imprimible) -->
-      <div class="bg-void] p-2.5 rounded border border-grid] mb-3 flex flex-wrap items-center justify-between gap-3 print:hidden">
+      <div class="bg-void p-2.5 rounded border border-grid mb-3 flex flex-wrap items-center justify-between gap-3 print:hidden">
         <div class="flex items-center gap-2 flex-1 min-w-[280px]">
-          <label for="select-cert" class="text-xs font-semibold text-dim] uppercase font-mono shrink-0">Programa:</label>
+          <label for="select-cert" class="text-xs font-semibold text-dim uppercase font-mono shrink-0">Programa:</label>
           <select
             id="select-cert"
             bind:value={selectedCertId}
@@ -394,7 +394,7 @@
                 createNewCertification();
               }
             }}
-            class="w-full h-8 px-2.5 bg-panel] border border-grid] rounded text-xs font-medium text-ink] outline-none focus:border-amber]"
+            class="w-full h-8 px-2.5 bg-panel border border-grid rounded text-xs font-medium text-ink outline-none focus:border-amber"
           >
             {#if !selectedCertId}
               <option value="">+ Nueva Nota (Borrador sin guardar)</option>
@@ -410,7 +410,7 @@
         <div class="flex items-center gap-2">
           <button
             onclick={createNewCertification}
-            class="px-3 py-1 bg-amber] hover:bg-amber] text-black font-bold border border-amber] rounded text-xs font-mono transition-colors flex items-center gap-1 shadow-sm"
+            class="px-3 py-1 bg-amber hover:bg-amber text-black font-bold border border-amber rounded text-xs font-mono transition-colors flex items-center gap-1 shadow-sm"
             title="Crear nueva nota oficial en blanco"
           >
             <span>+</span>
@@ -419,7 +419,7 @@
           {#if selectedCertId}
             <button
               onclick={handleDelete}
-              class="px-2.5 py-1 bg-raised] hover:bg-red]/20 text-red] border border-grid] rounded text-xs font-mono transition-colors"
+              class="px-2.5 py-1 bg-raised hover:bg-red/20 text-red border border-grid rounded text-xs font-mono transition-colors"
             >
               Eliminar
             </button>
@@ -434,7 +434,7 @@
 
         <!-- PESTAÑA 1: VISTA PREVIA DEL DOCUMENTO A4 OFICIAL -->
         {#if activeTab === 'document'}
-          <div bind:this={printableEl} class="bg-white text-black p-8 md:p-12 shadow-md rounded border border-grid] font-sans max-w-[210mm] mx-auto min-h-[297mm] flex flex-col justify-between print:border-none print:shadow-none print:p-0 print:m-0 print:max-w-none print:w-full print:min-h-0">
+          <div bind:this={printableEl} class="bg-white text-black p-8 md:p-12 shadow-md rounded border border-grid font-sans max-w-[210mm] mx-auto min-h-[297mm] flex flex-col justify-between print:border-none print:shadow-none print:p-0 print:m-0 print:max-w-none print:w-full print:min-h-0">
             
             <div>
               <!-- 1. ENCABEZADO INSTITUCIONAL OBLIGATORIO DE CÓRDOBA -->
@@ -560,20 +560,20 @@
           <div class="space-y-4">
             
             <!-- Tarjeta de Autogeneración desde Repartos -->
-            <div class="bg-void] border border-grid] p-4 rounded-md">
-              <h3 class="text-xs font-semibold text-amber] uppercase font-mono mb-2">
+            <div class="bg-void border border-grid p-4 rounded-md">
+              <h3 class="text-xs font-semibold text-amber uppercase font-mono mb-2">
                 [Autogenerar Certificación desde Reparto de Obras]
               </h3>
-              <p class="text-xs text-dim] mb-3">
+              <p class="text-xs text-dim mb-3">
                 Extrae automáticamente los bailarines asignados a roles de 1° Elenco, 2° Elenco y solísticos programados.
               </p>
               <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                 <div>
-                  <label for="auto-work" class="block text-[10px] uppercase font-mono text-dim] mb-1">Obra / Ballet:</label>
+                  <label for="auto-work" class="block text-[10px] uppercase font-mono text-dim mb-1">Obra / Ballet:</label>
                   <select
                     id="auto-work"
                     bind:value={selectedWorkId}
-                    class="w-full h-8 px-2 bg-panel] border border-grid] rounded text-xs text-ink] outline-none"
+                    class="w-full h-8 px-2 bg-panel border border-grid rounded text-xs text-ink outline-none"
                   >
                     {#each worksList as w}
                       <option value={w.id}>{w.title}</option>
@@ -581,30 +581,30 @@
                   </select>
                 </div>
                 <div>
-                  <label for="auto-dates" class="block text-[10px] uppercase font-mono text-dim] mb-1">Etiqueta de Fechas:</label>
+                  <label for="auto-dates" class="block text-[10px] uppercase font-mono text-dim mb-1">Etiqueta de Fechas:</label>
                   <input
                     id="auto-dates"
                     type="text"
                     bind:value={autoDatesLabel}
                     placeholder="ej: 01 y 03/10"
-                    class="w-full h-8 px-2 bg-panel] border border-grid] rounded text-xs text-ink] outline-none"
+                    class="w-full h-8 px-2 bg-panel border border-grid rounded text-xs text-ink outline-none"
                   />
                 </div>
                 <div>
-                  <label for="auto-count" class="block text-[10px] uppercase font-mono text-dim] mb-1">Funciones por Rol:</label>
+                  <label for="auto-count" class="block text-[10px] uppercase font-mono text-dim mb-1">Funciones por Rol:</label>
                   <input
                     id="auto-count"
                     type="number"
                     min="1"
                     bind:value={autoPerformancesCount}
-                    class="w-full h-8 px-2 bg-panel] border border-grid] rounded text-xs text-ink] outline-none text-center font-mono"
+                    class="w-full h-8 px-2 bg-panel border border-grid rounded text-xs text-ink outline-none text-center font-mono"
                   />
                 </div>
                 <div>
                   <button
                     onclick={handleAutoGenerate}
                     disabled={isSaving}
-                    class="w-full h-8 bg-raised] hover:bg-grid] text-amber] border border-grid] rounded text-xs font-semibold font-mono transition-colors"
+                    class="w-full h-8 bg-raised hover:bg-grid text-amber border border-grid rounded text-xs font-semibold font-mono transition-colors"
                   >
                     Generar Tabla
                   </button>
@@ -613,71 +613,71 @@
             </div>
 
             <!-- Datos Generales de la Nota -->
-            <div class="bg-void] border border-grid] p-4 rounded-md space-y-3">
-              <h3 class="text-xs font-semibold text-ink] uppercase font-mono">
+            <div class="bg-void border border-grid p-4 rounded-md space-y-3">
+              <h3 class="text-xs font-semibold text-ink uppercase font-mono">
                 Encabezado Protocolar & Destinatario
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <label for="edit-prog" class="block text-[10px] uppercase font-mono text-dim] mb-1">Título del Programa / Obra:</label>
+                  <label for="edit-prog" class="block text-[10px] uppercase font-mono text-dim mb-1">Título del Programa / Obra:</label>
                   <input
                     id="edit-prog"
                     type="text"
                     bind:value={editProgramTitle}
-                    class="w-full h-8 px-2 bg-panel] border border-grid] rounded text-xs text-ink] outline-none font-bold"
+                    class="w-full h-8 px-2 bg-panel border border-grid rounded text-xs text-ink outline-none font-bold"
                   />
                 </div>
                 <div>
-                  <label for="edit-hall" class="block text-[10px] uppercase font-mono text-dim] mb-1">Sala / Escenario:</label>
+                  <label for="edit-hall" class="block text-[10px] uppercase font-mono text-dim mb-1">Sala / Escenario:</label>
                   <input
                     id="edit-hall"
                     type="text"
                     bind:value={editHallName}
-                    class="w-full h-8 px-2 bg-panel] border border-grid] rounded text-xs text-ink] outline-none"
+                    class="w-full h-8 px-2 bg-panel border border-grid rounded text-xs text-ink outline-none"
                   />
                 </div>
                 <div>
-                  <label for="edit-date" class="block text-[10px] uppercase font-mono text-dim] mb-1">Fecha del Documento:</label>
+                  <label for="edit-date" class="block text-[10px] uppercase font-mono text-dim mb-1">Fecha del Documento:</label>
                   <input
                     id="edit-date"
                     type="date"
                     bind:value={editDocumentDate}
-                    class="w-full h-8 px-2 bg-panel] border border-grid] rounded text-xs text-amber] outline-none font-mono"
+                    class="w-full h-8 px-2 bg-panel border border-grid rounded text-xs text-amber outline-none font-mono"
                   />
                 </div>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                 <div>
-                  <label for="edit-recip-name" class="block text-[10px] uppercase font-mono text-dim] mb-1">Nombre del Director:</label>
+                  <label for="edit-recip-name" class="block text-[10px] uppercase font-mono text-dim mb-1">Nombre del Director:</label>
                   <input
                     id="edit-recip-name"
                     type="text"
                     bind:value={editRecipientName}
-                    class="w-full h-8 px-2 bg-panel] border border-grid] rounded text-xs text-ink] outline-none"
+                    class="w-full h-8 px-2 bg-panel border border-grid rounded text-xs text-ink outline-none"
                   />
                 </div>
                 <div>
-                  <label for="edit-recip-title" class="block text-[10px] uppercase font-mono text-dim] mb-1">Cargo Formal:</label>
+                  <label for="edit-recip-title" class="block text-[10px] uppercase font-mono text-dim mb-1">Cargo Formal:</label>
                   <input
                     id="edit-recip-title"
                     type="text"
                     bind:value={editRecipientTitle}
-                    class="w-full h-8 px-2 bg-panel] border border-grid] rounded text-xs text-ink] outline-none"
+                    class="w-full h-8 px-2 bg-panel border border-grid rounded text-xs text-ink outline-none"
                   />
                 </div>
               </div>
             </div>
 
             <!-- Tabla de Ítems / Solísticos Individuales -->
-            <div class="bg-void] border border-grid] p-4 rounded-md">
+            <div class="bg-void border border-grid p-4 rounded-md">
               <div class="flex items-center justify-between mb-3">
-                <h3 class="text-xs font-semibold text-ink] uppercase font-mono">
+                <h3 class="text-xs font-semibold text-ink uppercase font-mono">
                   Bailarines y Prestaciones Certificadas ({editItems.length} registros • Total {totalPrestaciones} funciones)
                 </h3>
                 <button
                   onclick={addItemRow}
-                  class="px-2.5 py-1 bg-raised] hover:bg-grid] text-green] border border-grid] rounded text-xs font-mono transition-colors"
+                  class="px-2.5 py-1 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-mono transition-colors"
                 >
                   + Agregar Fila
                 </button>
@@ -686,12 +686,12 @@
               <div class="space-y-2">
                 {#each editItems as item, idx}
                   {@const resolvedId = resolvePersonnelId(item)}
-                  <div class="flex flex-wrap items-center gap-2 p-2 bg-panel] border border-grid] rounded text-xs">
-                    <span class="w-6 text-center font-mono text-dim]">{idx + 1}</span>
+                  <div class="flex flex-wrap items-center gap-2 p-2 bg-panel border border-grid rounded text-xs">
+                    <span class="w-6 text-center font-mono text-dim">{idx + 1}</span>
                     
                     <div class="flex-1 min-w-[220px]">
                       <select
-                        class="w-full h-7 px-2 bg-void] border border-grid] rounded text-xs text-ink] font-bold outline-none focus:border-amber]"
+                        class="w-full h-7 px-2 bg-void border border-grid rounded text-xs text-ink font-bold outline-none focus:border-amber"
                         value={resolvedId}
                         onchange={(e) => {
                           const target = e.target as HTMLSelectElement;
@@ -724,7 +724,7 @@
                           type="text"
                           bind:value={item.dancer_name}
                           placeholder="APELLIDO, Nombre (Invitado o Manual)"
-                          class="w-full h-7 mt-1 px-2 bg-void] border border-amber]/40 rounded text-xs text-amber] uppercase font-bold outline-none"
+                          class="w-full h-7 mt-1 px-2 bg-void border border-amber/40 rounded text-xs text-amber uppercase font-bold outline-none"
                         />
                       {/if}
                     </div>
@@ -734,7 +734,7 @@
                         type="text"
                         bind:value={item.work_role}
                         placeholder="Obra / Rol / Variación"
-                        class="w-full h-7 px-2 bg-void] border border-grid] rounded text-xs text-ink]"
+                        class="w-full h-7 px-2 bg-void border border-grid rounded text-xs text-ink"
                       />
                     </div>
 
@@ -743,7 +743,7 @@
                         type="text"
                         bind:value={item.performance_dates}
                         placeholder="Fechas (ej: 01 y 03/10)"
-                        class="w-full h-7 px-2 bg-void] border border-grid] rounded text-xs text-center font-mono text-dim]"
+                        class="w-full h-7 px-2 bg-void border border-grid rounded text-xs text-center font-mono text-dim"
                       />
                     </div>
 
@@ -752,7 +752,7 @@
                         type="number"
                         min="1"
                         bind:value={item.performance_count}
-                        class="w-full h-7 px-1 bg-void] border border-grid] rounded text-xs text-center font-mono text-amber] font-bold"
+                        class="w-full h-7 px-1 bg-void border border-grid rounded text-xs text-center font-mono text-amber font-bold"
                       />
                     </div>
 
@@ -760,7 +760,7 @@
                       <button
                         onclick={() => moveRowUp(idx)}
                         disabled={idx === 0}
-                        class="w-6 h-7 flex items-center justify-center text-dim] hover:text-ink] hover:bg-raised] rounded transition-colors disabled:opacity-20 disabled:hover:bg-transparent"
+                        class="w-6 h-7 flex items-center justify-center text-dim hover:text-ink hover:bg-raised rounded transition-colors disabled:opacity-20 disabled:hover:bg-transparent"
                         title="Subir fila"
                       >
                         ▲
@@ -768,14 +768,14 @@
                       <button
                         onclick={() => moveRowDown(idx)}
                         disabled={idx === editItems.length - 1}
-                        class="w-6 h-7 flex items-center justify-center text-dim] hover:text-ink] hover:bg-raised] rounded transition-colors disabled:opacity-20 disabled:hover:bg-transparent"
+                        class="w-6 h-7 flex items-center justify-center text-dim hover:text-ink hover:bg-raised rounded transition-colors disabled:opacity-20 disabled:hover:bg-transparent"
                         title="Bajar fila"
                       >
                         ▼
                       </button>
                       <button
                         onclick={() => removeItemRow(idx)}
-                        class="w-6 h-7 flex items-center justify-center text-red] hover:bg-red]/20 rounded transition-colors font-bold text-sm ml-1"
+                        class="w-6 h-7 flex items-center justify-center text-red hover:bg-red/20 rounded transition-colors font-bold text-sm ml-1"
                         title="Eliminar fila"
                       >
                         ×
