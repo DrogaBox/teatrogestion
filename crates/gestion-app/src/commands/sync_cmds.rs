@@ -36,7 +36,7 @@ fn header_value(headers: &str, name: &str) -> Option<String> {
 }
 
 fn http_error(stream: &mut TcpStream, status: &str, message: &str) {
-    let body = format!("{{\"error\":\"{message}\"}}");
+    let body = serde_json::json!({ "error": message }).to_string();
     let resp = format!("HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len());
     let _ = stream.write_all(resp.as_bytes());
 }
@@ -214,9 +214,13 @@ fn handle_sync_client(
 
     let response_bundle = {
         let mut db_guard = db.lock().map_err(|_| "DB lock error")?;
-        // 1. Importar lo recibido (con errores a la vista, no tragados).
+        // 1. Importar lo recibido. Si falla (la importación es todo o nada), el otro equipo tiene que enterarse: antes
+        // recibía igual el paquete de vuelta y mostraba «Sincronización exitosa» sin que se hubiera guardado nada.
         if let Err(e) = sync_repo::import_sync_bundle(db_guard.connection_mut(), &remote_bundle) {
             eprintln!("[LAN Sync] No se pudo importar el paquete recibido: {e}");
+            drop(db_guard);
+            http_error(stream, "409 Conflict", &format!("El otro equipo no pudo guardar los datos recibidos: {e}"));
+            return Ok(());
         }
         // 2. Devolver lo local actualizado.
         sync_repo::export_sync_bundle(db_guard.connection(), &device_name, &node_id).map_err(|e| format!("Export error: {}", e))?
@@ -317,7 +321,12 @@ fn sync_over_tcp(target_addr: &str, key: &str, post_body: &[u8]) -> Result<Vec<u
         return Err(err("SYNC_AUTH", "El otro dispositivo rechazó la clave de sincronización. Escriba en los dos la misma clave (pestaña Sincronización).".into()));
     }
     if status != 200 {
-        return Err(err("PEER_ERROR", format!("El dispositivo remoto respondió con el estado {status}.")));
+        // El cuerpo de un error es corto y trae el motivo: se muestra en lugar de solo el número de estado.
+        let reason = serde_json::from_slice::<serde_json::Value>(&raw[body_start..])
+            .ok()
+            .and_then(|v| v["error"].as_str().map(str::to_owned))
+            .unwrap_or_else(|| format!("respondió con el estado {status}"));
+        return Err(err("PEER_ERROR", format!("El dispositivo remoto no sincronizó: {reason}")));
     }
     let content_len: usize = header_value(&header_str, "content-length").and_then(|v| v.parse().ok()).unwrap_or(0);
     if content_len == 0 || content_len > MAX_BODY_BYTES {
@@ -449,6 +458,18 @@ mod tests {
         let mut req = format!("POST /sync HTTP/1.1\r\nHost: x\r\nAuthorization: {old}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", body.len()).into_bytes();
         req.extend_from_slice(&body);
         assert!(raw_request(&addr, &req).starts_with("HTTP/1.1 401"));
+    }
+
+    #[test]
+    fn when_the_peer_cannot_import_the_client_gets_the_reason_instead_of_a_success() {
+        let (addr, server_db) = server_with(DatabaseManager::open_in_memory().unwrap());
+        let key = lan_auth::get_or_create_key(server_db.lock().unwrap().connection()).unwrap();
+        // Un registro de asistencia de una persona y un parte que no existen: la importación falla por clave foránea.
+        let mut bundle: serde_json::Value = serde_json::from_slice(&bundle_json(&server_db)).unwrap();
+        bundle["attendance_logs"] = serde_json::json!([{ "id": "ATT_HUERFANO", "personnel_id": "NO_EXISTE", "schedule_id": "NO_EXISTE", "status": "PRESENT", "updated_at": "2026-10-31T10:00:00Z" }]);
+        let err = sync_over_tcp(&addr, &key, &serde_json::to_vec(&bundle).unwrap()).unwrap_err();
+        assert_eq!(err.code, "PEER_ERROR", "{}", err.message);
+        assert!(err.message.contains("no pudo guardar"), "{}", err.message);
     }
 
     #[test]
