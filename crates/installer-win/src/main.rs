@@ -1062,6 +1062,9 @@ fn run_silent_install(
 /// Lanza la Interfaz Gráfica WPF moderna (PowerShell STA)
 fn launch_gui(source_dir: &Path) {
     let script_candidates = [
+        source_dir.join("Instalador_Unificado.ps1"),
+        source_dir.join("..").join("Instalador_Unificado.ps1"),
+        PathBuf::from("Instalador_Unificado.ps1"),
         source_dir.join("Instalador_Grafico.ps1"),
         source_dir.join("..").join("Instalador_Grafico.ps1"),
         PathBuf::from("Instalador_Grafico.ps1"),
@@ -1115,6 +1118,37 @@ fn main() {
                 print_banner();
                 admin_reset_vault_cli(&source_dir);
                 return;
+            }
+            "--target" => {
+                let target_dir = args.get(2).map(PathBuf::from);
+                if let Some(master_pass) = secret_from_env("TEATROGESTION_MASTER_PASSWORD") {
+                    let term_idx: u32 = 4; // 1 año / temporada
+                    let custom_days: u64 = 365;
+                    let puesto = "Oficina Inspección";
+                    let vault_pass = secret_from_env("TEATROGESTION_VAULT_PASSWORD");
+                    let dest = target_dir.unwrap_or_else(determine_target_dir);
+                    let result = run_silent_install(
+                        &source_dir,
+                        &dest,
+                        term_idx,
+                        custom_days,
+                        puesto,
+                        &master_pass,
+                        vault_pass.as_deref().map(String::as_str),
+                        Some(5),
+                    );
+                    match result {
+                        Ok(()) => std::process::exit(0),
+                        Err(e) => {
+                            eprintln!("[ERROR] {e}");
+                            std::process::exit(1);
+                        }
+                    }
+                } else {
+                    print_banner();
+                    run_interactive_install(&source_dir);
+                    return;
+                }
             }
             "--silent-install" => {
                 // Formato: --silent-install <target_dir> <term_idx> <custom_days> <puesto> [vault_timeout]
