@@ -1275,7 +1275,7 @@ dependencies = [
 
 [[package]]
 name = "gestion-app"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "gestion-core",
  "gestion-license",
@@ -1290,7 +1290,7 @@ dependencies = [
 
 [[package]]
 name = "gestion-core"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "blake3",
  "chrono",
@@ -1305,7 +1305,7 @@ dependencies = [
 
 [[package]]
 name = "gestion-license"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "aes-gcm",
  "ed25519-dalek",
@@ -1322,7 +1322,7 @@ dependencies = [
 
 [[package]]
 name = "gestion-update"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -1859,7 +1859,7 @@ dependencies = [
 
 [[package]]
 name = "installer-win"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "gestion-license",
  "rpassword",
@@ -4263,7 +4263,7 @@ checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
 name = "updater-win"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "gestion-core",
  "gestion-license",

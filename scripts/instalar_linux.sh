@@ -57,5 +57,5 @@ gio set "$DESK/teatrogestion.desktop" metadata::trusted true 2>/dev/null || true
 update-desktop-database "$APPS" 2>/dev/null || true
 gtk-update-icon-cache -q "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
 
-echo "✔ TeatroGestión v1.3.1 instalado/actualizado correctamente."
+echo "TeatroGestión $(grep -m1 '^version' Cargo.toml | cut -d\" -f2) instalado o actualizado."
 echo "Accesos directos listos en $DESK y en el menú de aplicaciones."

@@ -10,6 +10,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.5',
+    date: '01/11/2026',
+    title: 'Celular más cómodo, sincronización más segura y planillas corregidas',
+    added: [
+      'Celular: la barra de abajo usa íconos, el padrón y el inventario se ven como tarjetas, y desde el menú se puede usar a pantalla completa con la barra del teléfono escondida.',
+      'La categoría de revista se escribe libremente (por ejemplo, contratos de extras): se crea la primera vez que se usa y viaja en la sincronización. El formulario de personal permite cambiarla.',
+      'Planilla de ausentismo BOP: abre en el mes en curso, la semana tiene siempre 7 días (lunes a domingo) aunque cambie el mes, y el miércoles se marca con X para no repetir la M del martes.',
+      'La vista previa de impresión se lee en fondo claro en todas las planillas, y el manual tiene letra más grande y más aire entre párrafos.',
+    ],
+    fixed: [
+      'La sincronización por Wi-Fi ya no dice «exitosa» cuando el otro equipo no pudo guardar los datos: muestra el motivo.',
+      'Si la PC y el celular abrieron el parte del mismo día por separado, al sincronizar se unen en uno en lugar de trabar la sincronización.',
+      'La contraseña de la Bóveda ya no se puede cambiar desde la aplicación sin credenciales. El reseteo administrativo queda en el instalador, con la llave maestra del pendrive.',
+      'Importar el padrón desde un archivo volvió a funcionar.',
+      'El catálogo de stock bajo del celular volvió a funcionar.',
+      'Las entregas de valeras usan la temporada en curso (antes quedaban siempre en 2026).',
+      'El actualizador de Windows ya no rechaza bases creadas por la versión publicada en GitHub.',
+      'El distintivo de jubilado desaparece en cuanto se carga el estado del día.',
+      'En la planilla de asistencia, un nombre de categoría largo ya no corre el borde; la planilla de reparto de obra vuelve a abrir su vista previa al imprimir.',
+    ],
+  },
+  {
     version: '1.4',
     date: '29/10/2026',
     title: 'Planilla de ausentismo por semana, mes y año; vista previa editable',
