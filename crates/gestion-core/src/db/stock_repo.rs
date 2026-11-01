@@ -269,7 +269,8 @@ pub fn execute_voucher_delivery(
         ));
     }
 
-    let season_year = payload.season_year.unwrap_or_else(|| Utc::now().year());
+    // Hora local: con UTC, una entrega después de las 21 h del 31 de diciembre caía en la temporada siguiente.
+    let season_year = payload.season_year.unwrap_or_else(|| chrono::Local::now().year());
 
     if payload.is_quota_exception {
         match &payload.exception_reason {

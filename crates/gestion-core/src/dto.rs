@@ -161,6 +161,8 @@ pub struct StockFilterPayload {
     pub width_value: Option<String>,
     pub gm_line: Option<GaynorManufacturingLine>,
     pub prop_dye_state: Option<PropDyeState>,
+    /// La interfaz lo omite cuando no filtra (`undefined` en TypeScript): falta = todos los artículos.
+    #[serde(default)]
     pub low_stock_only: bool,
 }
 
@@ -571,3 +573,17 @@ pub struct VaultMonthlyTotalsDto {
 
 
 
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_stock_filter_without_low_stock_only_means_every_item() {
+        // La vista de stock del celular manda `low_stock_only: undefined` (el campo no viaja) cuando no filtra.
+        let f: StockFilterPayload = serde_json::from_str(r#"{"query":null}"#).expect("el filtro sin el campo se acepta");
+        assert!(!f.low_stock_only);
+        let f: StockFilterPayload = serde_json::from_str(r#"{"low_stock_only":true}"#).unwrap();
+        assert!(f.low_stock_only);
+    }
+}

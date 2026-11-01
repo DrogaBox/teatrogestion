@@ -77,7 +77,7 @@
       const item = catalog.find(i => i.sku_code === reservationPreset?.stock_sku) || catalog[0];
       const res = await api.executeVoucherDelivery({
         personnel_id: dancer.id,
-        season_year: 2026,
+        season_year: null, // la temporada en curso la pone el backend
         delivered_by_inspector_id: 'PER_INSPECTOR_MAIN',
         device_id: 'GALAXY-A53',
         signature_svg_strokes: '<svg>touch-sign</svg>',
@@ -118,7 +118,7 @@
 
       const res = await api.executeVoucherDelivery({
         personnel_id: dancer.id,
-        season_year: 2026,
+        season_year: null, // la temporada en curso la pone el backend
         delivered_by_inspector_id: 'PER_INSPECTOR_MAIN',
         device_id: 'GALAXY-A53',
         signature_svg_strokes: '<svg>touch-sign</svg>',

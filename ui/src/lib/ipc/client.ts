@@ -610,7 +610,7 @@ export const api = {
     invoke('upsert_personnel', { payload }),
 
   importPersonnelBatch: (batch: UpsertPersonnelPayload[]): Promise<ImportPersonnelResult> =>
-    invoke('import_personnel_batch', { batch }),
+    invoke('import_personnel_batch', { items: batch }),
 
   executeVoucherDelivery: (payload: ExecuteVoucherPayload): Promise<VoucherReceiptDto> =>
     invoke('execute_voucher_delivery', { payload }),
@@ -744,8 +744,6 @@ export const api = {
   setVaultPassword: (payload: SetVaultPasswordPayload): Promise<void> =>
     invoke('set_vault_password', { payload }),
 
-  adminResetVaultPassword: (payload: AdminResetVaultPasswordPayload): Promise<void> =>
-    invoke('admin_reset_vault_password', { payload }),
 };
 
 export interface WorkWithPassagesAndCastsDto {
@@ -1057,10 +1055,6 @@ export interface SetVaultPasswordPayload {
 
 export interface VerifyVaultPasswordPayload {
   password: string;
-}
-
-export interface AdminResetVaultPasswordPayload {
-  new_password: string;
 }
 
 export interface VaultMonthlyTotalsDto {

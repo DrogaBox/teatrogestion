@@ -1,6 +1,6 @@
 use crate::state::AppState;
 use gestion_core::dto::{
-    AdminResetVaultPasswordPayload, CreateInspectionDocumentPayload, InspectionVaultDocumentDto,
+    CreateInspectionDocumentPayload, InspectionVaultDocumentDto,
     InspectionVaultFilterPayload, SetVaultPasswordPayload, VaultMonthlyTotalsDto,
     VaultSecurityStatusDto, VerifyVaultPasswordPayload,
 };
@@ -104,16 +104,3 @@ pub fn set_vault_password(
     .map_err(|e| (&e).into())
 }
 
-#[tauri::command]
-pub fn admin_reset_vault_password(
-    state: State<AppState>,
-    payload: AdminResetVaultPasswordPayload,
-) -> Result<(), SerializableCoreError> {
-    let mut db = state.db.lock().map_err(|_| SerializableCoreError {
-        code: "MUTEX_LOCK_FAILED",
-        message: "No se pudo adquirir el bloqueo de base de datos".into(),
-    })?;
-
-    gestion_core::db::admin_reset_vault_password(db.connection_mut(), &payload.new_password)
-        .map_err(|e| (&e).into())
-}

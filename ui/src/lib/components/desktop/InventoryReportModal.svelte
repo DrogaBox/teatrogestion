@@ -129,7 +129,7 @@
 
       await api.executeVoucherDelivery({
         personnel_id: deliverPersonnelId,
-        season_year: 2026,
+        season_year: null, // la temporada en curso la pone el backend
         delivered_by_inspector_id: 'PER_INSPECTOR_MAIN',
         device_id: 'DESKTOP-PC',
         signature_svg_strokes: '<svg>desktop-assign</svg>',

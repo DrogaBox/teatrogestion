@@ -22,8 +22,9 @@
     onClose: () => void;
   }>();
 
-  let selectedYear = $state<number>(2026);
-  let selectedMonth = $state<number>(9); // Septiembre 2026 por defecto (como en la planilla física de Carina)
+  // Abre en el mes en curso.
+  let selectedYear = $state<number>(new Date().getFullYear());
+  let selectedMonth = $state<number>(new Date().getMonth() + 1);
   let matrix = $state<MonthlyBopMatrixDto | null>(null);
   // Meses vecinos: la semana de lunes a domingo puede empezar en el mes anterior o terminar en el siguiente
   let prevMatrix = $state<MonthlyBopMatrixDto | null>(null);

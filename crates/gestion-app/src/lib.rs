@@ -83,7 +83,8 @@ pub fn run() {
             get_vault_security_status,
             verify_vault_password,
             set_vault_password,
-            admin_reset_vault_password,
+            // Sin `admin_reset_vault_password`: cambiaba la contraseña de la Bóveda sin pedir ninguna credencial.
+            // El reseteo administrativo queda en el instalador, que exige la llave maestra del pendrive.
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
