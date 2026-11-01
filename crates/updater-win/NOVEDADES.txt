@@ -1,8 +1,9 @@
-Novedades de esta versión de TeatroGestión (1.4)
+Novedades de esta versión de TeatroGestión (1.5)
 ------------------------------------------------
-- Planilla de ausentismo BOP con tres vistas: Semana, Mes y Año. El Año resume los 12 meses; Exportar Excel e Imprimir respetan la vista elegida.
-- Al imprimir un parte se abre una vista previa donde se puede corregir cualquier dato antes de mandarlo a la impresora.
-- Se recuperaron los colores de la interfaz y el fondo de los menús desplegables.
-- La cruz de cerrar queda siempre en la esquina superior derecha de todas las ventanas.
-- Las bases de datos creadas por cualquier versión de TeatroGestión se aceptan al actualizar (antes una base creada por otra compilación podía rechazarse).
+- Celular: barra de íconos, padrón e inventario como tarjetas y pantalla completa desde el menú.
+- La categoría de revista se escribe libremente y viaja en la sincronización.
+- Planilla de ausentismo BOP: abre en el mes en curso, semanas siempre de lunes a domingo y el miércoles con X.
+- La sincronización por Wi-Fi avisa cuando el otro equipo no pudo guardar los datos, y une los partes del mismo día.
+- La contraseña de la Bóveda solo se restablece con el instalador y la llave maestra.
+- Se corrigieron la importación del padrón, el stock bajo del celular y la temporada de las valeras.
 - Sus datos (personal, asistencia, inventario, Bóveda de Inspección) y su licencia NO se tocan.
