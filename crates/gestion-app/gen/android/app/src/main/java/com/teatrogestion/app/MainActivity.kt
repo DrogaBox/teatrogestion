@@ -5,7 +5,11 @@ import android.content.pm.PackageManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.print.PrintAttributes
+import android.print.PrintManager
 import android.provider.Settings
+import android.util.Base64
+import android.view.KeyEvent
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -23,6 +27,8 @@ class MainActivity : TauriActivity() {
 
     /** Pantalla completa: la barra de arriba del teléfono se esconde y reaparece un momento al deslizar desde el borde. */
     private var fullscreen = true
+
+    private var appWebView: WebView? = null
 
     private fun applyFullscreen() {
         val controller = WindowCompat.getInsetsController(window, window.decorView)
@@ -78,7 +84,49 @@ class MainActivity : TauriActivity() {
         }
     }
 
+    /** El visor web no imprime ni descarga: el diálogo de impresión del sistema (también guarda en PDF) y el menú de compartir. */
+    inner class DocumentOutput(private val webView: WebView) {
+        @JavascriptInterface
+        fun print(jobName: String) {
+            runOnUiThread {
+                val manager = getSystemService(PRINT_SERVICE) as PrintManager
+                val attributes = PrintAttributes.Builder().setMediaSize(PrintAttributes.MediaSize.ISO_A4).build()
+                manager.print(jobName, webView.createPrintDocumentAdapter(jobName), attributes)
+            }
+        }
+
+        @JavascriptInterface
+        fun saveFile(fileName: String, mimeType: String, base64: String): String {
+            return try {
+                val folder = File(cacheDir, "exports").apply { mkdirs() }
+                val file = File(folder, File(fileName).name.ifBlank { "documento" })
+                file.writeBytes(Base64.decode(base64, Base64.DEFAULT))
+                val uri = FileProvider.getUriForFile(this@MainActivity, "$packageName.fileprovider", file)
+                val send = Intent(Intent.ACTION_SEND)
+                    .setType(mimeType)
+                    .putExtra(Intent.EXTRA_STREAM, uri)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                startActivity(Intent.createChooser(send, file.name))
+                "ok"
+            } catch (e: Exception) {
+                e.message ?: "error"
+            }
+        }
+    }
+
+    /** Atrás cierra la ventana abierta de la app; sin ventanas abiertas, Android hace lo de siempre. */
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        val webView = appWebView
+        if (keyCode != KeyEvent.KEYCODE_BACK || webView == null) return super.onKeyDown(keyCode, event)
+        webView.evaluateJavascript("window.__tgBack ? window.__tgBack() : false") { closed ->
+            if (closed != "true") moveTaskToBack(true)
+        }
+        return true
+    }
+
     override fun onWebViewCreate(webView: WebView) {
+        appWebView = webView
+        webView.addJavascriptInterface(DocumentOutput(webView), "TGOutput")
         webView.addJavascriptInterface(UpdateInstaller(), "TGUpdate")
         webView.addJavascriptInterface(ScreenMode(), "TGScreen")
     }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { saveBlob } from '../nativeOutput';
   import { onMount } from 'svelte';
   import { api, type LanSyncInfo, type SyncReportDto } from '../ipc/client';
   import ModalHeader from './shared/ModalHeader.svelte';
@@ -126,12 +127,7 @@
     try {
       const bundle = await api.exportLocalSyncBundle();
       const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `teatro_gestion_respaldo_${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+      await saveBlob(blob, `teatro_gestion_respaldo_${new Date().toISOString().slice(0, 10)}.json`);
     } catch (e: any) {
       errorMessage = 'Error exportando archivo JSON: ' + (e.message || e);
     }

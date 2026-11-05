@@ -1,10 +1,17 @@
 <script lang="ts">
+  import { saveBlob } from '../../nativeOutput';
   import { regimeLabel, roomLabel } from '../../labels';
   import type { DailyScheduleAggregate } from '../../ipc/client';
   import { modalBehavior } from '../../actions/modalBehavior';
   import PrintPreviewModal from '../shared/PrintPreviewModal.svelte';
+  import ZoomControls from '../shared/ZoomControls.svelte';
+  import { zoomable, defaultDocumentZoom } from '../../actions/zoomable';
 
   let printPreviewOpen = $state(false);
+  let zoom = $state(1);
+  $effect(() => {
+    if (isOpen) zoom = defaultDocumentZoom();
+  });
   let printableEl: HTMLElement | null = $state(null);
 
   let {
@@ -140,13 +147,7 @@
 
   function downloadCsv(content: string, filename: string) {
     const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    saveBlob(blob, filename).catch((e) => alert(e?.message || e));
   }
 </script>
 
@@ -189,8 +190,9 @@
             </button>
           </div>
 
-          <!-- Botones de Exportación -->
-          <div class="flex items-center gap-2">
+          <!-- Zoom y Botones de Exportación -->
+          <div class="flex flex-wrap items-center gap-2">
+            <ZoomControls bind:zoom />
             {#if activeReportTab === 'classes'}
               <button
                 onclick={exportClassesExcel}
@@ -231,7 +233,8 @@
       <!-- ================================================================= -->
       <!-- DOCUMENTO IMPRIMIBLE A4 (DISEÑO IDÉNTICO A LAS HOJAS DE INSPECCIÓN) -->
       <!-- ================================================================= -->
-      <div bind:this={printableEl} class="bg-white text-black p-6 md:p-10 rounded font-sans print:shadow-none print:p-0 print:m-0">
+      <div class="overflow-x-auto bg-white bg-local rounded print:overflow-visible" use:zoomable={{ zoom, onzoom: (z) => (zoom = z) }}>
+      <div bind:this={printableEl} style:zoom={zoom} class="tg-zoom-doc bg-white text-black p-6 md:p-10 rounded font-sans print:shadow-none print:p-0 print:m-0">
         
         <!-- PARTE DIARIO ACTIVO -->
         {#if activeReportTab === 'today'}
@@ -440,6 +443,7 @@
             </div>
           </div>
         {/if}
+      </div>
       </div>
 
       <PrintPreviewModal

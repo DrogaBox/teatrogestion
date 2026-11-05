@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { saveBlob } from '../../nativeOutput';
   import { onMount, untrack } from 'svelte';
   import {
     api,
@@ -398,13 +399,7 @@
 
   function downloadCsv(csv: string, fileName: string) {
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    saveBlob(blob, fileName).catch((e) => alert(e?.message || e));
   }
   function exportYearCsv() {
     let csv = '\uFEFF';
@@ -473,7 +468,7 @@
       <!-- BARRA SUPERIOR (NO IMPRIMIBLE)                                    -->
       <!-- ================================================================= -->
       <ModalHeader
-        title="[MATRIZ DE AUSENTISMO BOP]"
+        title="Planilla de ausentismo BOP"
         subtitle="Planilla mensual de asistencia histórica (Inspección Carina Lion)"
         onclose={onClose}
       >
@@ -550,7 +545,7 @@
 
             <button
               onclick={() => (printPreviewOpen = true)}
-              class="px-2.5 py-1 max-md:py-2.5 max-md:text-sm max-md:hidden bg-raised hover:bg-raised-hover text-ink border border-grid rounded text-xs font-mono font-semibold transition-colors"
+              class="px-2.5 py-1 max-md:py-2.5 max-md:text-sm bg-raised hover:bg-raised-hover text-ink border border-grid rounded text-xs font-mono font-semibold transition-colors"
             >
               Imprimir A4
             </button>
@@ -563,7 +558,8 @@
       <!-- ================================================================= -->
       <div bind:this={printableEl} class="flex-1 overflow-auto border border-grid rounded bg-void p-3 md:p-4 print:border-none print:overflow-visible print:bg-white print:text-black">
         
-        {#if isLoading}
+        <!-- Al recargar el mes con datos a la vista la planilla queda montada: conserva el lugar del scroll. -->
+        {#if isLoading && (viewMode === 'year' || !matrix)}
           <div class="py-20 text-center text-xs font-mono text-dim">
             Cargando matriz mensual de ausentismo...
           </div>

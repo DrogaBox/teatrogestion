@@ -381,6 +381,8 @@ export interface StockItemAvailabilityDto {
   free_available_qty: number;
   storage_bin_location?: string | null;
   is_low_stock: boolean;
+  quota_bucket: QuotaBucket;
+  min_alert_qty: number;
 }
 
 export interface UpsertStockItemPayload {
@@ -509,6 +511,8 @@ export interface AttendanceLogDto {
   current_physio_diagnosis: string | null;
   physio_tracking_notes: string | null;
   recorded_at: string;
+  specific_position: string | null;
+  gender_group: GenderGroup;
 }
 
 export interface RecordAttendancePayload {
@@ -605,6 +609,9 @@ export const api = {
 
   upsertStockItem: (payload: UpsertStockItemPayload): Promise<StockItemAvailabilityDto> =>
     invoke('upsert_stock_item', { payload }),
+
+  deleteStockItem: (stockItemId: string): Promise<void> =>
+    invoke('delete_stock_item', { stockItemId }),
 
   upsertPersonnel: (payload: UpsertPersonnelPayload): Promise<PersonnelWithQuotaDto> =>
     invoke('upsert_personnel', { payload }),

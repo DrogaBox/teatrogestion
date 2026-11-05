@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { saveBlob } from '../../nativeOutput';
   import { roleLabel } from '../../labels';
   import { onMount } from 'svelte';
   import {
@@ -158,13 +159,7 @@
 
   function downloadCsv(content: string, filename: string) {
     const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    saveBlob(blob, filename).catch((e) => alert(e?.message || e));
   }
 </script>
 
@@ -295,7 +290,7 @@
         
         <!-- PESTAÑA 1: PLANILLA INDIVIDUAL DEL AGENTE -->
         {#if activeTab === 'individual'}
-          {#if isLoadingSheet}
+          {#if isLoadingSheet && !currentSheet}
             <div class="py-16 text-center text-xs font-mono text-slate-500">
               Generando planilla mensual del agente...
             </div>

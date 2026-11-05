@@ -310,7 +310,7 @@
           <div>
             <div class="flex items-center gap-2">
               <h2 class="text-xs font-semibold text-amber uppercase tracking-wider font-mono">
-                [SOLÍSTICOS & PLUS POR PRESTACIÓN DE ROL]
+                Solísticos y plus por prestación de rol
               </h2>
               <span class="text-[10px] text-dim font-mono border border-grid px-1.5 py-0.5 rounded">
                 Ballet Oficial de Córdoba

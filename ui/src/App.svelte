@@ -140,7 +140,7 @@
       currentDate = dateStr;
     } catch (err: any) {
       console.error('Error cargando cronograma:', err);
-      errorMessage = err?.message || 'Error al conectar con gestion-core';
+      errorMessage = err?.message || 'No se pudo abrir la base de datos de este equipo';
     } finally {
       isLoading = false;
     }
@@ -240,7 +240,7 @@
                   { label: 'Planilla de ausentismo BOP', hint: 'Matriz mensual de asistencia', onSelect: () => (showBopMatrixModal = true) },
                   { label: 'Solísticos y plus por rol', hint: 'Certificación para Agencia Córdoba Cultura', onSelect: () => (showSoloistModal = true) },
                   { label: 'Repartos de obras', hint: 'Elencos, pasajes y planilla de cartelera', onSelect: () => (showWorkCastingModal = true) },
-                  { label: 'Bóveda de inspección', hint: 'Certificados, recibos y memos', separatorBefore: true, onSelect: () => (showVaultModal = true) },
+                  { label: 'Bóveda de inspección', hint: 'Certificados, recibos, partes e informes', separatorBefore: true, onSelect: () => (showVaultModal = true) },
                 ]}
               />
               <MenuButton
@@ -296,17 +296,17 @@
     {#if isLoading && !schedule}
       <div class="h-64 flex flex-col items-center justify-center gap-3 text-dim">
         <div class="w-8 h-8 border-2 border-amber border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-xs font-mono">Conectando con base de datos SQLite WAL local...</p>
+        <p class="text-xs font-mono">Abriendo la base de datos...</p>
       </div>
     {:else if errorMessage}
       <div class="p-6 rounded bg-void border border-red text-red text-center my-8">
-        <p class="text-xs font-mono font-bold mb-2">[ERROR DE INICIALIZACIÓN]</p>
+        <p class="text-xs font-mono font-bold mb-2">No se pudo iniciar</p>
         <p class="text-xs font-mono mb-4 text-ink">{errorMessage}</p>
         <button
           onclick={() => loadSchedule(currentDate)}
           class="px-4 py-2 bg-red hover:bg-red text-white text-xs font-bold rounded transition-colors"
         >
-          Reintentar conexión
+          Reintentar
         </button>
       </div>
     {:else if schedule}
@@ -415,7 +415,7 @@
       <!-- VISTA MÓVIL (OPTIMIZADA PARA SAMSUNG GALAXY A53 5G - ONE UI)     -->
       <!-- ================================================================= -->
       {:else}
-        <div class="space-y-4 max-w-xl mx-auto">
+        <div class="tg-mobile-page space-y-4 max-w-xl mx-auto">
           
           <!-- Pestaña 1: Entregas de Calzado y Asignación Nominal Rápida -->
           {#if mobileTab === 'home'}
@@ -570,7 +570,7 @@
                   class="h-8 px-2.5 bg-raised hover:bg-grid text-ink rounded text-xs font-mono font-bold transition-colors"
                   title="Día Anterior"
                 >
-                  ◀ Ayer
+                  ◀<span class="max-sm:hidden">&nbsp;Ayer</span>
                 </button>
                 <div class="flex items-center gap-1.5">
                   <input
@@ -592,7 +592,7 @@
                   class="h-8 px-2.5 bg-raised hover:bg-grid text-ink rounded text-xs font-mono font-bold transition-colors"
                   title="Día Siguiente"
                 >
-                  Mañana ▶
+                  <span class="max-sm:hidden">Mañana&nbsp;</span>▶
                 </button>
               </div>
 
@@ -603,54 +603,52 @@
                 <span>Ver Parte Oficial Semanal (Excel / PDF)</span>
               </button>
 
-              <div class="bg-panel border border-grid rounded p-3">
-                <div class="flex items-center justify-between text-xs mb-1.5">
-                  <span class="text-dim font-medium uppercase tracking-wider text-[10px]">Fecha de Citación</span>
-                  <span class="font-mono text-amber font-bold">{schedule.schedule_date}</span>
-                </div>
-                <div class="flex items-center justify-between text-xs mb-1.5">
-                  <span class="text-dim font-medium uppercase tracking-wider text-[10px]">Régimen Laboral</span>
-                  <span class="bg-raised px-2 py-0.5 rounded text-ink text-[11px] font-medium border border-grid">{regimeLabel(schedule.regime)}</span>
-                </div>
-                <div class="flex items-center justify-between text-xs">
-                  <span class="text-dim font-medium uppercase tracking-wider text-[10px]">Límite Horario</span>
-                  <span class="font-mono text-green font-bold">{schedule.nominal_end_time} h</span>
-                </div>
+              <!-- Día, semana o mes: lo mismo que Planificación en la computadora -->
+              <div class="grid grid-cols-3 gap-1 bg-void p-1 rounded border border-grid">
+                {#each [['day', 'Día'], ['week', 'Semana'], ['month', 'Mes']] as [key, label]}
+                  <button
+                    onclick={() => (scheduleViewMode = key as typeof scheduleViewMode)}
+                    class="h-9 rounded text-xs font-bold transition-colors {scheduleViewMode === key ? 'bg-amber text-void' : 'text-dim'}"
+                  >
+                    {label}
+                  </button>
+                {/each}
               </div>
 
-              <!-- Clases matutinas compactas -->
-              <MorningClassPanel
-                classes={schedule.morning_classes}
-                scheduleId={schedule.id}
-                onUpdated={() => loadSchedule(currentDate)}
-              />
-
-              <!-- Auditoría compacta de cruces -->
-              <ConflictAuditPanel {conflicts} />
-
-              <!-- Lista compacta de bloques de ensayo -->
-              <div class="bg-panel border border-grid rounded p-3">
-                <h3 class="text-[10px] font-bold uppercase tracking-wider text-dim mb-2">Bloques de Ensayo Citados</h3>
-                {#if schedule.rehearsal_blocks.length === 0}
-                  <p class="text-xs text-dim py-2">No hay bloques de ensayo agendados para esta fecha.</p>
-                {:else}
-                  <div class="space-y-1.5">
-                    {#each schedule.rehearsal_blocks as b}
-                      <div class="p-2.5 rounded bg-alt border border-grid text-xs">
-                        <div class="flex items-center justify-between font-mono text-amber font-bold">
-                          <span>{b.start_time} - {b.end_time} h</span>
-                          <span class="bg-raised text-dim px-1.5 py-0.5 rounded text-[10px] border border-grid">{roomLabel(b.room)}</span>
-                        </div>
-                        <div class="text-ink font-bold text-xs mt-1">{b.passage_name}</div>
-                        <div class="text-[11px] text-dim mt-0.5">Mtro: {b.master_name || 'Sin maestro'} • Pno: {b.pianist_name || 'Sin piano'}</div>
-                        {#if b.sound_requirement}
-                          <div class="text-[10px] font-mono text-cyan mt-1">[CUE] {b.sound_requirement}</div>
-                        {/if}
-                      </div>
-                    {/each}
-                  </div>
-                {/if}
-              </div>
+              {#if scheduleViewMode === 'day'}
+                <DailyRegimeBar
+                  {schedule}
+                  hideDatePicker
+                  onRegimeChange={handleRegimeChange}
+                  onDateChange={(d) => loadSchedule(d)}
+                />
+                <ConflictAuditPanel {conflicts} />
+                <MorningClassPanel
+                  classes={schedule.morning_classes}
+                  scheduleId={schedule.id}
+                  onUpdated={() => loadSchedule(currentDate)}
+                />
+                <RehearsalMultiTrackGrid
+                  scheduleId={schedule.id}
+                  blocks={schedule.rehearsal_blocks}
+                  {conflicts}
+                  onUpdated={() => loadSchedule(currentDate)}
+                />
+              {:else if scheduleViewMode === 'week'}
+                <WeeklySchedulePlanner
+                  {currentDate}
+                  onSelectDate={(d) => { currentDate = d; loadSchedule(d); }}
+                  onOpenCitationModal={(d) => { currentDate = d; loadSchedule(d).then(() => { scheduleViewMode = 'day'; }); }}
+                  onSwitchToDailyView={(d) => { currentDate = d; loadSchedule(d); scheduleViewMode = 'day'; }}
+                />
+              {:else}
+                <MonthlySchedulePlanner
+                  {currentDate}
+                  onSelectDate={(d) => { currentDate = d; loadSchedule(d); scheduleViewMode = 'day'; }}
+                  onSwitchToDailyView={(d) => { currentDate = d; loadSchedule(d); scheduleViewMode = 'day'; }}
+                  onSwitchToWeeklyView={(d) => { currentDate = d; loadSchedule(d); scheduleViewMode = 'week'; }}
+                />
+              {/if}
             </div>
           {/if}
 
@@ -798,7 +796,7 @@
   {#if viewMode === 'mobile'}
     <nav class="fixed bottom-0 left-0 right-0 z-40 bg-panel border-t border-grid ">
       <!-- 5 Pestañas Ergonómicas Táctiles -->
-      <div class="grid grid-cols-6 h-16 max-w-lg mx-auto px-1">
+      <div class="tg-phone-nav grid grid-cols-6 h-16 max-w-lg mx-auto px-1">
 
         <button
           onclick={() => mobileTab = 'home'}

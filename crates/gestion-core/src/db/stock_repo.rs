@@ -41,7 +41,9 @@ pub fn list_stock_catalog(
             reserved_qty,
             free_available_qty,
             storage_bin_location,
-            is_low_stock
+            is_low_stock,
+            quota_bucket,
+            min_alert_qty
         FROM v_stock_availability
         WHERE 1=1 ",
     );
@@ -164,6 +166,8 @@ pub fn list_stock_catalog(
             free_available_qty: row.get(22)?,
             storage_bin_location: row.get(23)?,
             is_low_stock: row.get::<_, i64>(24)? == 1,
+            quota_bucket: row.get(25)?,
+            min_alert_qty: row.get(26)?,
         })
     })?;
 
@@ -478,10 +482,7 @@ pub fn upsert_stock_item(
 ) -> CoreResult<StockItemAvailabilityDto> {
     let tx = conn.transaction()?;
 
-    let final_id = payload
-        .id
-        .filter(|s| !s.trim().is_empty())
-        .unwrap_or_else(|| format!("STK_{}", Uuid::new_v4().simple()));
+    let explicit_id = payload.id.filter(|s| !s.trim().is_empty());
 
     let subcat_abbr = payload
         .subcategory
@@ -508,6 +509,19 @@ pub fn upsert_stock_item(
         .unwrap_or_else(|| {
             format!("{}-{}-{}-{}", subcat_abbr, brand_abbr, color_abbr, payload.size_value.trim())
         });
+
+    // Un alta con el mismo código que un artículo dado de baja lo vuelve a activar (el código es único).
+    let final_id = match explicit_id {
+        Some(id) => id,
+        None => tx
+            .query_row(
+                "SELECT id FROM stock_items WHERE sku_code = ?1 AND is_active = 0",
+                params![&final_sku],
+                |r| r.get::<_, String>(0),
+            )
+            .optional()?
+            .unwrap_or_else(|| format!("STK_{}", Uuid::new_v4().simple())),
+    };
 
     let existing: Option<(i64, i64)> = tx
         .query_row(
@@ -545,6 +559,7 @@ pub fn upsert_stock_item(
                 physical_qty = ?13,
                 min_alert_qty = ?14,
                 storage_bin_location = ?15,
+                is_active = 1,
                 updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
              WHERE id = ?16",
             params![
@@ -629,7 +644,8 @@ pub fn upsert_stock_item(
             id, sku_code, family, subcategory, brand, model_name, raw_factory_code,
             color, material, prop_dye_state, size_system, size_value, width_value,
             gm_line, gm_fit, gm_box, gm_shank, gm_vamp, gm_heel, duval_hardness,
-            physical_qty, reserved_qty, free_available_qty, storage_bin_location, is_low_stock
+            physical_qty, reserved_qty, free_available_qty, storage_bin_location, is_low_stock,
+            quota_bucket, min_alert_qty
         FROM v_stock_availability
         WHERE id = ?1",
         params![&final_id],
@@ -660,10 +676,50 @@ pub fn upsert_stock_item(
                 free_available_qty: row.get(22)?,
                 storage_bin_location: row.get(23)?,
                 is_low_stock: row.get::<_, i64>(24)? == 1,
+                quota_bucket: row.get(25)?,
+                min_alert_qty: row.get(26)?,
             })
         },
     )?;
 
     tx.commit()?;
     Ok(item)
+}
+
+/// Da de baja un artículo del inventario: deja de verse en el catálogo, pero los vales y el libro de
+/// movimientos conservan la referencia y la sincronización lleva la baja al otro equipo. Un artículo con
+/// unidades reservadas no se puede dar de baja: primero hay que liberar la reserva.
+pub fn delete_stock_item(conn: &mut Connection, stock_item_id: &str) -> CoreResult<()> {
+    let tx = conn.transaction()?;
+    let current: Option<(i64, i64, i64)> = tx
+        .query_row(
+            "SELECT physical_qty, reserved_qty, is_active FROM stock_items WHERE id = ?1",
+            params![stock_item_id],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .optional()?;
+    let Some((physical, reserved, is_active)) = current else {
+        return Err(CoreError::ValidationFailed("El artículo ya no existe en el inventario.".into()));
+    };
+    if is_active == 0 {
+        return Ok(());
+    }
+    if reserved > 0 {
+        return Err(CoreError::ValidationFailed(format!(
+            "El artículo tiene {reserved} unidades reservadas: libere la reserva antes de borrarlo."
+        )));
+    }
+    tx.execute(
+        "UPDATE stock_items SET is_active = 0, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?1",
+        params![stock_item_id],
+    )?;
+    tx.execute(
+        "INSERT INTO stock_ledger (
+            id, stock_item_id, movement_type, delta_physical, delta_reserved,
+            balance_physical_after, balance_reserved_after, notes
+        ) VALUES (?1, ?2, 'AUDIT_ADJUSTMENT', 0, 0, ?3, 0, 'Baja del artículo del inventario')",
+        params![format!("LED_{}", Uuid::new_v4().simple()), stock_item_id, physical],
+    )?;
+    tx.commit()?;
+    Ok(())
 }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { saveBlob, saveDataUrl } from '../../nativeOutput';
   import { onMount } from 'svelte';
   import {
     api,
@@ -278,6 +279,18 @@
     )
   );
 
+  // Dos listas, Mujeres y Varones, en orden alfabético (con acentos en su lugar). Quien no tenga
+  // cargada ninguna de las dos va en una tercera, para que nadie quede afuera de la planilla.
+  const byName = new Intl.Collator('es', { sensitivity: 'base' });
+  const attendanceGroups = $derived.by(() => {
+    const sorted = [...filteredLogs].sort((a, b) => byName.compare(a.dancer_name, b.dancer_name));
+    return [
+      { key: 'FEMALE', label: 'Mujeres', items: sorted.filter((l) => l.gender_group === 'FEMALE') },
+      { key: 'MALE', label: 'Varones', items: sorted.filter((l) => l.gender_group === 'MALE') },
+      { key: 'OTHER', label: 'Otros', items: sorted.filter((l) => l.gender_group !== 'FEMALE' && l.gender_group !== 'MALE') },
+    ].filter((g) => g.items.length > 0);
+  });
+
   // Estadísticas rápidas
   const countPresent = $derived(logs.filter((l) => l.attendance_status === 'PRESENT').length);
   const countNotInClass = $derived(logs.filter((l) => l.attendance_status === 'NOT_IN_CLASS').length);
@@ -319,13 +332,7 @@
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `Asistencia_Ballet_${scheduleDate}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    saveBlob(blob, `Asistencia_Ballet_${scheduleDate}.csv`).catch((e) => alert(e?.message || e));
   }
 
   function formatFullDate(isoDate: string): string {
@@ -362,10 +369,8 @@
             {formatFullDate(activeDate)}
           </h1>
         </div>
-        <p class="text-xs text-dim mt-1 flex items-center gap-2 font-mono">
-          <span>Ballet Oficial de Córdoba</span>
-          <span>•</span>
-          <span>Teatro del Libertador San Martín</span>
+        <p class="text-xs text-dim mt-1 font-mono">
+          Ballet Oficial de Córdoba • Teatro del Libertador San Martín
         </p>
 
         <!-- Selector Interactivo de Fecha (Consultar Ausentismo y TC de cualquier día) -->
@@ -534,8 +539,12 @@
           <th class="p-3">Seguimiento Kinésico / Médico</th>
         </tr>
       </thead>
+      {#each attendanceGroups as group (group.key)}
       <tbody class="divide-y divide-grid/60 font-medium">
-        {#each filteredLogs as dancer}
+        <tr class="bg-alt">
+          <td colspan="5" class="px-3 py-2 text-xs font-bold uppercase tracking-wider text-amber">{group.label} ({group.items.length})</td>
+        </tr>
+        {#each group.items as dancer}
           <tr class="hover:bg-raised/40 transition-colors">
             <!-- Nombre y DNI -->
             <td class="p-3">
@@ -548,6 +557,9 @@
               <span class="inline-block max-w-[11rem] px-2 py-0.5 rounded text-[10px] font-medium leading-snug bg-raised text-dim border border-grid">
                 {dancer.category_name}
               </span>
+              {#if dancer.specific_position}
+                <div class="mt-0.5 text-[10px] font-medium text-amber">{dancer.specific_position}</div>
+              {/if}
             </td>
 
             <!-- Estado Operativo Actual con Badge -->
@@ -729,12 +741,15 @@
           </tr>
         {/each}
       </tbody>
+      {/each}
     </table>
   </div>
 
   <!-- 2. VISTA MÓVIL TÁCTIL (TARJETAS OPTIMIZADAS PARA GALAXY A53 / 1-TOUCH) -->
   <div class="block md:hidden space-y-3">
-    {#each filteredLogs as dancer}
+    {#each attendanceGroups as group (group.key)}
+    <h3 class="pt-1 text-xs font-bold uppercase tracking-wider text-amber">{group.label} ({group.items.length})</h3>
+    {#each group.items as dancer}
       <div class="bg-void border border-grid rounded-md p-3.5 space-y-2">
         <!-- Encabezado de la Tarjeta Móvil -->
         <div class="flex items-start justify-between gap-2">
@@ -748,6 +763,9 @@
                 DNI: {dancer.legajo || 'S/D'}
               </span>
             </div>
+            {#if dancer.specific_position}
+              <div class="mt-0.5 text-[10px] font-medium text-amber">{dancer.specific_position}</div>
+            {/if}
           </div>
 
           <!-- Badge de Estado Actual -->
@@ -922,6 +940,7 @@
           </button>
         </div>
       </div>
+    {/each}
     {/each}
   </div>
 </div>
@@ -1192,6 +1211,7 @@
               <a
                 href={zoomCertificateUrl}
                 download="certificado_medico"
+                onclick={(e) => { e.preventDefault(); if (zoomCertificateUrl) saveDataUrl(zoomCertificateUrl, 'certificado_medico').catch((err) => alert(err?.message || err)); }}
                 class="inline-block px-4 py-2 bg-raised hover:bg-grid text-ink border border-grid font-medium text-xs rounded transition-colors"
               >
                 Descargar Archivo

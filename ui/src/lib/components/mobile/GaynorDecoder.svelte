@@ -44,10 +44,8 @@
 <div class="bg-panel border border-grid rounded p-4 shadow-md">
   <div class="flex items-center justify-between mb-3">
     <div class="flex items-center gap-2">
-      <span class="text-amber text-xs font-mono font-bold">[GAYNOR]</span>
       <h3 class="text-xs font-bold uppercase tracking-wider text-ink">Decodificador Técnico de Calzado</h3>
     </div>
-    <span class="text-[10px] bg-void text-dim px-2 py-0.5 rounded border border-grid font-mono">Tauri v2 IPC</span>
   </div>
 
   <!-- Input Táctil -->

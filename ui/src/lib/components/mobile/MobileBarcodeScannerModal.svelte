@@ -434,7 +434,7 @@
         sku_code: matchedItem.sku_code,
         family: matchedItem.family,
         subcategory: matchedItem.subcategory,
-        quota_bucket: 'EXEMPT',
+        quota_bucket: matchedItem.quota_bucket,
         brand: matchedItem.brand,
         model_name: matchedItem.model_name,
         raw_factory_code: matchedItem.raw_factory_code,
@@ -444,7 +444,7 @@
         size_value: matchedItem.size_value,
         width_value: matchedItem.width_value,
         physical_qty: newPhysical,
-        min_alert_qty: 2,
+        min_alert_qty: matchedItem.min_alert_qty,
         storage_bin_location: matchedItem.storage_bin_location,
       };
       const updated = await api.upsertStockItem(payload);
@@ -615,7 +615,7 @@
         <!-- RESULTADO DEL ESCANEO -->
         {#if isSearching}
           <div class="p-4 text-center text-dim font-mono text-xs">
-            Buscando en base de datos SQLite WAL local...
+            Buscando el producto...
           </div>
         {:else if scannedBarcode}
           {#if matchedItem}
@@ -655,7 +655,7 @@
 
               {#if stockUpdatedSuccess}
                 <div class="p-2 rounded bg-void border border-green text-green text-xs text-center font-mono">
-                  ✓ Stock físico actualizado correctamente en SQLite WAL.
+                  Stock actualizado.
                 </div>
               {/if}
 

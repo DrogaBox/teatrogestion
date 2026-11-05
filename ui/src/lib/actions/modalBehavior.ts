@@ -12,6 +12,17 @@ export interface ModalBehaviorOptions {
   backdrop?: boolean;
 }
 
+// Ventanas abiertas, de la de abajo a la de arriba. El botón Atrás de Android (MainActivity.kt) cierra la
+// de arriba con `__tgBack()`; si no hay ninguna, Android hace lo suyo.
+const openModals: (() => void)[] = [];
+if (typeof window !== 'undefined') {
+  (window as unknown as { __tgBack: () => boolean }).__tgBack = () => {
+    const top = openModals.at(-1);
+    top?.();
+    return top !== undefined;
+  };
+}
+
 const FOCUSABLE = [
   'a[href]',
   'button:not([disabled])',
@@ -70,6 +81,9 @@ export function modalBehavior(node: HTMLElement, options: ModalBehaviorOptions) 
     }
   }
 
+  const closeFromBack = () => options.onclose();
+  openModals.push(closeFromBack);
+
   node.addEventListener('keydown', onKeydown);
   node.addEventListener('mousedown', onClick);
   focusFirstField();
@@ -78,6 +92,7 @@ export function modalBehavior(node: HTMLElement, options: ModalBehaviorOptions) 
     destroy() {
       node.removeEventListener('keydown', onKeydown);
       node.removeEventListener('mousedown', onClick);
+      openModals.splice(openModals.indexOf(closeFromBack), 1);
       opener?.focus({ preventScroll: true });
     }
   };

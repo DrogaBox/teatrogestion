@@ -81,7 +81,8 @@ pub fn list_attendance_for_date(
             COALESCE(a.recorded_at, strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
             COALESCE(p.is_retired, 0) as is_retired,
             p.retirement_notes,
-            p.specific_position
+            p.specific_position,
+            p.gender_group
          FROM personnel p
          JOIN personnel_categories c ON p.category_id = c.id
          LEFT JOIN attendance_logs a ON a.personnel_id = p.id AND a.schedule_id = ?1
@@ -129,7 +130,8 @@ pub fn list_attendance_for_date(
         let recorded_at: String = r.get(24)?;
         let is_retired_raw: i32 = r.get(25)?;
         let retirement_notes: Option<String> = r.get(26)?;
-        let _specific_position: Option<String> = r.get(27)?;
+        let specific_position: Option<String> = r.get(27)?;
+        let gender_group: String = r.get(28)?;
 
         let dancer_name = match nickname {
             Some(ref n) if !n.trim().is_empty() => format!("{} ({})", last_name, n),
@@ -164,6 +166,8 @@ pub fn list_attendance_for_date(
             current_physio_diagnosis,
             physio_tracking_notes,
             recorded_at,
+            specific_position,
+            gender_group,
         })
     })?;
 

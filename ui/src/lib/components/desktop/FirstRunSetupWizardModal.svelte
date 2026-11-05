@@ -349,7 +349,7 @@
                   <label class="flex items-center justify-between p-3 rounded bg-panel border border-grid cursor-pointer">
                     <div>
                       <div class="text-xs font-semibold text-ink">{w.title}</div>
-                      <div class="text-[10px] text-dim">Pasajes y elencos preconfigurados en SQLite WAL</div>
+                      <div class="text-[10px] text-dim">Pasajes y elencos ya cargados</div>
                     </div>
                     <input type="checkbox" bind:checked={w.selected} class="h-4 w-4 rounded accent-amber" />
                   </label>

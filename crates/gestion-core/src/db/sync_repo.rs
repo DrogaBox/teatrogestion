@@ -55,7 +55,7 @@ pub fn export_sync_bundle(
                 raw_factory_code, color, material, prop_dye_state, dyed_for_work_id,
                 size_system, size_value, width_value, gm_line, gm_fit, gm_box, gm_shank,
                 gm_vamp, gm_heel, duval_hardness, physical_qty, reserved_qty, min_alert_qty,
-                storage_bin_location, updated_at
+                storage_bin_location, updated_at, is_active
          FROM stock_items",
     )?;
     let stock_items = stmt
@@ -89,6 +89,7 @@ pub fn export_sync_bundle(
                 "min_alert_qty": row.get::<_, i32>(25)?,
                 "storage_bin_location": row.get::<_, Option<String>>(26)?,
                 "updated_at": row.get::<_, String>(27)?,
+                "is_active": row.get::<_, i32>(28)? == 1,
             }))
         })?
         .collect::<Result<Vec<Value>, _>>()?;
@@ -457,6 +458,8 @@ pub fn import_sync_bundle(
         let min_alert = item["min_alert_qty"].as_i64().unwrap_or(2);
         let bin_loc = item["storage_bin_location"].as_str();
         let updated_at = item["updated_at"].as_str().unwrap_or("");
+        // Un equipo sin la baja de artículos no manda el campo: no cambia lo que haya acá.
+        let is_active = item["is_active"].as_bool().map(i32::from);
 
         let changes = tx.execute(
             "INSERT INTO stock_items (
@@ -464,8 +467,8 @@ pub fn import_sync_bundle(
                 raw_factory_code, color, material, prop_dye_state, dyed_for_work_id,
                 size_system, size_value, width_value, gm_line, gm_fit, gm_box, gm_shank,
                 gm_vamp, gm_heel, duval_hardness, physical_qty, reserved_qty, min_alert_qty,
-                storage_bin_location, updated_at
-             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28)
+                storage_bin_location, updated_at, is_active
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, COALESCE(?29, 1))
              ON CONFLICT(id) DO UPDATE SET
                 sku_code = excluded.sku_code,
                 barcode = excluded.barcode,
@@ -493,14 +496,15 @@ pub fn import_sync_bundle(
                 reserved_qty = excluded.reserved_qty,
                 min_alert_qty = excluded.min_alert_qty,
                 storage_bin_location = excluded.storage_bin_location,
-                updated_at = excluded.updated_at
+                updated_at = excluded.updated_at,
+                is_active = COALESCE(?29, stock_items.is_active)
              WHERE excluded.updated_at >= stock_items.updated_at",
             params![
                 id, sku_code, barcode, family, subcategory, quota_bucket, brand, model_name,
                 raw_factory_code, color, material, prop_dye_state, dyed_for_work_id,
                 size_system, size_value, width_value, gm_line, gm_fit, gm_box, gm_shank,
                 gm_vamp, gm_heel, duval_hardness, physical_qty, reserved_qty, min_alert,
-                bin_loc, updated_at
+                bin_loc, updated_at, is_active
             ],
         )?;
         if changes > 0 {

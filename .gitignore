@@ -2,6 +2,7 @@
 /target/
 node_modules/
 /ui/dist/
+/ui/public/ocr/
 crates/gestion-app/gen/android/build/
 crates/gestion-app/gen/android/app/build/
 crates/gestion-app/gen/android/.gradle/

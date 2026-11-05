@@ -190,7 +190,6 @@
         <div class="text-xs font-semibold uppercase tracking-wider text-green">Entrega Exitosa Registrada</div>
         <div class="text-xl font-mono font-bold text-white my-1">{receipt.voucher_number}</div>
         <div class="text-xs text-ink">{receipt.message}</div>
-        <div class="text-[10px] text-dim mt-2 font-mono">Dispositivo: GALAXY-A53 • SQLite WAL</div>
         <button
           onclick={onClose}
           class="w-full mt-3 h-10 bg-green hover:bg-green text-black font-semibold text-xs rounded transition-colors"

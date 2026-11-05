@@ -312,6 +312,12 @@ table {
     overflow: visible !important;
   }
 
+  /* El zoom es solo para leer en pantalla: el papel sale siempre en su tamaño. */
+  .tg-zoom-doc {
+    zoom: 1 !important;
+    min-width: 0 !important;
+  }
+
   /* La pantalla de trabajo tiene altura fija y desplazamiento propio: al imprimir fluye normal. */
   .app-shell {
     height: auto !important;
@@ -331,7 +337,7 @@ table {
    - Ventanas grandes a pantalla completa (sin márgenes que roban lugar)
    - Controles de al menos 40 px de alto
 ============================================================================= */
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 767px), screen and (max-height: 500px) {
   [class*="text-[8px]"], [class*="text-[9px]"], [class*="text-[10px]"] { font-size: 12px !important; line-height: 1.35 !important; }
   [class*="text-[11px]"] { font-size: 13px !important; line-height: 1.4 !important; }
   .text-xs { font-size: 14px !important; line-height: 1.45 !important; }
@@ -368,7 +374,7 @@ table {
   .overflow-x-auto, .overflow-auto { -webkit-overflow-scrolling: touch; }
 }
 
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 767px), screen and (max-height: 500px) {
   /* Barras superiores de ventanas grandes: se acomodan en varias líneas en vez de desbordar */
   .fixed.inset-0.z-50 > div > div:first-child[class*="justify-between"] {
     flex-wrap: wrap;
@@ -384,7 +390,7 @@ table {
   .fixed.inset-0.z-50 .overflow-x-auto td { white-space: nowrap; }
 }
 
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 767px), screen and (max-height: 500px) {
   button.tg-close { min-width: 44px; min-height: 44px; font-size: 20px !important; line-height: 1 !important; }
   /* El cierre unificado de ventanas también es tocable con el dedo */
   .tg-modal-close { min-width: 44px; min-height: 44px; }
@@ -393,11 +399,30 @@ table {
   /* La cabecera de las ventanas se acomoda en varias líneas en vez de desbordar */
   .tg-modal-head { flex-wrap: wrap; padding-top: calc(0.5rem + env(safe-area-inset-top, 0px)); }
   .tg-modal-head > div:first-child { flex: 1 1 100%; }
+  /* La cruz siempre en la esquina, aunque la cabecera ocupe varias líneas */
+  .tg-modal-head { position: relative; padding-right: 3.5rem; }
+  .tg-modal-head > .tg-modal-close { position: absolute; top: calc(0.25rem + env(safe-area-inset-top, 0px)); right: 0.25rem; }
   .tg-btn { height: 40px; }
 }
 
+/* Celular acostado: hay ancho de sobra y poca altura. Barras finas y el contenido a todo el ancho. */
+@media screen and (max-height: 500px) {
+  .tg-mobile-page { max-width: none !important; }
+  .tg-phone-nav { height: 44px !important; max-width: none !important; }
+  .tg-phone-nav > button { flex-direction: row !important; gap: 6px !important; }
+  .app-shell > header { padding-top: 2px; padding-bottom: 2px; }
+  .app-shell > header p { display: none; }
+  table button { min-height: 36px; }
+  .tg-print-preview-chrome p { display: none; }
+}
+
+/* En pantalla la hoja lleva margen; en papel lo pone la impresora. */
+@media screen {
+  .tg-print-preview-doc { padding: 1rem; }
+}
+
 /* Escritorio: tamaños de letra mínimos más cómodos (la pantalla, no el papel) */
-@media screen and (min-width: 768px) {
+@media screen and (min-width: 768px) and (min-height: 501px) {
   [class*="text-[8px]"], [class*="text-[9px]"] { font-size: 11px !important; }
   [class*="text-[10px]"] { font-size: 11.5px !important; }
   [class*="text-[11px]"] { font-size: 12.5px !important; }
@@ -433,6 +458,22 @@ table {
   body.tg-print-preview-open .tg-print-preview-chrome {
     display: none !important;
   }
+}
+
+.tg-import-pick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Hoja A4 en pantalla: con el zoom se agranda entera, sin reacomodar el texto. */
+.tg-zoom-doc {
+  min-width: 794px;
 }
 
 .tg-print-preview-doc {
@@ -478,10 +519,10 @@ table {
 }
 
 /* =============================================================================
-   MÓVIL: tablas como tarjetas y barras de botones en una sola fila deslizable.
+   MÓVIL: tablas como tarjetas y barras de botones ordenadas en filas.
    - .tg-card-table (con use:cardTable): cada fila pasa a ser una tarjeta con
      «ETIQUETA  valor» por celda; el encabezado de la tabla se oculta.
-   - .tg-bar-scroll: la botonera de la cabecera no se parte en filas.
+   - .tg-bar-scroll: la botonera de la cabecera se parte en filas: todas las acciones a la vista.
 ============================================================================= */
 @media screen and (max-width: 767px) {
   .tg-card-table,
@@ -512,13 +553,8 @@ table {
     color: var(--color-dim);
   }
   .tg-card-table td > .flex { justify-content: flex-end; }
-  .tg-bar-scroll {
-    flex-wrap: nowrap !important;
-    width: 100%;
-    overflow-x: auto;
-    padding-bottom: 2px;
-  }
-  .tg-bar-scroll > * { flex-shrink: 0; white-space: nowrap; }
+  .tg-bar-scroll { flex-wrap: wrap !important; width: 100%; }
+  .tg-bar-scroll > * { white-space: nowrap; }
 }
 
 /* =============================================================================

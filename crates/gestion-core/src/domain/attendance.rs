@@ -158,6 +158,8 @@ pub struct AttendanceLogDto {
     pub current_physio_diagnosis: Option<String>,
     pub physio_tracking_notes: Option<String>,
     pub recorded_at: String,
+    pub specific_position: Option<String>,
+    pub gender_group: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

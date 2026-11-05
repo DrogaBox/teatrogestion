@@ -12,10 +12,13 @@
 
   let {
     schedule,
+    hideDatePicker = false,
     onRegimeChange,
     onDateChange
   } = $props<{
     schedule: DailyScheduleAggregate;
+    /** El celular ya tiene el selector de fecha arriba de la pantalla. */
+    hideDatePicker?: boolean;
     onRegimeChange: (regime: WorkRegime) => void;
     onDateChange: (date: string) => void;
   }>();
@@ -116,6 +119,7 @@
     
     <!-- Selector de Fecha & Parámetros -->
     <div class="flex items-end gap-2 flex-wrap">
+      {#if !hideDatePicker}
       <div>
         <label for="parte-date-picker" class="block text-[10px] uppercase font-bold tracking-wider text-dim mb-1 font-mono">Fecha del Parte</label>
         <input
@@ -126,6 +130,7 @@
           class="bg-void border border-grid rounded px-2 text-xs font-bold text-ink outline-none focus:border-amber font-mono h-8"
         />
       </div>
+      {/if}
 
       <!-- Fichaje / Marcada Obligatoria -->
       <div>
@@ -200,7 +205,7 @@
     <!-- Conmutador de Régimen Laboral -->
     <div>
       <div class="text-[10px] uppercase font-bold tracking-wider text-dim mb-1 font-mono text-left sm:text-right">Régimen Horario</div>
-      <div class="inline-flex bg-void p-0.5 rounded border border-grid gap-0.5 h-8 items-center">
+      <div class="flex flex-wrap sm:inline-flex sm:flex-nowrap bg-void p-0.5 rounded border border-grid gap-0.5 sm:h-8 items-center">
         {#each regimes as r}
           {@const isActive = schedule.regime === r.key}
           <button

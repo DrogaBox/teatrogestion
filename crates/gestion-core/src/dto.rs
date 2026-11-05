@@ -193,6 +193,8 @@ pub struct StockItemAvailabilityDto {
     pub free_available_qty: i64,
     pub storage_bin_location: Option<String>,
     pub is_low_stock: bool,
+    pub quota_bucket: String,
+    pub min_alert_qty: i64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

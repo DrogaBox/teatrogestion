@@ -11,6 +11,8 @@
   } from '../../ipc/client';
   import ModalHeader from '../shared/ModalHeader.svelte';
   import { modalBehavior } from '../../actions/modalBehavior';
+  import { printDocument, saveDataUrl } from '../../nativeOutput';
+  import type { PhotoReader } from '../../documentRecognition';
 
   let {
     isOpen,
@@ -57,7 +59,7 @@
   // Modal de Alta / Carga de Documento
   let showUploadModal = $state(false);
   let uploadTitle = $state('');
-  let uploadCategory = $state<'RECIBO_COMPRA' | 'CERTIFICADO_MEDICO' | 'MEMO_DISPOSICION' | 'ACUERDO_DIRECCION' | 'SOLISTICO_FIRMA' | 'OTRO'>('RECIBO_COMPRA');
+  let uploadCategory = $state<'RECIBO_COMPRA' | 'CERTIFICADO_MEDICO' | 'MEMO_DISPOSICION' | 'ACUERDO_DIRECCION' | 'SOLISTICO_FIRMA' | 'PARTE' | 'INFORME' | 'OTRO'>('RECIBO_COMPRA');
   let uploadDate = $state(new Date().toISOString().split('T')[0]);
   let uploadPersonnelId = $state('');
   let uploadAmountArs = $state<number | null>(null);
@@ -80,6 +82,8 @@
     { key: 'ACUERDO_DIRECCION', label: 'Acuerdos Francos / Dirección', badge: 'bg-green/15 text-green border-green/30' },
     { key: 'MEMO_DISPOSICION', label: 'Memos y Disposiciones', badge: 'bg-violet/15 text-violet border-violet/30' },
     { key: 'SOLISTICO_FIRMA', label: 'Solísticos Firmados', badge: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+    { key: 'PARTE', label: 'Partes', badge: 'bg-cyan/15 text-cyan border-cyan/30' },
+    { key: 'INFORME', label: 'Informes', badge: 'bg-violet/15 text-violet border-violet/30' },
     { key: 'OTRO', label: 'Otros / Notas', badge: 'bg-zinc-700/20 text-zinc-300 border-zinc-600/30' },
   ];
 
@@ -225,6 +229,153 @@
     }
   }
 
+  // Importar con foto o archivos: de cada foto se lee el texto y se reconoce qué documento es (tipo, fecha,
+  // título, persona, importe). Es una propuesta: cada fila se revisa antes de guardar.
+  const MAX_IMPORT_BYTES = 30 * 1024 * 1024;
+  interface ImportRow {
+    id: number;
+    file: File;
+    preview: string | null;
+    title: string;
+    category: string;
+    date: string;
+    personnelId: string;
+    amount: number | null;
+    text: string;
+    status: 'waiting' | 'reading' | 'done' | 'unread';
+    progress: number;
+    saved: boolean;
+    problem: string;
+  }
+  let showImportModal = $state(false);
+  let importRows = $state<ImportRow[]>([]);
+  let importDone = $state(0);
+  let isImporting = $state(false);
+  let isReading = $state(false);
+  let nextImportRow = 0;
+
+  const today = () => new Date().toISOString().split('T')[0];
+  const hasCamera = /Android|iPhone|iPad/i.test(navigator.userAgent);
+  const importCategories = CATEGORIES.filter((c) => c.key !== 'ALL');
+
+  function openImport() {
+    importRows = [];
+    importDone = 0;
+    showImportModal = true;
+  }
+
+  function closeImport() {
+    if (isImporting || isReading) return;
+    for (const row of importRows) if (row.preview) URL.revokeObjectURL(row.preview);
+    importRows = [];
+    showImportModal = false;
+  }
+
+  function addImportFiles(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    importRows = [
+      ...importRows,
+      ...files.map((file): ImportRow => {
+        const isImage = file.type.startsWith('image/');
+        return {
+          id: nextImportRow++,
+          file,
+          preview: isImage ? URL.createObjectURL(file) : null,
+          title: file.name.replace(/\.[^.]+$/, ''),
+          category: 'OTRO',
+          date: today(),
+          personnelId: '',
+          amount: null,
+          text: '',
+          status: isImage ? 'waiting' : 'unread',
+          progress: 0,
+          saved: false,
+          problem: file.size > MAX_IMPORT_BYTES ? 'Pesa más de 30 MB: no se puede guardar' : '',
+        };
+      }),
+    ];
+    readPendingPhotos();
+  }
+
+  async function readPendingPhotos() {
+    if (isReading) return;
+    isReading = true;
+    let reader: PhotoReader | null = null;
+    try {
+      const { openPhotoReader, detectDocument } = await import('../../documentRecognition');
+      for (let row = importRows.find((r) => r.status === 'waiting'); row; row = importRows.find((r) => r.status === 'waiting')) {
+        row.status = 'reading';
+        try {
+          reader ??= await openPhotoReader();
+          const current = row;
+          const text = await reader.read(current.file, (fraction) => (current.progress = fraction));
+          const found = detectDocument(text, personnelList);
+          current.text = text.trim();
+          current.category = found.category;
+          current.date = found.date ?? current.date;
+          current.title = found.title ?? `${found.label} ${current.date}`;
+          current.personnelId = found.personnelId ?? '';
+          current.amount = found.amount;
+          current.status = 'done';
+        } catch (e) {
+          console.error('No se pudo leer la foto:', e);
+          row.status = 'unread';
+        }
+      }
+    } finally {
+      await reader?.close();
+      isReading = false;
+    }
+  }
+
+  async function runImport() {
+    isImporting = true;
+    const { compressPhoto } = await import('../../documentRecognition');
+    let lastCategory = '';
+    for (const row of importRows) {
+      if (row.saved || row.file.size > MAX_IMPORT_BYTES) continue;
+      row.problem = '';
+      try {
+        const file = await compressPhoto(row.file);
+        await api.createVaultDocument({
+          title: row.title.trim() || file.name,
+          category: row.category,
+          document_date: row.date,
+          personnel_id: row.personnelId || null,
+          file_name: file.name,
+          file_type: file.type || 'application/octet-stream',
+          file_size_bytes: file.size,
+          file_data: await readAsDataUrl(file),
+          amount_ars: row.category === 'RECIBO_COMPRA' ? row.amount : null,
+          supplier_vendor: null,
+          // El texto leído queda en las observaciones: con eso la foto se encuentra con el buscador.
+          notes: row.text ? row.text.slice(0, 4000) : null,
+        });
+        row.saved = true;
+        importDone += 1;
+        lastCategory = row.category;
+      } catch (e: any) {
+        row.problem = e?.message || String(e);
+      }
+    }
+    isImporting = false;
+    if (lastCategory) selectedCategory = importRows.every((r) => !r.saved || r.category === lastCategory) ? lastCategory : 'ALL';
+    await loadVaultData();
+    importRows = importRows.filter((r) => !r.saved);
+    if (importRows.length === 0) closeImport();
+  }
+
+  function readAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+
   function resetUploadForm() {
     uploadTitle = '';
     uploadCategory = 'RECIBO_COMPRA';
@@ -334,11 +485,11 @@
               </svg>
             </div>
             <div>
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2 max-md:pr-10">
                 <h2 class="text-sm font-black tracking-wide uppercase font-sans text-white">
                   Bóveda de Documentación de Inspección
                 </h2>
-                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber/15 text-amber border border-amber/30">
+                <span class="max-md:hidden text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber/15 text-amber border border-amber/30">
                   CARINA LION
                 </span>
                 {#if isUnlocked}
@@ -352,7 +503,7 @@
                 {/if}
               </div>
               <p class="text-[11px] text-dim mt-0.5">
-                Certificados médicos, facturas de caja chica (colofonia, botiquín), memos de dirección y acuerdos.
+                Certificados médicos, facturas de caja chica, partes, informes, memos de dirección y acuerdos.
               </p>
             </div>
           </div>
@@ -503,12 +654,18 @@
             </div>
 
             <!-- Botón de Alta Rápida de Documento / Recibo -->
-            <div class="bg-void p-3 rounded border border-grid flex flex-col justify-center">
+            <div class="bg-void p-3 rounded border border-grid flex flex-col justify-center gap-1.5">
               <button
                 onclick={() => { resetUploadForm(); showUploadModal = true; }}
-                class="h-full py-2 px-3 bg-amber hover:bg-amber text-void font-bold rounded text-xs transition-colors flex items-center justify-center gap-1.5 shadow"
+                class="flex-1 py-2 px-3 bg-amber hover:bg-amber text-void font-bold rounded text-xs transition-colors flex items-center justify-center gap-1.5 shadow"
               >
                 <span>+ Cargar Documento / Recibo</span>
+              </button>
+              <button
+                onclick={openImport}
+                class="flex-1 py-2 px-3 bg-raised hover:bg-grid text-ink border border-grid font-bold rounded text-xs transition-colors"
+              >
+                Importar con foto o archivo
               </button>
             </div>
           </div>
@@ -560,7 +717,7 @@
         <!-- GRILLA DE DOCUMENTOS                                                -->
         <!-- =================================================================== -->
         <div class="flex-1 overflow-auto p-4 bg-void">
-          {#if isLoading}
+          {#if isLoading && documents.length === 0}
             <div class="py-20 text-center text-xs font-mono text-dim">
               Cargando documentación de la bóveda...
             </div>
@@ -695,6 +852,8 @@
               <option value="ACUERDO_DIRECCION">Acuerdo de Francos / Dirección</option>
               <option value="MEMO_DISPOSICION">Memo / Disposición Oficial</option>
               <option value="SOLISTICO_FIRMA">Solístico / Planilla Firmada</option>
+              <option value="PARTE">Parte</option>
+              <option value="INFORME">Informe</option>
               <option value="OTRO">Otro Documento</option>
             </select>
           </div>
@@ -840,12 +999,13 @@
           <a
             href={viewingDocument.file_data}
             download={viewingDocument.file_name}
+            onclick={(e) => { e.preventDefault(); if (viewingDocument) saveDataUrl(viewingDocument.file_data, viewingDocument.file_name).catch((err) => alert(err?.message || err)); }}
             class="h-8 px-3 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold flex items-center gap-1 transition-colors"
           >
             Descargar
           </a>
           <button
-            onclick={() => window.print()}
+            onclick={() => printDocument(viewingDocument?.title)}
             class="h-8 px-3 bg-raised hover:bg-grid text-ink border border-grid rounded text-xs font-semibold transition-colors"
           >
             Imprimir
@@ -871,6 +1031,11 @@
           class="w-full h-full rounded border border-grid bg-white"
           title={viewingDocument.title}
         ></iframe>
+      {:else if !viewingDocument.file_type.startsWith('image/')}
+        <div class="text-center text-ink space-y-2 p-8">
+          <p class="text-sm font-semibold">{viewingDocument.file_name}</p>
+          <p class="text-xs text-dim">Este tipo de archivo no se puede mostrar acá: use «Descargar» para abrirlo con su programa.</p>
+        </div>
       {:else}
         <img
           src={viewingDocument.file_data}
@@ -878,6 +1043,102 @@
           class="max-w-full max-h-[85vh] object-contain rounded  border border-grid"
         />
       {/if}
+    </div>
+  </div>
+{/if}
+
+{#if showImportModal}
+  <div class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3" use:modalBehavior={{ onclose: closeImport, backdrop: false }}>
+    <div class="tg-modal max-w-2xl">
+      <ModalHeader title="Importar con foto o archivo" subtitle="La app lee el texto de cada foto y reconoce qué documento es" onclose={closeImport} />
+      <div class="tg-modal-body space-y-3 text-xs">
+        <div class="grid gap-2 {hasCamera ? 'grid-cols-2' : 'grid-cols-1'}">
+          {#if hasCamera}
+            <label class="tg-import-pick bg-amber text-void">
+              Sacar foto
+              <input type="file" accept="image/*" capture="environment" class="sr-only" onchange={addImportFiles} />
+            </label>
+          {/if}
+          <label class="tg-import-pick {hasCamera ? 'bg-raised text-ink border border-grid' : 'bg-amber text-void'}">
+            {hasCamera ? 'Elegir archivos' : 'Elegir fotos o archivos'}
+            <input type="file" multiple class="sr-only" onchange={addImportFiles} />
+          </label>
+        </div>
+
+        {#if importRows.length === 0}
+          <p class="py-4 text-center text-dim">
+            Partes, informes, certificados, recibos, memos... Las fotos se leen en este equipo, sin internet. Los PDF, Word o Excel se guardan tal cual, con el nombre del archivo como título.
+          </p>
+        {/if}
+
+        {#each importRows as row (row.id)}
+          <div class="p-2.5 rounded border border-grid bg-void space-y-2">
+            <div class="flex items-start gap-2.5">
+              {#if row.preview}
+                <img src={row.preview} alt="" class="w-14 h-14 object-cover rounded border border-grid shrink-0" />
+              {/if}
+              <div class="flex-1 min-w-0 space-y-1">
+                <input
+                  type="text"
+                  bind:value={row.title}
+                  aria-label="Título"
+                  class="w-full h-9 px-2.5 bg-panel border border-grid rounded text-xs font-semibold text-ink outline-none focus:border-amber"
+                />
+                {#if row.status === 'waiting' || row.status === 'reading'}
+                  <p class="text-amber">Leyendo la foto... {Math.round(row.progress * 100)}%</p>
+                {:else if row.status === 'done' && row.category !== 'OTRO'}
+                  <p class="text-green">Reconocido: revise los datos antes de guardar.</p>
+                {:else if row.status === 'done'}
+                  <p class="text-dim">No se reconoció el tipo de documento: elíjalo abajo.</p>
+                {:else if row.preview}
+                  <p class="text-dim">No se pudo leer la foto: complete los datos a mano.</p>
+                {/if}
+              </div>
+              <button
+                type="button"
+                class="tg-btn shrink-0"
+                disabled={isImporting}
+                onclick={() => (importRows = importRows.filter((r) => r.id !== row.id))}
+                aria-label="Quitar de la lista"
+                title="Quitar de la lista"
+              >
+                Quitar
+              </button>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <select bind:value={row.category} aria-label="Tipo de documento" class="h-9 px-2 bg-panel border border-grid rounded text-xs font-semibold text-ink outline-none focus:border-amber">
+                {#each importCategories as c (c.key)}
+                  <option value={c.key}>{c.label}</option>
+                {/each}
+              </select>
+              <input type="date" bind:value={row.date} aria-label="Fecha" class="h-9 px-2 bg-panel border border-grid rounded text-xs text-ink outline-none focus:border-amber" />
+              <select bind:value={row.personnelId} aria-label="Persona" class="h-9 px-2 bg-panel border border-grid rounded text-xs text-ink outline-none focus:border-amber">
+                <option value="">Sin persona</option>
+                {#each personnelList as p (p.id)}
+                  <option value={p.id}>{p.last_name}, {p.first_name}</option>
+                {/each}
+              </select>
+              {#if row.category === 'RECIBO_COMPRA'}
+                <input type="number" step="0.01" min="0" bind:value={row.amount} placeholder="Importe" aria-label="Importe" class="h-9 px-2 bg-panel border border-grid rounded text-xs text-ink outline-none focus:border-amber" />
+              {/if}
+            </div>
+            {#if row.problem}
+              <p class="text-red">{row.problem}</p>
+            {/if}
+          </div>
+        {/each}
+
+        {#if importDone > 0 && importRows.length > 0}
+          <p class="font-semibold text-green">Guardados: {importDone}</p>
+        {/if}
+
+        <div class="flex justify-end gap-2">
+          <button type="button" class="tg-btn" disabled={isImporting || isReading} onclick={closeImport}>Cerrar</button>
+          <button type="button" class="tg-btn tg-btn-primary" disabled={isImporting || isReading || importRows.length === 0} onclick={runImport}>
+            {isImporting ? 'Guardando…' : isReading ? 'Leyendo…' : importRows.length > 1 ? `Guardar ${importRows.length} documentos` : 'Guardar'}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 {/if}

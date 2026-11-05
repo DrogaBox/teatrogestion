@@ -1,6 +1,9 @@
 <script lang="ts">
   import ModalHeader from './ModalHeader.svelte';
+  import ZoomControls from './ZoomControls.svelte';
   import { modalBehavior } from '../../actions/modalBehavior';
+  import { zoomable, defaultDocumentZoom } from '../../actions/zoomable';
+  import { printDocument } from '../../nativeOutput';
 
   /// Vista previa de impresión editable: clona el documento imprimible del llamador
   /// (`source`, el contenedor que la ventana marca con `bind:this`) y deja su texto
@@ -38,6 +41,10 @@
   let saveChecked = $state(false);
   let saving = $state(false);
   let errorMsg = $state('');
+  let zoom = $state(1);
+  $effect(() => {
+    if (open) zoom = defaultDocumentZoom();
+  });
 
   // La vista previa se monta como hija directa de <body> (portal) para que, al
   // imprimir, el CSS pueda ocultar todo lo demás y dejar solo el documento.
@@ -108,7 +115,7 @@
       }
       saving = false;
     }
-    window.print();
+    printDocument(title);
   }
 </script>
 
@@ -133,7 +140,8 @@
           <p class="text-[11px] text-dim font-mono min-w-0">
             Edite el texto directamente sobre el documento. Los cambios valen solo para esta copia impresa.
           </p>
-          <div class="flex items-center gap-2 shrink-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <ZoomControls bind:zoom />
             <button
               type="button"
               class="tg-btn"
@@ -161,10 +169,11 @@
         </div>
       </div>
 
-      <div class="flex-1 overflow-auto bg-white min-h-0">
+      <div class="flex-1 overflow-auto bg-white bg-local min-h-0" use:zoomable={{ zoom, onzoom: (z) => (zoom = z) }}>
         {#if docHtml !== null}
           <div
-            class="tg-print-preview-doc"
+            class="tg-print-preview-doc tg-zoom-doc"
+            style:zoom={zoom}
             bind:this={docEl}
             contenteditable="true"
             spellcheck="false"

@@ -44,6 +44,12 @@
     'MEDIAS_DANZA': { family: 'APPAREL', quota: 'TIGHTS', sizeSys: 'ALPHA', defaultMat: 'MICROFIBRA' },
     'MEDIA_PUNTA_CUERO': { family: 'WOMENS_FLAT', quota: 'FLAT', sizeSys: 'US', defaultMat: 'CUERO' },
     'MEDIA_PUNTA_TELA': { family: 'WOMENS_FLAT', quota: 'FLAT', sizeSys: 'US', defaultMat: 'TELA_ELASTICA' },
+    'MEDIA_PUNTA_VARON': { family: 'MENS_FLAT', quota: 'FLAT', sizeSys: 'US', defaultMat: 'CUERO' },
+    'MEDIA_PUNTA_MUJER_UNISEX': { family: 'WOMENS_FLAT', quota: 'FLAT', sizeSys: 'US', defaultMat: 'CANVAS' },
+    'MEDIA_MALLA': { family: 'APPAREL', quota: 'TIGHTS', sizeSys: 'ALPHA', defaultMat: 'MICROFIBRA' },
+    'PUNTA_GAYNOR_MINDEN': { family: 'POINTE', quota: 'POINTE', sizeSys: 'US', defaultMat: 'SATEN' },
+    'PUNTA_BLOCH': { family: 'POINTE', quota: 'POINTE', sizeSys: 'US', defaultMat: 'SATEN' },
+    'PUNTA_SANSHA_DUVAL': { family: 'POINTE', quota: 'POINTE', sizeSys: 'US', defaultMat: 'SATEN' },
     'PUNTA_OTRAS': { family: 'POINTE', quota: 'POINTE', sizeSys: 'US', defaultMat: 'SATEN' },
     'ZAPATOS_JAZZ': { family: 'WOMENS_FLAT', quota: 'FLAT', sizeSys: 'US', defaultMat: 'CUERO' },
     'ZAPATOS_CARACTER': { family: 'WOMENS_FLAT', quota: 'FLAT', sizeSys: 'US', defaultMat: 'CUERO' },
@@ -62,10 +68,15 @@
     }
   }
 
+  // Cada vez que se abre: los datos del ítem a modificar (también su cupo y su alerta, que se
+  // guardan con él) o el formulario limpio para un alta.
   $effect(() => {
+    if (!isOpen) return;
     if (initialItem) {
       subcategory = initialItem.subcategory;
       family = initialItem.family;
+      quotaBucket = initialItem.quota_bucket;
+      minAlertQty = Number(initialItem.min_alert_qty) || 0;
       brand = initialItem.brand;
       modelName = initialItem.model_name;
       rawFactoryCode = initialItem.raw_factory_code || '';
@@ -76,7 +87,19 @@
       widthValue = initialItem.width_value || '';
       physicalQty = Number(initialItem.physical_qty) || 0;
       storageBinLocation = initialItem.storage_bin_location || '';
+    } else {
+      onSubcategoryChange('CALZA_MASCULINA');
+      brand = 'Capezio';
+      modelName = '';
+      rawFactoryCode = '';
+      color = 'Negro';
+      sizeValue = 'M';
+      widthValue = '';
+      physicalQty = 10;
+      minAlertQty = 2;
+      storageBinLocation = '';
     }
+    errorMessage = null;
   });
 
   async function handleSubmit(e: Event) {
@@ -166,8 +189,14 @@
             <option value="MEDIAS_DANZA">Medias de Danza / Soquetes</option>
             <option value="MEDIA_PUNTA_CUERO">Media Puntas de Cuero (Piel/Blanco/Negro)</option>
             <option value="MEDIA_PUNTA_TELA">Media Puntas de Tela Elastizada</option>
+            <option value="MEDIA_PUNTA_VARON">Media Puntas de Varón</option>
+            <option value="MEDIA_PUNTA_MUJER_UNISEX">Media Puntas de Lona (Mujer / Unisex)</option>
+            <option value="MEDIA_MALLA">Medias Mallas</option>
             <option value="ZAPATOS_JAZZ">Zapatos de Jazz (Suela Partida)</option>
             <option value="ZAPATOS_CARACTER">Zapatos de Carácter (Taco Cubano / Bajo)</option>
+            <option value="PUNTA_GAYNOR_MINDEN">Zapatillas de Punta Gaynor Minden</option>
+            <option value="PUNTA_BLOCH">Zapatillas de Punta Bloch</option>
+            <option value="PUNTA_SANSHA_DUVAL">Zapatillas de Punta Sansha Duval</option>
             <option value="PUNTA_OTRAS">Zapatillas de Punta (Otras Marcas)</option>
             <option value="BOMBACHA_ESCENA">Bombachas de Escena</option>
             <option value="OTRO_INDUMENTARIA">Otro Rubro / Indumentaria Escénica</option>

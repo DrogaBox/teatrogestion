@@ -336,7 +336,7 @@ pub fn upsert_personnel(
                     is_active = ?10,
                     is_retired = COALESCE(?11, is_retired),
                     retirement_notes = COALESCE(?12, retirement_notes),
-                    specific_position = COALESCE(?13, specific_position),
+                    specific_position = CASE WHEN ?13 IS NULL THEN specific_position ELSE NULLIF(?13, '') END,
                     notes = COALESCE(?14, notes),
                     updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
                  WHERE id = ?15",
@@ -353,6 +353,7 @@ pub fn upsert_personnel(
                     if is_active { 1 } else { 0 },
                     payload.is_retired.map(|r| if r { 1 } else { 0 }),
                     payload.retirement_notes.as_deref().map(str::trim),
+                    // Sin dato (importación) se conserva; vacío (formulario) lo borra.
                     payload.specific_position.as_deref().map(str::trim),
                     payload.notes.as_deref().map(str::trim),
                     eid,
@@ -393,7 +394,7 @@ pub fn upsert_personnel(
                     if is_active { 1 } else { 0 },
                     if payload.is_retired.unwrap_or(false) { 1 } else { 0 },
                     payload.retirement_notes.as_deref().map(str::trim),
-                    payload.specific_position.as_deref().map(str::trim),
+                    payload.specific_position.as_deref().map(str::trim).filter(|s| !s.is_empty()),
                     payload.notes.as_deref().map(str::trim),
                 ],
             )?;

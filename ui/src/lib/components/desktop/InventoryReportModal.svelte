@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { saveBlob } from '../../nativeOutput';
   import { onMount } from 'svelte';
   import {
     api,
@@ -99,6 +100,19 @@
     loadCatalog();
   }
 
+  async function handleDeleteItem(item: StockItemAvailabilityDto) {
+    const inStock = item.physical_qty > 0 ? `\n\nTodavía figuran ${item.physical_qty} unidades en depósito.` : '';
+    if (!confirm(`¿Borrar "${item.brand} ${item.model_name}" (talle ${item.size_value}) del inventario?${inStock}\n\nLos vales ya entregados conservan su historial.`)) {
+      return;
+    }
+    try {
+      await api.deleteStockItem(item.id);
+      stockItems = stockItems.filter((i) => i.id !== item.id);
+    } catch (err: any) {
+      alert(`No se pudo borrar: ${err?.message || err}`);
+    }
+  }
+
   async function openDirectDeliver(item: StockItemAvailabilityDto) {
     deliverItem = item;
     deliverQty = 1;
@@ -173,13 +187,7 @@
     csv += '\n"★ REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS. ★"\n';
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `Inventario_Oficial_Ballet_Oficial_Cordoba_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    saveBlob(blob, `Inventario_Oficial_Ballet_Oficial_Cordoba_${new Date().toISOString().split('T')[0]}.csv`).catch((e) => alert(e?.message || e));
   }
 
   // Totales calculados
@@ -343,9 +351,10 @@
           </div>
         </div>
 
-        {#if isLoading}
+        <!-- Al recargar con datos a la vista la lista queda montada: conserva el lugar del scroll. -->
+        {#if isLoading && stockItems.length === 0}
           <div class="py-12 text-center text-dim font-mono text-xs flex items-center justify-center gap-2">
-            Cargando catálogo de depósito desde SQLite local...
+            Cargando el inventario...
           </div>
         {:else if stockItems.length === 0}
           <div class="py-12 text-center bg-alt rounded border border-grid text-dim text-xs">
@@ -442,6 +451,13 @@
                           title="Modificar stock o ubicación"
                         >
                           Editar
+                        </button>
+                        <button
+                          onclick={() => handleDeleteItem(it)}
+                          class="px-2 py-0.5 rounded bg-raised hover:bg-red/20 text-red text-xs font-mono border border-grid"
+                          title="Borrar este ítem del inventario"
+                        >
+                          Borrar
                         </button>
                       </div>
                     </td>

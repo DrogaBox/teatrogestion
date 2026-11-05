@@ -78,6 +78,11 @@ pub const EMBEDDED_MIGRATIONS: &[EmbeddedMigration] = &[
         name: "0015_leave_type",
         sql: include_str!("../../migrations/0015_leave_type.sql"),
     },
+    EmbeddedMigration {
+        version: 16,
+        name: "0016_stock_item_soft_delete",
+        sql: include_str!("../../migrations/0016_stock_item_soft_delete.sql"),
+    },
 ];
 
 /// Implementación determinista de SHA-256 (FIPS 180-4) libre de dependencias externas

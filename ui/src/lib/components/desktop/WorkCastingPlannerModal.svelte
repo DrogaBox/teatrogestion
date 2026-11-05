@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { saveBlob } from '../../nativeOutput';
   import { onMount } from 'svelte';
   import {
     api,
@@ -271,13 +272,7 @@
     csv += '\n"★ REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS. ★"\n';
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `Reparto_${selectedWork.title.replace(/\s+/g, '_')}_Ballet_Oficial.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    saveBlob(blob, `Reparto_${selectedWork.title.replace(/\s+/g, '_')}_Ballet_Oficial.csv`).catch((e) => alert(e?.message || e));
   }
 </script>
 

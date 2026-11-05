@@ -1,9 +1,9 @@
-Novedades de esta versión de TeatroGestión (1.5)
+Novedades de esta versión de TeatroGestión (1.6)
 ------------------------------------------------
-- Celular: barra de íconos, padrón e inventario como tarjetas y pantalla completa desde el menú.
-- La categoría de revista se escribe libremente y viaja en la sincronización.
-- Planilla de ausentismo BOP: abre en el mes en curso, semanas siempre de lunes a domingo y el miércoles con X.
-- La sincronización por Wi-Fi avisa cuando el otro equipo no pudo guardar los datos, y une los partes del mismo día.
-- La contraseña de la Bóveda solo se restablece con el instalador y la llave maestra.
-- Se corrigieron la importación del padrón, el stock bajo del celular y la temporada de las valeras.
+- Asistencia en orden alfabético y en dos listas, Mujeres y Varones.
+- Inventario: se puede borrar un artículo, y editarlo también desde el celular. Editar ya no cambia su cupo ni su alerta.
+- Parte y vista previa de impresión con zoom: dos dedos en el celular, Ctrl + rueda en la PC o botones.
+- Bóveda: importar con una foto: la app lee el papel y reconoce qué documento es, su fecha y su título. También varios archivos de una vez.
+- Celular: imprimir, guardar en PDF y exportar planillas; Planificación completa, igual que en la PC.
+- Las listas quedan en el mismo lugar después de editar, y el cargo específico se puede borrar.
 - Sus datos (personal, asistencia, inventario, Bóveda de Inspección) y su licencia NO se tocan.

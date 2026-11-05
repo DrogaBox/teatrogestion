@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { saveBlob } from '../../nativeOutput';
   import { roleLabel } from '../../labels';
   import {
     api,
@@ -151,7 +152,8 @@
         is_active: formIsActive,
         is_retired: formIsRetired,
         retirement_notes: formRetirementNotes.trim() || null,
-        specific_position: formSpecificPosition.trim() || null,
+        // Vacío (no nulo): el núcleo lo interpreta como «quitar el cargo».
+        specific_position: formSpecificPosition.trim(),
         notes: formNotes.trim() || null,
       };
 
@@ -280,13 +282,7 @@
     csv += '\n"★ REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS. ★"\n';
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `Padron_Oficial_Ballet_Oficial_Cordoba_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    saveBlob(blob, `Padron_Oficial_Ballet_Oficial_Cordoba_${new Date().toISOString().split('T')[0]}.csv`).catch((e) => alert(e?.message || e));
   }
 </script>
 
@@ -426,9 +422,10 @@
           </div>
         </div>
 
-        {#if isLoading}
+        <!-- Al recargar con datos a la vista la lista queda montada: conserva el lugar del scroll. -->
+        {#if isLoading && roster.length === 0}
           <div class="py-12 text-center text-dim font-mono text-xs flex items-center justify-center gap-2">
-            Consultando base de datos SQLite...
+            Cargando el padrón...
           </div>
         {:else if filteredRoster.length === 0}
           <div class="py-12 text-center bg-alt rounded border border-grid text-dim text-xs">

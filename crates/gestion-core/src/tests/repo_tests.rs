@@ -1313,3 +1313,114 @@ fn test_sound_technician_assignment_and_sync() {
     let parsed: crate::dto::SyncBundle = serde_json::from_value(old).expect("paquete viejo");
     assert!(parsed.morning_classes.is_empty());
 }
+
+#[test]
+fn a_stock_item_can_be_deleted_edited_and_comes_back_with_the_same_code() {
+    use crate::db::stock_repo::delete_stock_item;
+    let mut db = DatabaseManager::open_in_memory().expect("open memory db");
+    let payload = |id: Option<String>, sku: Option<String>, qty: i32| UpsertStockItemPayload {
+        id,
+        sku_code: sku,
+        family: "POINTE".to_string(),
+        subcategory: "PUNTA_BLOCH".to_string(),
+        quota_bucket: QuotaBucket::Pointe,
+        brand: "Bloch".to_string(),
+        model_name: "Balance".to_string(),
+        raw_factory_code: None,
+        color: "Rosa".to_string(),
+        material: "SATEN".to_string(),
+        size_system: "US".to_string(),
+        size_value: "6".to_string(),
+        width_value: None,
+        physical_qty: qty,
+        min_alert_qty: 4,
+        storage_bin_location: None,
+    };
+    let catalog = |db: &DatabaseManager| list_stock_catalog(db.connection(), StockFilterPayload { query: Some("Balance".into()), ..Default::default() }).expect("list");
+
+    let item = upsert_stock_item(db.connection_mut(), payload(None, None, 8)).expect("alta");
+    assert_eq!((item.quota_bucket.as_str(), item.min_alert_qty), ("POINTE", 4), "el catálogo informa cupo y alerta para no pisarlos al editar");
+
+    let personnel = list_personnel(db.connection(), None, true).expect("padrón");
+    let reservation = create_nominal_reservation(db.connection_mut(), &item.id, &personnel[0].id, "Prueba", 1, None).expect("reserva");
+    let err = delete_stock_item(db.connection_mut(), &item.id).expect_err("con reservas no se borra");
+    assert!(err.to_string().contains("reservadas"), "{err}");
+    release_nominal_reservation(db.connection_mut(), &reservation.id).expect("libera");
+
+    delete_stock_item(db.connection_mut(), &item.id).expect("baja");
+    assert!(catalog(&db).is_empty(), "dado de baja no aparece en el catálogo");
+    delete_stock_item(db.connection_mut(), &item.id).expect("repetir la baja no falla");
+    assert!(delete_stock_item(db.connection_mut(), "NO_EXISTE").is_err());
+    let history: i64 = db.connection().query_row("SELECT COUNT(*) FROM stock_ledger WHERE stock_item_id = ?1", [&item.id], |r| r.get(0)).unwrap();
+    assert!(history >= 2, "el libro de movimientos se conserva");
+
+    // El código es único: un alta igual reactiva el artículo en lugar de fallar.
+    let again = upsert_stock_item(db.connection_mut(), payload(None, None, 3)).expect("alta con el mismo código");
+    assert_eq!((again.id.as_str(), again.physical_qty), (item.id.as_str(), 3));
+    assert_eq!(catalog(&db).len(), 1);
+}
+
+#[test]
+fn a_deleted_stock_item_stays_deleted_after_syncing_with_the_other_device() {
+    use crate::db::stock_repo::delete_stock_item;
+    use crate::db::sync_repo::{export_sync_bundle, import_sync_bundle};
+    let mut pc = DatabaseManager::open_in_memory().expect("pc");
+    let mut phone = DatabaseManager::open_in_memory().expect("celular");
+    let id = list_stock_catalog(pc.connection(), StockFilterPayload::default()).expect("list")[0].id.clone();
+    let export = |db: &DatabaseManager| export_sync_bundle(db.connection(), "equipo", "nodo").expect("export");
+    import_sync_bundle(phone.connection_mut(), &export(&pc)).expect("copia inicial");
+
+    std::thread::sleep(std::time::Duration::from_millis(5));
+    delete_stock_item(pc.connection_mut(), &id).expect("baja");
+    import_sync_bundle(phone.connection_mut(), &export(&pc)).expect("baja al celular");
+    let visible = |db: &DatabaseManager| list_stock_catalog(db.connection(), StockFilterPayload::default()).expect("list").iter().any(|i| i.id == id);
+    assert!(!visible(&phone), "la baja llega al otro equipo");
+
+    // Lo que manda un equipo que todavía no conoce la baja no revive el artículo.
+    let mut bundle = export(&phone);
+    for item in &mut bundle.stock_items {
+        item.as_object_mut().unwrap().remove("is_active");
+    }
+    import_sync_bundle(pc.connection_mut(), &bundle).expect("vuelta");
+    assert!(!visible(&pc));
+}
+
+#[test]
+fn the_specific_position_and_role_can_be_changed_and_the_position_cleared() {
+    use crate::db::personnel_repo::upsert_personnel;
+    let db = DatabaseManager::open_in_memory().expect("open memory db");
+    let p = list_personnel(db.connection(), None, true).expect("padrón").into_iter().next().expect("alguien");
+    let save = |role: PersonnelRole, position: Option<&str>| {
+        upsert_personnel(db.connection(), UpsertPersonnelPayload {
+            id: Some(p.id.clone()),
+            legajo: None,
+            first_name: p.first_name.clone(),
+            last_name: p.last_name.clone(),
+            nickname: None,
+            role: Some(role),
+            gender_group: Some(GenderGroup::Female),
+            category_id: Some(p.category_id.clone()),
+            category_name: None,
+            default_pointe_raw_code: None,
+            default_flat_size: None,
+            is_active: Some(true),
+            is_retired: None,
+            retirement_notes: None,
+            specific_position: position.map(str::to_string),
+            notes: None,
+        }).expect("guardar")
+    };
+    let changed = save(PersonnelRole::Inspector, Some("Supervisora General"));
+    assert_eq!((changed.role, changed.specific_position.as_deref()), (PersonnelRole::Inspector, Some("Supervisora General")));
+    assert_eq!(save(PersonnelRole::Inspector, None).specific_position.as_deref(), Some("Supervisora General"), "sin dato se conserva (importación)");
+    assert_eq!(save(PersonnelRole::Dancer, Some("  ")).specific_position, None, "vacío lo borra (formulario)");
+}
+
+#[test]
+fn attendance_reports_gender_and_position_of_each_person() {
+    let db = DatabaseManager::open_in_memory().expect("open memory db");
+    let logs = list_attendance_for_date(db.connection(), "2026-11-05").expect("asistencia");
+    assert!(!logs.is_empty());
+    assert!(logs.iter().all(|l| !l.gender_group.is_empty()));
+    assert!(logs.iter().any(|l| l.gender_group == "FEMALE") && logs.iter().any(|l| l.gender_group == "MALE"));
+}

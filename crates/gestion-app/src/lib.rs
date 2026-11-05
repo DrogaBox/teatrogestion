@@ -40,6 +40,7 @@ pub fn run() {
             parse_gaynor_code_preview,
             list_stock_catalog,
             upsert_stock_item,
+            delete_stock_item,
             execute_voucher_delivery,
             list_attendance_for_date,
             record_attendance,

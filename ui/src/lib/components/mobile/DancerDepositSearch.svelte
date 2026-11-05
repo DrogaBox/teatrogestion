@@ -81,7 +81,7 @@
   <div class="space-y-2">
     {#if isLoading}
       <div class="text-center py-6 text-dim text-xs">
-        Consultando padrón local SQLite...
+        Cargando el padrón...
       </div>
     {:else if dancers.length === 0}
       <div class="text-center py-8 bg-panel rounded border border-grid text-dim text-xs">

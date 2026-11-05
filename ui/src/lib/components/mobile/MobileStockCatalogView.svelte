@@ -12,6 +12,7 @@
   let categoryFilter = $state<'ALL' | 'POINTE' | 'FLAT' | 'APPAREL' | 'LOW'>('ALL');
   let isLoading = $state(false);
   let showNewItemModal = $state(false);
+  let editingItem = $state<StockItemAvailabilityDto | null>(null);
   let updatingItemId = $state<string | null>(null);
 
   async function loadStock() {
@@ -60,7 +61,7 @@
         sku_code: item.sku_code,
         family: item.family,
         subcategory: item.subcategory,
-        quota_bucket: 'EXEMPT',
+        quota_bucket: item.quota_bucket,
         brand: item.brand,
         model_name: item.model_name,
         raw_factory_code: item.raw_factory_code,
@@ -70,7 +71,7 @@
         size_value: item.size_value,
         width_value: item.width_value,
         physical_qty: newQty,
-        min_alert_qty: 2,
+        min_alert_qty: item.min_alert_qty,
         storage_bin_location: item.storage_bin_location,
       };
 
@@ -78,6 +79,32 @@
       items = items.map((i) => (i.id === updated.id ? updated : i));
     } catch (e: any) {
       alert(`Error al ajustar stock: ${e?.message || e}`);
+    } finally {
+      updatingItemId = null;
+    }
+  }
+
+  function openNewItem() {
+    editingItem = null;
+    showNewItemModal = true;
+  }
+
+  function openEditItem(item: StockItemAvailabilityDto) {
+    editingItem = item;
+    showNewItemModal = true;
+  }
+
+  async function deleteItem(item: StockItemAvailabilityDto) {
+    const inStock = item.physical_qty > 0 ? `\n\nTodavía figuran ${item.physical_qty} unidades en depósito.` : '';
+    if (!confirm(`¿Borrar "${item.brand} ${item.model_name}" (talle ${item.size_value}) del inventario?${inStock}\n\nLos vales ya entregados conservan su historial.`)) {
+      return;
+    }
+    updatingItemId = item.id;
+    try {
+      await api.deleteStockItem(item.id);
+      items = items.filter((i) => i.id !== item.id);
+    } catch (e: any) {
+      alert(`No se pudo borrar: ${e?.message || e}`);
     } finally {
       updatingItemId = null;
     }
@@ -100,7 +127,7 @@
       </p>
     </div>
     <button
-      onclick={() => (showNewItemModal = true)}
+      onclick={openNewItem}
       class="h-7 px-2.5 bg-amber hover:bg-amber text-void font-bold text-xs rounded transition-colors flex items-center gap-1 shrink-0"
     >
       <span>+</span>
@@ -168,15 +195,15 @@
 
   <!-- Lista de Productos en Tarjetas Ergonómicas One UI -->
   <div class="space-y-2">
-    {#if isLoading}
+    {#if isLoading && items.length === 0}
       <div class="text-center py-6 text-dim text-xs font-mono">
-        Consultando catálogo SQLite WAL...
+        Cargando el catálogo...
       </div>
     {:else if filteredItems.length === 0}
       <div class="text-center py-8 bg-panel rounded border border-grid text-dim text-xs space-y-2">
         <p>No se encontraron productos para los filtros seleccionados.</p>
         <button
-          onclick={() => (showNewItemModal = true)}
+          onclick={openNewItem}
           class="px-3 py-1 bg-raised hover:bg-raised-hover text-amber border border-amber/40 rounded text-xs font-bold"
         >
           + Dar de alta este producto
@@ -270,6 +297,22 @@
               </button>
             </div>
           </div>
+          <div class="flex items-center justify-end gap-1.5">
+            <button
+              disabled={isBusy}
+              onclick={() => openEditItem(item)}
+              class="h-8 px-3 bg-raised hover:bg-raised-hover text-ink rounded text-[11px] font-bold border border-grid disabled:opacity-50"
+            >
+              Editar
+            </button>
+            <button
+              disabled={isBusy}
+              onclick={() => deleteItem(item)}
+              class="h-8 px-3 bg-raised hover:bg-red/20 text-red rounded text-[11px] font-bold border border-grid disabled:opacity-50"
+            >
+              Borrar
+            </button>
+          </div>
 
         </div>
       {/each}
@@ -280,6 +323,7 @@
 <!-- Modal para Alta de Producto -->
 <NewStockItemModal
   isOpen={showNewItemModal}
+  initialItem={editingItem}
   onClose={() => (showNewItemModal = false)}
   onSaved={() => {
     showNewItemModal = false;

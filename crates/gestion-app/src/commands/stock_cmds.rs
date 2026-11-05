@@ -46,6 +46,19 @@ pub fn upsert_stock_item(
 }
 
 #[tauri::command]
+pub fn delete_stock_item(
+    state: State<'_, AppState>,
+    stock_item_id: String,
+) -> Result<(), SerializableCoreError> {
+    let mut db = state.db.lock().map_err(|_| SerializableCoreError {
+        code: "LOCK_ERROR",
+        message: "Fallo al adquirir bloqueo de base de datos".to_string(),
+    })?;
+    stock_repo::delete_stock_item(db.connection_mut(), &stock_item_id)
+        .map_err(|e| SerializableCoreError::from(&e))
+}
+
+#[tauri::command]
 pub fn execute_voucher_delivery(
     state: State<'_, AppState>,
     payload: ExecuteVoucherPayload,

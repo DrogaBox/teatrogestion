@@ -271,7 +271,7 @@
           tabindex="0"
           onclick={() => handleSelectDay(day)}
           onkeydown={(e) => { if (e.key === 'Enter') handleSelectDay(day); }}
-          class="min-h-[90px] md:min-h-[110px] p-2 flex flex-col justify-between transition-colors cursor-pointer text-left {day.isCurrentMonth ? 'bg-panel hover:bg-raised' : 'bg-void text-dim'} {day.isSelected ? 'ring-2 ring-amber ring-inset' : ''}"
+          class="min-h-[68px] md:min-h-[110px] p-1 md:p-2 flex flex-col justify-between transition-colors cursor-pointer text-left {day.isCurrentMonth ? 'bg-panel hover:bg-raised' : 'bg-void text-dim'} {day.isSelected ? 'ring-2 ring-amber ring-inset' : ''}"
         >
           <!-- Fila Superior: Número de Día y Régimen -->
           <div class="flex items-start justify-between">
@@ -280,7 +280,7 @@
             </span>
 
             {#if day.summary}
-              <span class="text-[9px] font-mono {rTag.color}">
+              <span class="max-md:hidden text-[9px] font-mono {rTag.color}">
                 {rTag.label}
               </span>
             {/if}
@@ -290,19 +290,19 @@
           <div class="my-1 space-y-1">
             {#if day.summary && day.summary.rehearsal_blocks_count > 0}
               <div class="text-[10px] font-mono bg-raised border border-grid px-1.5 py-0.5 rounded text-amber truncate">
-                {day.summary.rehearsal_blocks_count} {day.summary.rehearsal_blocks_count === 1 ? 'ensayo' : 'ensayos'}
+                {day.summary.rehearsal_blocks_count}<span class="max-md:hidden"> {day.summary.rehearsal_blocks_count === 1 ? 'ensayo' : 'ensayos'}</span>
               </div>
             {/if}
 
             {#if day.summary && day.summary.morning_classes_count > 0}
               <div class="text-[9px] font-mono text-green truncate">
-                ✓ Clases 09:00
+                ✓<span class="max-md:hidden"> Clases 09:00</span>
               </div>
             {/if}
           </div>
 
           <!-- Acciones Rápidas al Clic -->
-          <div class="flex items-center justify-between pt-1 border-t border-grid/60 text-[9px] font-mono">
+          <div class="max-md:hidden flex items-center justify-between pt-1 border-t border-grid/60 text-[9px] font-mono">
             <button
               onclick={(e) => { e.stopPropagation(); onSwitchToDailyView(day.date); }}
               class="text-cyan hover:underline"
