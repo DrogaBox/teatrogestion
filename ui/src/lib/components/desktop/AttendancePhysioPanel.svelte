@@ -25,6 +25,7 @@
   let logs = $state<AttendanceLogDto[]>([]);
   let isLoading = $state(false);
   let searchQuery = $state('');
+  let genderView = $state<'ALL' | 'FEMALE' | 'MALE'>('ALL');
 
   // Modales
   let medicalModalDancer = $state<AttendanceLogDto | null>(null);
@@ -271,15 +272,23 @@
     lateModalDancer = null;
   }
 
+  // Qué lista se ve: Mujeres, Varones o todos. Los contadores, la impresión y el Excel siguen a lo elegido.
+  const genderViews = $derived([
+    { key: 'ALL', label: 'Todos', count: logs.length },
+    { key: 'FEMALE', label: 'Mujeres', count: logs.filter((l) => l.gender_group === 'FEMALE').length },
+    { key: 'MALE', label: 'Varones', count: logs.filter((l) => l.gender_group === 'MALE').length },
+  ]);
+  const shownLogs = $derived(genderView === 'ALL' ? logs : logs.filter((l) => l.gender_group === genderView));
+
   // Filtrado de bailarines
   const filteredLogs = $derived(
-    logs.filter((l) =>
+    shownLogs.filter((l) =>
       l.dancer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (l.legajo && l.legajo.toLowerCase().includes(searchQuery.toLowerCase()))
     )
   );
 
-  // Dos listas, Mujeres y Varones, en orden alfabético (con acentos en su lugar). Quien no tenga
+  // Mujeres y Varones por separado, en orden alfabético (con acentos en su lugar). Quien no tenga
   // cargada ninguna de las dos va en una tercera, para que nadie quede afuera de la planilla.
   const byName = new Intl.Collator('es', { sensitivity: 'base' });
   const attendanceGroups = $derived.by(() => {
@@ -292,24 +301,24 @@
   });
 
   // Estadísticas rápidas
-  const countPresent = $derived(logs.filter((l) => l.attendance_status === 'PRESENT').length);
-  const countNotInClass = $derived(logs.filter((l) => l.attendance_status === 'NOT_IN_CLASS').length);
-  const countPhysio = $derived(logs.filter((l) => l.attendance_status === 'IN_PHYSIOTHERAPY').length);
-  const countLate = $derived(logs.filter((l) => l.attendance_status === 'LATE').length);
-  const countMedical = $derived(logs.filter((l) => l.attendance_status === 'MEDICAL_LEAVE').length);
-  const countAbsent = $derived(logs.filter((l) => l.attendance_status === 'ABSENT').length);
-  const countNoPart = $derived(logs.filter((l) => l.attendance_status === 'NO_PART').length);
-  const countTask = $derived(logs.filter((l) => l.attendance_status === 'TASK_ADJUSTMENT').length);
-  const countJustified = $derived(logs.filter((l) => l.attendance_status === 'JUSTIFIED_ABSENCE').length);
-  const countPending = $derived(logs.filter((l) => l.attendance_status === 'PENDING').length);
-  const countRetired = $derived(logs.filter((l) => l.is_retired && l.attendance_status === 'RETIRED_EXEMPT').length);
+  const countPresent = $derived(shownLogs.filter((l) => l.attendance_status === 'PRESENT').length);
+  const countNotInClass = $derived(shownLogs.filter((l) => l.attendance_status === 'NOT_IN_CLASS').length);
+  const countPhysio = $derived(shownLogs.filter((l) => l.attendance_status === 'IN_PHYSIOTHERAPY').length);
+  const countLate = $derived(shownLogs.filter((l) => l.attendance_status === 'LATE').length);
+  const countMedical = $derived(shownLogs.filter((l) => l.attendance_status === 'MEDICAL_LEAVE').length);
+  const countAbsent = $derived(shownLogs.filter((l) => l.attendance_status === 'ABSENT').length);
+  const countNoPart = $derived(shownLogs.filter((l) => l.attendance_status === 'NO_PART').length);
+  const countTask = $derived(shownLogs.filter((l) => l.attendance_status === 'TASK_ADJUSTMENT').length);
+  const countJustified = $derived(shownLogs.filter((l) => l.attendance_status === 'JUSTIFIED_ABSENCE').length);
+  const countPending = $derived(shownLogs.filter((l) => l.attendance_status === 'PENDING').length);
+  const countRetired = $derived(shownLogs.filter((l) => l.is_retired && l.attendance_status === 'RETIRED_EXEMPT').length);
 
   // Exportar Excel (CSV con BOM)
   function exportExcel() {
     let csv = '\uFEFF'; // BOM UTF-8 para Excel
     csv += 'FECHA;DNI;NOMBRE Y APELLIDO;ESTADO ASISTENCIA;CLASE MATUTINA;FICHADA;DEMORA (MIN);DIAGNOSTICO / NOTAS FISIO;CERTIFICADO;MEDICO\n';
 
-    logs.forEach((l) => {
+    shownLogs.forEach((l) => {
       let stLabel = l.attendance_status;
       if (l.attendance_status === 'PRESENT') stLabel = 'Está (Presente)';
       else if (l.attendance_status === 'NOT_IN_CLASS') stLabel = 'No está en clase';
@@ -332,7 +341,8 @@
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    saveBlob(blob, `Asistencia_Ballet_${scheduleDate}.csv`).catch((e) => alert(e?.message || e));
+    const suffix = genderView === 'FEMALE' ? '_Mujeres' : genderView === 'MALE' ? '_Varones' : '';
+    saveBlob(blob, `Asistencia_Ballet_${scheduleDate}${suffix}.csv`).catch((e) => alert(e?.message || e));
   }
 
   function formatFullDate(isoDate: string): string {
@@ -355,7 +365,7 @@
 
   const effectivePresenceCount = $derived(countPresent + countNotInClass);
   const operationalPercent = $derived(
-    logs.length > 0 ? ((effectivePresenceCount / logs.length) * 100).toFixed(1) : '100.0'
+    shownLogs.length > 0 ? ((effectivePresenceCount / shownLogs.length) * 100).toFixed(1) : '100.0'
   );
 </script>
 
@@ -418,7 +428,7 @@
 
         <div class="bg-panel border border-grid px-3 py-1.5 rounded">
           <span class="text-dim uppercase text-[10px] block font-semibold">Dotación Operativa</span>
-          <span class="text-amber font-semibold">{effectivePresenceCount}/{logs.length} ({operationalPercent}%)</span>
+          <span class="text-amber font-semibold">{effectivePresenceCount}/{shownLogs.length} ({operationalPercent}%)</span>
         </div>
       </div>
     </div>
@@ -517,15 +527,33 @@
     </div>
   </div>
 
-  <!-- Buscador de Bailarines -->
-  <div data-print-skip class="mb-4">
+  <!-- Qué lista ver y Buscador de Bailarines -->
+  <div data-print-skip class="mb-4 flex flex-col gap-2 md:flex-row">
+    <div class="grid grid-cols-3 gap-1 bg-void p-1 rounded border border-grid md:w-96 md:shrink-0" role="group" aria-label="Qué lista ver">
+      {#each genderViews as view (view.key)}
+        <button
+          type="button"
+          onclick={() => (genderView = view.key as typeof genderView)}
+          aria-pressed={genderView === view.key}
+          class="h-10 rounded text-xs font-bold transition-colors {genderView === view.key ? 'bg-amber text-void' : 'text-dim hover:text-ink'}"
+        >
+          {view.label} ({view.count})
+        </button>
+      {/each}
+    </div>
     <input
       type="text"
       bind:value={searchQuery}
       placeholder="Filtrar por nombre, apellido o DNI..."
-      class="w-full h-10 px-3 bg-void border border-grid focus:border-amber rounded text-xs font-medium text-ink outline-none"
+      class="w-full h-12 md:h-auto px-3 bg-void border border-grid focus:border-amber rounded text-xs font-medium text-ink outline-none"
     />
   </div>
+
+  {#if logs.length > 0 && attendanceGroups.length === 0}
+    <p data-print-skip class="mb-4 p-4 text-center text-sm text-dim border border-grid rounded">
+      No aparece nadie en esta lista{searchQuery ? ' con esa búsqueda' : ''}. Probá con «Todos».
+    </p>
+  {/if}
 
   <!-- 1. VISTA DE ESCRITORIO (TABLA MULTI-COLUMNA) -->
   <div class="hidden md:block overflow-x-auto">

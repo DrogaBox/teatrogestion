@@ -1,6 +1,6 @@
 Novedades de esta versión de TeatroGestión (1.6)
 ------------------------------------------------
-- Asistencia en orden alfabético y en dos listas, Mujeres y Varones.
+- Asistencia en orden alfabético, con un selector para ver Mujeres, Varones o Todos.
 - Inventario: se puede borrar un artículo, y editarlo también desde el celular. Editar ya no cambia su cupo ni su alerta.
 - Parte y vista previa de impresión con zoom: dos dedos en el celular, Ctrl + rueda en la PC o botones.
 - Bóveda: importar con una foto: la app lee el papel y reconoce qué documento es, su fecha y su título. También varios archivos de una vez.

@@ -12,9 +12,9 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: '1.6',
     date: '05/11/2026',
-    title: 'Pedidos de Inspección: asistencia en dos listas, inventario completo y el celular a la par de la PC',
+    title: 'Pedidos de Inspección: asistencia por Mujeres y Varones, inventario completo y el celular a la par de la PC',
     added: [
-      'Asistencia en orden alfabético y en dos listas, Mujeres y Varones (quien no tenga cargado el dato aparece en «Otros»). También se ve el cargo específico de cada persona.',
+      'Asistencia en orden alfabético y con un selector para ver Mujeres, Varones o Todos: los contadores, la impresión y el Excel siguen a lo elegido (quien no tenga cargado el dato aparece en «Todos», bajo «Otros»). También se ve el cargo específico de cada persona.',
       'Inventario: se puede borrar un artículo, y desde el celular ahora también editarlo. Los vales ya entregados conservan su historial, y la baja llega al otro equipo al sincronizar.',
       'Parte y vista previa de impresión: zoom con dos dedos en el celular, con Ctrl + rueda del mouse en la PC o con los botones − y +. El papel sale siempre en su tamaño.',
       'Bóveda: importar con una foto. Se saca la foto del papel y la app lee el texto, sin internet, y reconoce si es un parte, informe, certificado, recibo o memo, con su fecha, título, persona e importe: se revisa y se guarda. Después se lo encuentra con el buscador por lo que dice. También se pueden importar varios archivos de una vez (PDF, Word, Excel).',
