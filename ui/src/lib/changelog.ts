@@ -10,6 +10,31 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.7',
+    date: '22/11/2026',
+    title: 'Edición libre sin licencia, asistencia en 1 clic, partes reales y sincronización completa',
+    added: [
+      'Edición libre sin licencia: funciona en cualquier PC y celular sin pedir archivo de licencia ni contraseña maestra al instalar o abrir.',
+      'Asistencia diaria más rápida: botón «Marcar pendientes como Presentes» (respeta carpetas médicas y jubilados), resaltado claro del estado activo de cada bailarín y sección plegable al pie para jubilados.',
+      'Padrón de personal completo: ahora permite cargar y editar el género (Mujer / Varón) y los talles de zapatillas de punta y media punta.',
+      'Partes Oficiales y Certificación de Solísticos conectados a los datos reales de la semana (lunes a domingo) y con texto de encabezado y destinatario editables.',
+      'Sincronización Wi-Fi completa entre PC y celular: ahora viajan también las licencias médicas por rango, los repartos de ensayos, las obras y pasajes, las certificaciones de solistas y los documentos de la Bóveda. Además se agregó el botón «Importar Respaldo JSON».',
+      'Celular más cómodo: la barra inferior pasó a 5 pestañas más amplias (la guía Gaynor Minden ahora vive dentro de Entregas) y la vista previa de impresión ya no abre el teclado al desplazarse (la edición se activa con un botón).',
+      'Auditoría automática del descanso de 12 horas entre una función nocturna y la citación de la mañana siguiente.',
+    ],
+    fixed: [
+      'Cerrar la Planilla de Ausentismo BOP desde Asistencia ya no da error y recarga los cambios al instante.',
+      'Los certificados médicos, observaciones y archivos adjuntos ya no quedan cargados al pasar de un bailarín a otro en los modales de Licencia, Fisioterapia o Llegada Tarde.',
+      'Las clases matutinas ya permiten cargar división «General Compañía» y usar «Pista TeatroCue» en dos salas distintas el mismo día sin error.',
+      'Fechas corregidas después de las 21:00 hs: los partes, certificados y documentos de la Bóveda ya no se guardan con fecha del día siguiente.',
+      'El Excel de asistencia ya no pone horario «08:45» a ausentes, licencias ni jubilados; el porcentaje de presentismo coincide entre Inicio y Asistencia; y las funciones de sábado y domingo ya no aparecen tapadas como «Franco / Descanso» en la planilla mensual de RRHH.',
+      'Las tardanzas se calculan sobre la hora de citación real de cada día (y no fija a las 08:45), y corregir un toque accidental en Licencia o Jubilado limpia correctamente el estado anterior.',
+      'Valeras y escáner: las reservas se leen directo de la base de datos (sin descontar stock dos veces), el escáner ya no deja la cámara encendida ni falla en cámaras 720p, y el ítem escaneado se selecciona directo para entregar.',
+      'Bóveda más rápida en el celular: los archivos pesados solo se descargan al abrirlos, las fotos manuales se comprimen automáticamente, se pueden adjuntar PDFs o fotos de WhatsApp y tocar la pantalla evita el bloqueo automático.',
+      'Guardar reglas o editar ensayos ya no borra las notas; la ventana en PC ya no pierde el menú al achicarla a media pantalla; y el buscador de la Ayuda filtra correctamente los capítulos.',
+    ],
+  },
+  {
     version: '1.6',
     date: '05/11/2026',
     title: 'Pedidos de Inspección: asistencia por Mujeres y Varones, inventario completo y el celular a la par de la PC',

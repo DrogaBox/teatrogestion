@@ -66,7 +66,7 @@ echo   Gestión de Instalaciones, Actualizaciones y Licencias Offline
 echo ===============================================================================
 echo.
 echo   [1] Actualizar AMBAS aplicaciones en 1 Clic (TeatroGestión + TeatroCue)
-echo   [2] Instalar / Actualizar TeatroGestión (v1.6.0 - Edición Libre sin licencia)
+echo   [2] Instalar / Actualizar TeatroGestión (v1.7.0 - Edición Libre sin licencia)
 echo   [3] Instalar / Actualizar TeatroCue (v0.2.0 - Edición Libre + Salida Carts)
 echo   [4] Renovar Licencias Offline (master.key.enc)
 echo   [5] Restablecer Contraseña de Bóveda de Inspección (Carina Lion)

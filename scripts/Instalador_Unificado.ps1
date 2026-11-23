@@ -174,7 +174,7 @@ try {
     function Refresh-StatusBadges {
         $state = Check-Installations
         if ($state.GestionPath) {
-            $lblStatusGestion.Text = "✔ TeatroGestión v1.6.0 (Libre) en $($state.GestionPath)"
+            $lblStatusGestion.Text = "✔ TeatroGestión v1.7.0 (Libre) en $($state.GestionPath)"
             $lblStatusGestion.ForeColor = [System.Drawing.Color]::FromArgb(76, 175, 80)
         } else {
             $lblStatusGestion.Text = "○ TeatroGestión: No detectado en esta PC"
@@ -606,7 +606,7 @@ try {
                 Log-Msg "Ejecutando Actualizador de TeatroGestión..."
                 $code = Run-LoggedProcess $exeGestionUpdate "--si"
                 if ($code -eq 0) {
-                    Log-Msg "✔ TeatroGestión actualizado con éxito a la versión v1.6.0 (Edición Libre, sin licencia)."
+                    Log-Msg "✔ TeatroGestión actualizado con éxito a la versión v1.7.0 (Edición Libre, sin licencia)."
                 } else {
                     Log-Msg "⚠ Actualizador de TeatroGestión finalizó con código: $code"
                 }
