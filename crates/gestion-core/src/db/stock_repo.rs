@@ -3,8 +3,8 @@ use crate::domain::{
     StockReservation, StockSubcategory,
 };
 use crate::dto::{
-    ExecuteVoucherPayload, StockFilterPayload, StockItemAvailabilityDto, UpsertStockItemPayload,
-    VoucherReceiptDto,
+    ActiveReservationDto, ExecuteVoucherPayload, StockFilterPayload, StockItemAvailabilityDto,
+    UpsertStockItemPayload, VoucherReceiptDto,
 };
 use crate::error::{CoreError, CoreResult};
 use chrono::{Datelike, Utc};
@@ -178,6 +178,68 @@ pub fn list_stock_catalog(
     Ok(items)
 }
 
+pub fn list_active_reservations(
+    conn: &Connection,
+    personnel_id: Option<&str>,
+) -> CoreResult<Vec<ActiveReservationDto>> {
+    let mut sql = String::from(
+        "SELECT
+            r.id,
+            r.stock_item_id,
+            s.sku_code,
+            s.brand,
+            s.model_name,
+            s.raw_factory_code,
+            s.size_value,
+            s.width_value,
+            s.quota_bucket,
+            r.personnel_id,
+            r.reserved_for_label,
+            r.quantity,
+            r.notes,
+            r.created_at
+         FROM stock_reservations r
+         JOIN stock_items s ON s.id = r.stock_item_id
+         WHERE r.status = 'ACTIVE' AND s.is_active = 1 ",
+    );
+
+    let mut params_vec: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
+    if let Some(pid) = personnel_id {
+        if !pid.trim().is_empty() {
+            sql.push_str("AND r.personnel_id = ? ");
+            params_vec.push(Box::new(pid.trim().to_string()));
+        }
+    }
+    sql.push_str("ORDER BY r.created_at DESC;");
+
+    let params_slice: Vec<&dyn rusqlite::ToSql> = params_vec.iter().map(|b| b.as_ref()).collect();
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(params_slice.as_slice(), |r| {
+        Ok(ActiveReservationDto {
+            id: r.get(0)?,
+            stock_item_id: r.get(1)?,
+            sku_code: r.get(2)?,
+            brand: r.get(3)?,
+            model_name: r.get(4)?,
+            raw_factory_code: r.get(5)?,
+            size_value: r.get(6)?,
+            width_value: r.get(7)?,
+            quota_bucket: r.get(8)?,
+            personnel_id: r.get(9)?,
+            reserved_for_label: r.get(10)?,
+            quantity: r.get(11)?,
+            notes: r.get(12)?,
+            created_at: r.get(13)?,
+        })
+    })?;
+
+    let mut out = Vec::new();
+    for row in rows {
+        out.push(row?);
+    }
+    Ok(out)
+}
+
 pub fn create_nominal_reservation(
     conn: &mut Connection,
     stock_item_id: &str,
@@ -347,12 +409,27 @@ pub fn execute_voucher_delivery(
     }
 
     let voucher_id = format!("VOU_{}", Uuid::new_v4().simple());
-    let voucher_seq: i64 = tx.query_row(
-        "SELECT COALESCE(COUNT(*), 0) + 1 FROM voucher_deliveries WHERE season_year = ?1;",
-        [season_year],
+    let prefix = format!("VAL-{}-", season_year);
+    let max_seq: i64 = tx.query_row(
+        "SELECT COALESCE(MAX(CAST(substr(voucher_number, ?1, 6) AS INTEGER)), 0)
+         FROM voucher_deliveries
+         WHERE season_year = ?2 AND voucher_number LIKE ?3;",
+        params![(prefix.len() + 1) as i64, season_year, format!("{}%", prefix)],
         |r| r.get(0),
     )?;
-    let voucher_number = format!("VAL-{}-{:06}", season_year, voucher_seq);
+    let mut seq = max_seq + 1;
+    let voucher_number = loop {
+        let candidate = format!("VAL-{}-{:06}", season_year, seq);
+        let exists: bool = tx.query_row(
+            "SELECT EXISTS(SELECT 1 FROM voucher_deliveries WHERE voucher_number = ?1);",
+            [&candidate],
+            |r| r.get(0),
+        )?;
+        if !exists {
+            break candidate;
+        }
+        seq += 1;
+    };
     let now_iso = Utc::now().to_rfc3339();
 
     tx.execute(
@@ -398,17 +475,77 @@ pub fn execute_voucher_delivery(
             other => CoreError::Database(other),
         })?;
 
-        if let Some(res_id) = &item.reservation_id {
-            // Reserva nominativa consumida
-            tx.execute(
-                "UPDATE stock_reservations
-                 SET status = 'DELIVERED', resolved_at = ?1
-                 WHERE id = ?2 AND status = 'ACTIVE';",
-                params![now_iso, res_id],
-            )?;
+        let mut delta_reserved: i64 = 0;
 
-            phys = phys.saturating_sub(item.quantity as i64);
-            res = res.saturating_sub(item.quantity as i64);
+        if let Some(res_id) = &item.reservation_id {
+            // Verificar que la reserva exista, esté ACTIVE y corresponda al artículo
+            let res_row: Option<(i64, String)> = tx
+                .query_row(
+                    "SELECT quantity, stock_item_id
+                     FROM stock_reservations
+                     WHERE id = ?1 AND status = 'ACTIVE';",
+                    [res_id],
+                    |r| Ok((r.get(0)?, r.get(1)?)),
+                )
+                .optional()?;
+
+            let Some((res_qty, res_item_id)) = res_row else {
+                return Err(CoreError::IntegrityViolation(format!(
+                    "La reserva '{}' no existe o ya fue entregada/liberada.",
+                    res_id
+                )));
+            };
+
+            if res_item_id != item.stock_item_id {
+                return Err(CoreError::IntegrityViolation(format!(
+                    "La reserva '{}' corresponde a otro artículo del depósito.",
+                    res_id
+                )));
+            }
+
+            let req_qty = item.quantity as i64;
+            if req_qty > res_qty {
+                return Err(CoreError::InsufficientFreeStock {
+                    sku_code: sku,
+                    requested: item.quantity,
+                    available_free: res_qty.max(0) as u32,
+                });
+            }
+
+            if phys < req_qty || res < req_qty {
+                return Err(CoreError::InsufficientFreeStock {
+                    sku_code: sku,
+                    requested: item.quantity,
+                    available_free: phys.min(res).max(0) as u32,
+                });
+            }
+
+            let rows_affected = if req_qty == res_qty {
+                tx.execute(
+                    "UPDATE stock_reservations
+                     SET status = 'DELIVERED', resolved_at = ?1
+                     WHERE id = ?2 AND status = 'ACTIVE';",
+                    params![now_iso, res_id],
+                )?
+            } else {
+                tx.execute(
+                    "UPDATE stock_reservations
+                     SET quantity = quantity - ?1
+                     WHERE id = ?2 AND status = 'ACTIVE' AND quantity > ?1;",
+                    params![req_qty, res_id],
+                )?
+            };
+
+            if rows_affected != 1 {
+                return Err(CoreError::IntegrityViolation(format!(
+                    "No se pudo consumir la reserva '{}' de forma atómica (ya fue modificada).",
+                    res_id
+                )));
+            }
+
+            phys = phys.saturating_sub(req_qty);
+            res = res.saturating_sub(req_qty);
+            delta_reserved = -req_qty;
 
             tx.execute(
                 "UPDATE stock_items
@@ -449,11 +586,12 @@ pub fn execute_voucher_delivery(
             "INSERT INTO stock_ledger (
                 id, stock_item_id, movement_type, delta_physical, delta_reserved,
                 balance_physical_after, balance_reserved_after, reference_id, performed_by, notes, created_at
-             ) VALUES (?1, ?2, 'VOUCHER_DELIVERY_OUT', ?3, 0, ?4, ?5, ?6, ?7, 'Entrega de valera', ?8);",
+             ) VALUES (?1, ?2, 'VOUCHER_DELIVERY_OUT', ?3, ?4, ?5, ?6, ?7, ?8, 'Entrega de valera', ?9);",
             params![
                 ledger_id,
                 item.stock_item_id,
                 -(item.quantity as i64),
+                delta_reserved,
                 phys,
                 res,
                 voucher_id,
@@ -503,12 +641,15 @@ pub fn upsert_stock_item(
         .collect::<String>()
         .to_uppercase();
 
-    let final_sku = payload
+    let explicit_sku = payload
         .sku_code
-        .filter(|s| !s.trim().is_empty())
-        .unwrap_or_else(|| {
-            format!("{}-{}-{}-{}", subcat_abbr, brand_abbr, color_abbr, payload.size_value.trim())
-        });
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
+    let has_explicit_sku = explicit_sku.is_some();
+
+    let base_sku = explicit_sku.unwrap_or_else(|| {
+        format!("{}-{}-{}-{}", subcat_abbr, brand_abbr, color_abbr, payload.size_value.trim())
+    });
 
     // Un alta con el mismo código que un artículo dado de baja lo vuelve a activar (el código es único).
     let final_id = match explicit_id {
@@ -516,11 +657,46 @@ pub fn upsert_stock_item(
         None => tx
             .query_row(
                 "SELECT id FROM stock_items WHERE sku_code = ?1 AND is_active = 0",
-                params![&final_sku],
+                params![&base_sku],
                 |r| r.get::<_, String>(0),
             )
             .optional()?
             .unwrap_or_else(|| format!("STK_{}", Uuid::new_v4().simple())),
+    };
+
+    // Evitar colisiones UNIQUE(sku_code) contra otros artículos existentes
+    let final_sku = {
+        let collision: Option<String> = tx
+            .query_row(
+                "SELECT id FROM stock_items WHERE sku_code = ?1 AND id != ?2",
+                params![&base_sku, &final_id],
+                |r| r.get(0),
+            )
+            .optional()?;
+
+        if collision.is_some() {
+            if has_explicit_sku {
+                return Err(CoreError::ValidationFailed(format!(
+                    "Ya existe otro artículo con el código SKU '{}'. Usá un código diferente o editá el artículo existente.",
+                    base_sku
+                )));
+            }
+            let mut suffix = 2u32;
+            loop {
+                let candidate = format!("{}-{}", base_sku, suffix);
+                let taken: bool = tx.query_row(
+                    "SELECT EXISTS(SELECT 1 FROM stock_items WHERE sku_code = ?1 AND id != ?2)",
+                    params![&candidate, &final_id],
+                    |r| r.get(0),
+                )?;
+                if !taken {
+                    break candidate;
+                }
+                suffix += 1;
+            }
+        } else {
+            base_sku
+        }
     };
 
     let existing: Option<(i64, i64)> = tx

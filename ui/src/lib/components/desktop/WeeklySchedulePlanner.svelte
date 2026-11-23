@@ -61,7 +61,7 @@
     return `${year}-${month}-${day}`;
   }
 
-  const DAY_NAMES = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
+  const DAY_NAMES = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
 
   async function calculateAndLoadWeek(baseDateStr: string) {
     const [y, m, d] = baseDateStr.split('-').map(Number);
@@ -71,7 +71,7 @@
     const days: DayScheduleData[] = [];
     const todayStr = formatIso(new Date());
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       const currentDay = new Date(monday);
       currentDay.setDate(monday.getDate() + i);
       const iso = formatIso(currentDay);
@@ -136,12 +136,15 @@
 
       const targetScheduleId = targetRes.schedule.id;
 
-      // 1. Copiar clases matutinas si no existen
+      // 1. Reemplazar clases matutinas en el destino para evitar duplicados o colisiones UNIQUE
+      for (const existingMc of targetRes.schedule.morning_classes) {
+        await api.deleteMorningClass(existingMc.id);
+      }
       for (const mc of sourceRes.schedule.morning_classes) {
         await api.upsertMorningClass({
           schedule_id: targetScheduleId,
           room: mc.room,
-          gender_division: mc.gender_division,
+          gender_division: mc.gender_division === 'NOT_APPLICABLE' ? 'UNIFIED_SPECIAL' : mc.gender_division,
           start_time: mc.start_time,
           end_time: mc.end_time,
           master_id: mc.master_id,
@@ -168,6 +171,7 @@
           pianist_id: rb.pianist_id,
           sound_tech_id: rb.sound_tech_id,
           allow_shared_room: rb.allow_shared_room,
+          notes: rb.notes ?? null,
           cast_groups: rb.cast_groups.map(g => ({
             group_order: g.group_order,
             group_label: g.group_label,
@@ -189,6 +193,19 @@
       alert(`Error al copiar cronograma: ${e?.message || e}`);
     } finally {
       isCloning = false;
+    }
+  }
+
+  function getShortRoomCode(room: string): string {
+    switch (room) {
+      case 'SALA_1': return 'S1';
+      case 'SALA_2': return 'S2';
+      case 'SALA_3': return 'S3';
+      case 'ESCENARIO': return 'ESC';
+      case 'GIRA_SALA': return 'G-SALA';
+      case 'GIRA_ESCENARIO': return 'G-ESC';
+      case 'GIRA_TRASLADO': return 'GIRA';
+      default: return roomLabel(room);
     }
   }
 
@@ -271,8 +288,8 @@
     </div>
   </div>
 
-  <!-- Grilla Semanal: 6 Columnas (Lunes a Sábado) -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2">
+  <!-- Grilla Semanal: 7 Columnas (Lunes a Domingo) -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2">
     {#each weekDays as day}
       <div class="bg-panel border {day.isSelected ? 'border-amber' : 'border-grid'} rounded flex flex-col min-h-[580px] shadow-sm">
         
@@ -305,7 +322,7 @@
             <span class="text-dim font-mono uppercase block font-bold text-[9px]">Clases 09:00 - 10:15:</span>
             {#each day.schedule.morning_classes as mc}
               <div class="text-ink truncate">
-                <span class="text-green font-mono font-bold">{mc.room === 'SALA_1' ? 'S1' : 'S3'}:</span>
+                <span class="text-green font-mono font-bold">{getShortRoomCode(mc.room)}:</span>
                 <span>{mc.master_name?.split(',')[0]}</span>
               </div>
             {/each}
@@ -466,7 +483,7 @@
           <p class="text-xs font-mono font-bold mt-1">PLAN SEMANAL DE CITACIONES: {weekStartStr} AL {weekEndStr}</p>
         </div>
 
-        <div class="grid grid-cols-6 gap-2">
+        <div class="grid grid-cols-7 gap-2">
           {#each weekDays as d}
             <div class="border border-black p-2 flex flex-col min-h-[350px]">
               <div class="border-b border-black pb-1 mb-1.5 text-center">

@@ -107,8 +107,8 @@
             Activa / Válida
           </span>
         {:else if info.state === 'NotEnforced'}
-          <span class="px-2 py-0.5 bg-cyan/15 text-cyan border border-cyan/30 rounded font-bold uppercase">
-            Modo Desarrollo
+          <span class="px-2 py-0.5 bg-green/15 text-green border border-green/30 rounded font-bold uppercase">
+            Edición Libre · Sin vencimiento
           </span>
         {:else}
           <span class="px-2 py-0.5 bg-red/15 text-red border border-red/30 rounded font-bold uppercase">
@@ -162,7 +162,8 @@
         </div>
       {/if}
 
-      <!-- Plegable de Reactivación de Emergencia -->
+      <!-- Plegable de Reactivación de Emergencia (oculto en Edición Libre) -->
+      {#if info.state !== 'NotEnforced'}
       <div class="pt-2">
         <button
           type="button"
@@ -230,6 +231,7 @@
           </div>
         {/if}
       </div>
+      {/if}
     </div>
 
     <!-- Pie -->

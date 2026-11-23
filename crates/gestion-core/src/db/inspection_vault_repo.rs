@@ -242,7 +242,7 @@ pub fn list_vault_documents(
         "SELECT 
             d.id, d.title, d.category, d.document_date, d.personnel_id,
             p.last_name || ', ' || p.first_name as personnel_name,
-            d.file_name, d.file_type, d.file_size_bytes, d.file_data,
+            d.file_name, d.file_type, d.file_size_bytes,
             d.amount_ars, d.supplier_vendor, d.notes, d.created_at, d.updated_at
          FROM inspection_vault_documents d
          LEFT JOIN personnel p ON p.id = d.personnel_id
@@ -309,12 +309,12 @@ pub fn list_vault_documents(
             file_name: r.get(6)?,
             file_type: r.get(7)?,
             file_size_bytes: r.get(8)?,
-            file_data: r.get(9)?,
-            amount_ars: r.get(10)?,
-            supplier_vendor: r.get(11)?,
-            notes: r.get(12)?,
-            created_at: r.get(13)?,
-            updated_at: r.get(14)?,
+            file_data: String::new(), // Carga bajo demanda vía get_vault_document_data
+            amount_ars: r.get(9)?,
+            supplier_vendor: r.get(10)?,
+            notes: r.get(11)?,
+            created_at: r.get(12)?,
+            updated_at: r.get(13)?,
         })
     })?;
 
@@ -323,6 +323,21 @@ pub fn list_vault_documents(
         docs.push(row?);
     }
     Ok(docs)
+}
+
+pub fn get_vault_document_data(conn: &Connection, id: &str) -> CoreResult<String> {
+    conn.query_row(
+        "SELECT file_data FROM inspection_vault_documents WHERE id = ?1;",
+        [id],
+        |r| r.get(0),
+    )
+    .map_err(|e| match e {
+        rusqlite::Error::QueryReturnedNoRows => CoreError::EntityNotFound {
+            entity: "inspection_vault_documents",
+            id: id.to_string(),
+        },
+        other => CoreError::Database(other),
+    })
 }
 
 pub fn delete_vault_document(conn: &Connection, id: &str) -> CoreResult<()> {

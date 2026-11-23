@@ -2,8 +2,8 @@ use crate::state::AppState;
 use gestion_core::db::stock_repo;
 use gestion_core::domain::GaynorParsedSpec;
 use gestion_core::dto::{
-    ExecuteVoucherPayload, StockFilterPayload, StockItemAvailabilityDto, UpsertStockItemPayload,
-    VoucherReceiptDto,
+    ActiveReservationDto, ExecuteVoucherPayload, StockFilterPayload, StockItemAvailabilityDto,
+    UpsertStockItemPayload, VoucherReceiptDto,
 };
 use gestion_core::error::SerializableCoreError;
 use gestion_core::services::gaynor_parser::parse_gaynor_code;
@@ -55,6 +55,19 @@ pub fn delete_stock_item(
         message: "Fallo al adquirir bloqueo de base de datos".to_string(),
     })?;
     stock_repo::delete_stock_item(db.connection_mut(), &stock_item_id)
+        .map_err(|e| SerializableCoreError::from(&e))
+}
+
+#[tauri::command]
+pub fn list_active_reservations(
+    state: State<'_, AppState>,
+    personnel_id: Option<String>,
+) -> Result<Vec<ActiveReservationDto>, SerializableCoreError> {
+    let db = state.db.lock().map_err(|_| SerializableCoreError {
+        code: "LOCK_ERROR",
+        message: "Fallo al adquirir bloqueo de base de datos".to_string(),
+    })?;
+    stock_repo::list_active_reservations(db.connection(), personnel_id.as_deref())
         .map_err(|e| SerializableCoreError::from(&e))
 }
 

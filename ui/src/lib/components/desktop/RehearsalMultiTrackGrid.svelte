@@ -221,7 +221,8 @@
     selectedPianistId = block.pianist_id || '';
     isToConfirm = block.confirmation_state === 'REHEARSAL_TO_CONFIRM';
     allowSharedRoom = block.allow_shared_room;
-    notes = '';
+    notes = block.notes ?? '';
+    castLine = '';
 
     if (block.pianist_id) {
       soundType = 'pianist';

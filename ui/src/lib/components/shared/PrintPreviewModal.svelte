@@ -37,13 +37,17 @@
 
   let docHtml: string | null = $state(null);
   let docEl: HTMLElement | null = $state(null);
+  let isEditing = $state(false);
   let dirty = $state(false);
   let saveChecked = $state(false);
   let saving = $state(false);
   let errorMsg = $state('');
   let zoom = $state(1);
   $effect(() => {
-    if (open) zoom = defaultDocumentZoom();
+    if (open) {
+      zoom = defaultDocumentZoom();
+      isEditing = false;
+    }
   });
 
   // La vista previa se monta como hija directa de <body> (portal) para que, al
@@ -74,6 +78,25 @@
       el.replaceWith(span);
     });
     clone.querySelectorAll('.tg-card-table').forEach((el) => el.classList.remove('tg-card-table'));
+    // Hacer visibles en la vista previa los encabezados/pies que en pantalla llevan `hidden print:block` (o `print:flex`, etc.)
+    const printDisplayMap: [string, string][] = [
+      ['print:block', 'block'],
+      ['print:flex', 'flex'],
+      ['print:grid', 'grid'],
+      ['print:inline-block', 'inline-block'],
+      ['print:inline', 'inline'],
+      ['print:table', 'table'],
+      ['print:table-row', 'table-row'],
+    ];
+    clone.querySelectorAll('.hidden').forEach((el) => {
+      for (const [printCls, screenCls] of printDisplayMap) {
+        if (el.classList.contains(printCls)) {
+          el.classList.remove('hidden');
+          el.classList.add(screenCls);
+          break;
+        }
+      }
+    });
     return clone.innerHTML;
   }
 
@@ -138,10 +161,22 @@
         </ModalHeader>
         <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-grid bg-panel">
           <p class="text-[11px] text-dim font-mono min-w-0">
-            Edite el texto directamente sobre el documento. Los cambios valen solo para esta copia impresa.
+            {#if isEditing}
+              Modo edición activo: tocá el texto para corregirlo solo en esta copia impresa.
+            {:else}
+              Vista previa de lectura. Activá «Editar texto» si necesitás retocar algo antes de imprimir.
+            {/if}
           </p>
           <div class="flex flex-wrap items-center gap-2">
             <ZoomControls bind:zoom />
+            <button
+              type="button"
+              class="tg-btn {isEditing ? 'border-amber text-amber bg-amber/15' : ''}"
+              onclick={() => (isEditing = !isEditing)}
+              title="Activar o desactivar edición directa sobre el documento"
+            >
+              {isEditing ? '✓ Editando texto' : 'Editar texto'}
+            </button>
             <button
               type="button"
               class="tg-btn"
@@ -175,7 +210,7 @@
             class="tg-print-preview-doc tg-zoom-doc"
             style:zoom={zoom}
             bind:this={docEl}
-            contenteditable="true"
+            contenteditable={isEditing ? 'true' : 'false'}
             spellcheck="false"
             oninput={() => (dirty = true)}
           >

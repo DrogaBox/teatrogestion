@@ -48,6 +48,7 @@ fn sample_rehearsal_block(
         sound_tech_id: None,
         sound_tech_name: None,
         allow_shared_room: false,
+        notes: None,
         cast_groups: vec![RehearsalCastGroup {
             id: format!("GRP-{id}"),
             group_order: 1,

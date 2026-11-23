@@ -245,11 +245,13 @@ pub fn export_sync_bundle(
         })?
         .collect::<Result<Vec<Value>, _>>()?;
 
-    // 8. Daily Schedules
+    // 8. Daily Schedules (with all columns from migrations 0001, 0009, 0011, 0012)
     let mut stmt = conn.prepare(
         "SELECT id, schedule_date, day_of_week, regime_type, mandatory_checkin_time,
                 nominal_start_time, nominal_end_time, minimum_intershift_rest_hours,
-                footer_legal_clause, status, general_notes, created_at, updated_at
+                footer_legal_clause, status, general_notes, created_at, updated_at,
+                day_annotation, class_to_rehearsal_rest_minutes, is_compensatory_rest_day,
+                compensatory_rest_policy, compensatory_rest_days
          FROM daily_schedules",
     )?;
     let daily_schedules = stmt
@@ -268,6 +270,11 @@ pub fn export_sync_bundle(
                 "general_notes": row.get::<_, Option<String>>(10)?,
                 "created_at": row.get::<_, String>(11)?,
                 "updated_at": row.get::<_, String>(12)?,
+                "day_annotation": row.get::<_, Option<String>>(13)?,
+                "class_to_rehearsal_rest_minutes": row.get::<_, i32>(14)?,
+                "is_compensatory_rest_day": row.get::<_, i32>(15)? == 1,
+                "compensatory_rest_policy": row.get::<_, String>(16)?,
+                "compensatory_rest_days": row.get::<_, i32>(17)?,
             }))
         })?
         .collect::<Result<Vec<Value>, _>>()?;
@@ -328,8 +335,216 @@ pub fn export_sync_bundle(
         })?
         .collect::<Result<Vec<Value>, _>>()?;
 
+    // 11. Medical Leave Records
+    let mut stmt = conn.prepare(
+        "SELECT id, personnel_id, start_date, end_date, diagnosis, doctor_name,
+                certificate_file_name, certificate_data, remarks, created_at, leave_type
+         FROM medical_leave_records",
+    )?;
+    let medical_leave_records = stmt
+        .query_map([], |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, String>(0)?,
+                "personnel_id": row.get::<_, String>(1)?,
+                "start_date": row.get::<_, String>(2)?,
+                "end_date": row.get::<_, String>(3)?,
+                "diagnosis": row.get::<_, Option<String>>(4)?,
+                "doctor_name": row.get::<_, Option<String>>(5)?,
+                "certificate_file_name": row.get::<_, Option<String>>(6)?,
+                "certificate_data": row.get::<_, Option<String>>(7)?,
+                "remarks": row.get::<_, Option<String>>(8)?,
+                "created_at": row.get::<_, String>(9)?,
+                "leave_type": row.get::<_, String>(10)?,
+            }))
+        })?
+        .collect::<Result<Vec<Value>, _>>()?;
+
+    // 12. Works
+    let mut stmt = conn.prepare(
+        "SELECT id, title, composer, choreographer, is_active FROM works",
+    )?;
+    let works = stmt
+        .query_map([], |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, String>(0)?,
+                "title": row.get::<_, String>(1)?,
+                "composer": row.get::<_, Option<String>>(2)?,
+                "choreographer": row.get::<_, Option<String>>(3)?,
+                "is_active": row.get::<_, i32>(4)? == 1,
+            }))
+        })?
+        .collect::<Result<Vec<Value>, _>>()?;
+
+    // 13. Work Passages
+    let mut stmt = conn.prepare(
+        "SELECT id, work_id, name, act_scene, default_duration_min, default_sound_cue
+         FROM work_passages",
+    )?;
+    let work_passages = stmt
+        .query_map([], |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, String>(0)?,
+                "work_id": row.get::<_, String>(1)?,
+                "name": row.get::<_, String>(2)?,
+                "act_scene": row.get::<_, Option<String>>(3)?,
+                "default_duration_min": row.get::<_, i32>(4)?,
+                "default_sound_cue": row.get::<_, Option<String>>(5)?,
+            }))
+        })?
+        .collect::<Result<Vec<Value>, _>>()?;
+
+    // 14. Work Cast Plans
+    let mut stmt = conn.prepare(
+        "SELECT id, work_id, passage_id, tier_name, cast_label, default_sound_cue, notes, created_at, updated_at
+         FROM work_cast_plans",
+    )?;
+    let work_cast_plans = stmt
+        .query_map([], |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, String>(0)?,
+                "work_id": row.get::<_, String>(1)?,
+                "passage_id": row.get::<_, Option<String>>(2)?,
+                "tier_name": row.get::<_, String>(3)?,
+                "cast_label": row.get::<_, String>(4)?,
+                "default_sound_cue": row.get::<_, Option<String>>(5)?,
+                "notes": row.get::<_, Option<String>>(6)?,
+                "created_at": row.get::<_, String>(7)?,
+                "updated_at": row.get::<_, String>(8)?,
+            }))
+        })?
+        .collect::<Result<Vec<Value>, _>>()?;
+
+    // 15. Work Cast Plan Members
+    let mut stmt = conn.prepare(
+        "SELECT id, plan_id, personnel_id, character_role, partner_personnel_id, assignment_condition, sort_order
+         FROM work_cast_plan_members",
+    )?;
+    let work_cast_plan_members = stmt
+        .query_map([], |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, String>(0)?,
+                "plan_id": row.get::<_, String>(1)?,
+                "personnel_id": row.get::<_, String>(2)?,
+                "character_role": row.get::<_, Option<String>>(3)?,
+                "partner_personnel_id": row.get::<_, Option<String>>(4)?,
+                "assignment_condition": row.get::<_, String>(5)?,
+                "sort_order": row.get::<_, i32>(6)?,
+            }))
+        })?
+        .collect::<Result<Vec<Value>, _>>()?;
+
+    // 16. Rehearsal Cast Groups
+    let mut stmt = conn.prepare(
+        "SELECT id, rehearsal_block_id, group_order, group_label, display_expression, is_to_confirm
+         FROM rehearsal_cast_groups",
+    )?;
+    let rehearsal_cast_groups = stmt
+        .query_map([], |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, String>(0)?,
+                "rehearsal_block_id": row.get::<_, String>(1)?,
+                "group_order": row.get::<_, i32>(2)?,
+                "group_label": row.get::<_, Option<String>>(3)?,
+                "display_expression": row.get::<_, Option<String>>(4)?,
+                "is_to_confirm": row.get::<_, i32>(5)? == 1,
+            }))
+        })?
+        .collect::<Result<Vec<Value>, _>>()?;
+
+    // 17. Rehearsal Cast Members
+    let mut stmt = conn.prepare(
+        "SELECT id, cast_group_id, personnel_id, character_role, partner_personnel_id, assignment_condition, sort_order
+         FROM rehearsal_cast_members",
+    )?;
+    let rehearsal_cast_members = stmt
+        .query_map([], |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, String>(0)?,
+                "cast_group_id": row.get::<_, String>(1)?,
+                "personnel_id": row.get::<_, String>(2)?,
+                "character_role": row.get::<_, Option<String>>(3)?,
+                "partner_personnel_id": row.get::<_, Option<String>>(4)?,
+                "assignment_condition": row.get::<_, String>(5)?,
+                "sort_order": row.get::<_, i32>(6)?,
+            }))
+        })?
+        .collect::<Result<Vec<Value>, _>>()?;
+
+    // 18. Soloist Certifications
+    let mut stmt = conn.prepare(
+        "SELECT id, program_title, hall_name, document_date, recipient_name, recipient_title,
+                intro_body, closing_text, status, notes, created_at, updated_at
+         FROM soloist_certifications",
+    )?;
+    let soloist_certifications = stmt
+        .query_map([], |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, String>(0)?,
+                "program_title": row.get::<_, String>(1)?,
+                "hall_name": row.get::<_, String>(2)?,
+                "document_date": row.get::<_, String>(3)?,
+                "recipient_name": row.get::<_, String>(4)?,
+                "recipient_title": row.get::<_, String>(5)?,
+                "intro_body": row.get::<_, String>(6)?,
+                "closing_text": row.get::<_, String>(7)?,
+                "status": row.get::<_, String>(8)?,
+                "notes": row.get::<_, Option<String>>(9)?,
+                "created_at": row.get::<_, String>(10)?,
+                "updated_at": row.get::<_, String>(11)?,
+            }))
+        })?
+        .collect::<Result<Vec<Value>, _>>()?;
+
+    // 19. Soloist Certification Items
+    let mut stmt = conn.prepare(
+        "SELECT id, certification_id, personnel_id, dancer_name, work_role,
+                performance_dates, performance_count, sort_order
+         FROM soloist_certification_items",
+    )?;
+    let soloist_certification_items = stmt
+        .query_map([], |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, String>(0)?,
+                "certification_id": row.get::<_, String>(1)?,
+                "personnel_id": row.get::<_, Option<String>>(2)?,
+                "dancer_name": row.get::<_, String>(3)?,
+                "work_role": row.get::<_, String>(4)?,
+                "performance_dates": row.get::<_, String>(5)?,
+                "performance_count": row.get::<_, i32>(6)?,
+                "sort_order": row.get::<_, i32>(7)?,
+            }))
+        })?
+        .collect::<Result<Vec<Value>, _>>()?;
+
+    // 20. Inspection Vault Documents
+    let mut stmt = conn.prepare(
+        "SELECT id, title, category, document_date, personnel_id, file_name, file_type,
+                file_size_bytes, file_data, amount_ars, supplier_vendor, notes, created_at, updated_at
+         FROM inspection_vault_documents",
+    )?;
+    let inspection_vault_documents = stmt
+        .query_map([], |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, String>(0)?,
+                "title": row.get::<_, String>(1)?,
+                "category": row.get::<_, String>(2)?,
+                "document_date": row.get::<_, String>(3)?,
+                "personnel_id": row.get::<_, Option<String>>(4)?,
+                "file_name": row.get::<_, String>(5)?,
+                "file_type": row.get::<_, String>(6)?,
+                "file_size_bytes": row.get::<_, i64>(7)?,
+                "file_data": row.get::<_, String>(8)?,
+                "amount_ars": row.get::<_, Option<f64>>(9)?,
+                "supplier_vendor": row.get::<_, Option<String>>(10)?,
+                "notes": row.get::<_, Option<String>>(11)?,
+                "created_at": row.get::<_, String>(12)?,
+                "updated_at": row.get::<_, String>(13)?,
+            }))
+        })?
+        .collect::<Result<Vec<Value>, _>>()?;
+
     Ok(SyncBundle {
-        format_version: 1,
+        format_version: 2,
         exported_at_iso: now_iso,
         source_device_name: device_name.to_string(),
         source_node_id: node_id.to_string(),
@@ -344,6 +559,16 @@ pub fn export_sync_bundle(
         daily_schedules,
         rehearsal_blocks,
         morning_classes,
+        medical_leave_records,
+        works,
+        work_passages,
+        work_cast_plans,
+        work_cast_plan_members,
+        rehearsal_cast_groups,
+        rehearsal_cast_members,
+        soloist_certifications,
+        soloist_certification_items,
+        inspection_vault_documents,
     })
 }
 
@@ -358,6 +583,8 @@ pub fn import_sync_bundle(
     // Parte remoto -> parte local de la misma fecha: cada equipo crea su propio parte del día al tomar asistencia,
     // así que la misma fecha puede llegar con otro `id` y `schedule_date` es UNIQUE.
     let mut schedule_ids: HashMap<String, String> = HashMap::new();
+    let mut work_ids: HashMap<String, String> = HashMap::new();
+    let mut passage_ids: HashMap<String, String> = HashMap::new();
 
     // 1. Personnel
     for item in &bundle.personnel {
@@ -424,6 +651,146 @@ pub fn import_sync_bundle(
         )?;
         if changes > 0 {
             total_applied += 1;
+        }
+    }
+
+    // 1b. Works (antes de stock_items, work_passages, stock_reservations y rehearsal_blocks por FK)
+    for item in &bundle.works {
+        total_received += 1;
+        let remote_id = item["id"].as_str().unwrap_or_default();
+        let title = item["title"].as_str().unwrap_or_default();
+        let composer = item["composer"].as_str();
+        let choreographer = item["choreographer"].as_str();
+        let is_active = if item["is_active"].as_bool().unwrap_or(true) { 1 } else { 0 };
+        if remote_id.is_empty() || title.is_empty() {
+            continue;
+        }
+        let local_id: String = tx
+            .query_row("SELECT id FROM works WHERE title = ?1", params![title], |r| r.get(0))
+            .optional()?
+            .unwrap_or_else(|| remote_id.to_string());
+        work_ids.insert(remote_id.to_string(), local_id.clone());
+
+        let changes = tx.execute(
+            "INSERT INTO works (id, title, composer, choreographer, is_active)
+             VALUES (?1, ?2, ?3, ?4, ?5)
+             ON CONFLICT(id) DO UPDATE SET
+                composer = COALESCE(excluded.composer, works.composer),
+                choreographer = COALESCE(excluded.choreographer, works.choreographer),
+                is_active = excluded.is_active",
+            params![local_id, title, composer, choreographer, is_active],
+        )?;
+        if changes > 0 {
+            total_applied += 1;
+        }
+    }
+
+    // 1c. Work Passages
+    for item in &bundle.work_passages {
+        total_received += 1;
+        let remote_id = item["id"].as_str().unwrap_or_default();
+        let raw_work_id = item["work_id"].as_str().unwrap_or_default();
+        let work_id = work_ids.get(raw_work_id).map_or(raw_work_id, String::as_str);
+        let name = item["name"].as_str().unwrap_or_default();
+        let act_scene = item["act_scene"].as_str();
+        let default_duration = item["default_duration_min"].as_i64().unwrap_or(60);
+        let default_cue = item["default_sound_cue"].as_str();
+        if remote_id.is_empty() || work_id.is_empty() || name.is_empty() {
+            continue;
+        }
+        let local_id: String = tx
+            .query_row(
+                "SELECT id FROM work_passages WHERE work_id = ?1 AND name = ?2",
+                params![work_id, name],
+                |r| r.get(0),
+            )
+            .optional()?
+            .unwrap_or_else(|| remote_id.to_string());
+        passage_ids.insert(remote_id.to_string(), local_id.clone());
+
+        let changes = tx.execute(
+            "INSERT INTO work_passages (id, work_id, name, act_scene, default_duration_min, default_sound_cue)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+             ON CONFLICT(id) DO UPDATE SET
+                act_scene = COALESCE(excluded.act_scene, work_passages.act_scene),
+                default_duration_min = excluded.default_duration_min,
+                default_sound_cue = COALESCE(excluded.default_sound_cue, work_passages.default_sound_cue)",
+            params![local_id, work_id, name, act_scene, default_duration, default_cue],
+        )?;
+        if changes > 0 {
+            total_applied += 1;
+        }
+    }
+
+    // 1d. Work Cast Plans
+    for item in &bundle.work_cast_plans {
+        total_received += 1;
+        let id = item["id"].as_str().unwrap_or_default();
+        let raw_work_id = item["work_id"].as_str().unwrap_or_default();
+        let work_id = work_ids.get(raw_work_id).map_or(raw_work_id, String::as_str);
+        let passage_id = item["passage_id"]
+            .as_str()
+            .map(|p| passage_ids.get(p).map_or(p, String::as_str));
+        let tier_name = item["tier_name"].as_str().unwrap_or("1° Elenco");
+        let cast_label = item["cast_label"].as_str().unwrap_or_default();
+        let default_cue = item["default_sound_cue"].as_str();
+        let notes = item["notes"].as_str();
+        let created_at = item["created_at"].as_str().unwrap_or("");
+        let updated_at = item["updated_at"].as_str().unwrap_or("");
+        if id.is_empty() || work_id.is_empty() {
+            continue;
+        }
+
+        let changes = tx.execute(
+            "INSERT INTO work_cast_plans (
+                id, work_id, passage_id, tier_name, cast_label, default_sound_cue, notes, created_at, updated_at
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
+             ON CONFLICT(id) DO UPDATE SET
+                work_id = excluded.work_id,
+                passage_id = excluded.passage_id,
+                tier_name = excluded.tier_name,
+                cast_label = excluded.cast_label,
+                default_sound_cue = excluded.default_sound_cue,
+                notes = excluded.notes,
+                updated_at = excluded.updated_at
+             WHERE excluded.updated_at >= work_cast_plans.updated_at",
+            params![id, work_id, passage_id, tier_name, cast_label, default_cue, notes, created_at, updated_at],
+        )?;
+        if changes > 0 {
+            total_applied += 1;
+        }
+    }
+
+    // 1e. Work Cast Plan Members
+    for item in &bundle.work_cast_plan_members {
+        total_received += 1;
+        let id = item["id"].as_str().unwrap_or_default();
+        let plan_id = item["plan_id"].as_str().unwrap_or_default();
+        let personnel_id = item["personnel_id"].as_str().unwrap_or_default();
+        let character_role = item["character_role"].as_str();
+        let partner_id = item["partner_personnel_id"].as_str();
+        let cond = item["assignment_condition"].as_str().unwrap_or("TITULAR");
+        let sort_order = item["sort_order"].as_i64().unwrap_or(0);
+        if id.is_empty() || plan_id.is_empty() || personnel_id.is_empty() {
+            continue;
+        }
+
+        let result = tx.execute(
+            "INSERT INTO work_cast_plan_members (
+                id, plan_id, personnel_id, character_role, partner_personnel_id, assignment_condition, sort_order
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+             ON CONFLICT(id) DO UPDATE SET
+                character_role = excluded.character_role,
+                partner_personnel_id = excluded.partner_personnel_id,
+                assignment_condition = excluded.assignment_condition,
+                sort_order = excluded.sort_order",
+            params![id, plan_id, personnel_id, character_role, partner_id, cond, sort_order],
+        );
+        match result {
+            Ok(n) if n > 0 => total_applied += 1,
+            Ok(_) => {}
+            Err(rusqlite::Error::SqliteFailure(e, _)) if e.code == rusqlite::ErrorCode::ConstraintViolation => {}
+            Err(e) => return Err(e.into()),
         }
     }
 
@@ -528,26 +895,41 @@ pub fn import_sync_bundle(
         let notes = item["general_notes"].as_str();
         let created_at = item["created_at"].as_str().unwrap_or("");
         let updated_at = item["updated_at"].as_str().unwrap_or("");
+        let day_annotation = item["day_annotation"].as_str();
+        let class_rest_mins = item["class_to_rehearsal_rest_minutes"].as_i64().unwrap_or(15);
+        let is_comp_day = if item["is_compensatory_rest_day"].as_bool().unwrap_or(false) { 1 } else { 0 };
+        let comp_policy = item["compensatory_rest_policy"].as_str().unwrap_or("NEXT_DAY");
+        let comp_days = item["compensatory_rest_days"].as_i64().unwrap_or(1);
         let id = local_schedule_id(&tx, &mut schedule_ids, id, sched_date)?;
 
         let changes = tx.execute(
             "INSERT INTO daily_schedules (
                 id, schedule_date, day_of_week, regime_type, mandatory_checkin_time,
                 nominal_start_time, nominal_end_time, minimum_intershift_rest_hours,
-                footer_legal_clause, status, general_notes, created_at, updated_at
-             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
+                footer_legal_clause, status, general_notes, created_at, updated_at,
+                day_annotation, class_to_rehearsal_rest_minutes, is_compensatory_rest_day,
+                compensatory_rest_policy, compensatory_rest_days
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)
              ON CONFLICT(id) DO UPDATE SET
                 regime_type = excluded.regime_type,
                 mandatory_checkin_time = excluded.mandatory_checkin_time,
                 nominal_start_time = excluded.nominal_start_time,
                 nominal_end_time = excluded.nominal_end_time,
+                minimum_intershift_rest_hours = excluded.minimum_intershift_rest_hours,
+                footer_legal_clause = excluded.footer_legal_clause,
                 status = excluded.status,
                 general_notes = excluded.general_notes,
+                day_annotation = COALESCE(excluded.day_annotation, daily_schedules.day_annotation),
+                class_to_rehearsal_rest_minutes = excluded.class_to_rehearsal_rest_minutes,
+                is_compensatory_rest_day = excluded.is_compensatory_rest_day,
+                compensatory_rest_policy = excluded.compensatory_rest_policy,
+                compensatory_rest_days = excluded.compensatory_rest_days,
                 updated_at = excluded.updated_at
              WHERE excluded.updated_at >= daily_schedules.updated_at",
             params![
                 id, sched_date, day_of_week, regime_type, mandatory_checkin,
-                start_time, end_time, rest_hours, legal_clause, status, notes, created_at, updated_at
+                start_time, end_time, rest_hours, legal_clause, status, notes, created_at, updated_at,
+                day_annotation, class_rest_mins, is_comp_day, comp_policy, comp_days
             ],
         )?;
         if changes > 0 {
@@ -617,6 +999,21 @@ pub fn import_sync_bundle(
         let signature = item["signature_svg_strokes"].as_str();
         let notes = item["notes"].as_str();
 
+        // Evitar colisión UNIQUE(voucher_number) si dos equipos emitieron el mismo correlativo offline
+        let final_voucher_num = {
+            let collides: bool = tx.query_row(
+                "SELECT EXISTS(SELECT 1 FROM voucher_deliveries WHERE voucher_number = ?1 AND id != ?2)",
+                params![voucher_num, id],
+                |r| r.get(0),
+            )?;
+            if collides {
+                let short_id: String = id.chars().rev().take(4).collect();
+                format!("{}-{}", voucher_num, short_id.to_uppercase())
+            } else {
+                voucher_num.to_string()
+            }
+        };
+
         let changes = tx.execute(
             "INSERT INTO voucher_deliveries (
                 id, voucher_number, personnel_id, season_year, delivered_by_inspector_id,
@@ -625,7 +1022,7 @@ pub fn import_sync_bundle(
              ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
              ON CONFLICT(id) DO NOTHING",
             params![
-                id, voucher_num, personnel_id, season_year, inspector_id,
+                id, final_voucher_num, personnel_id, season_year, inspector_id,
                 delivery_ts, is_quota_exception, exception_reason, device_id,
                 signature, notes
             ],
@@ -810,8 +1207,12 @@ pub fn import_sync_bundle(
         let start_time = item["start_time"].as_str().unwrap_or("10:30");
         let end_time = item["end_time"].as_str().unwrap_or("12:00");
         let activity_type = item["activity_type"].as_str().unwrap_or("STUDIO_REHEARSAL");
-        let work_id = item["work_id"].as_str();
-        let passage_id = item["passage_id"].as_str();
+        let work_id = item["work_id"]
+            .as_str()
+            .map(|w| work_ids.get(w).map_or(w, String::as_str));
+        let passage_id = item["passage_id"]
+            .as_str()
+            .map(|p| passage_ids.get(p).map_or(p, String::as_str));
         let custom_passage = item["custom_passage_label"].as_str();
         let confirmation = item["confirmation_state"].as_str().unwrap_or("CONFIRMED");
         let sound_req = item["sound_requirement"].as_str().unwrap_or("PIANO");
@@ -893,6 +1294,256 @@ pub fn import_sync_bundle(
             // Otra clase ya ocupa esa sala o ese maestro ese día, o falta el parte del día: se conserva lo local.
             Err(rusqlite::Error::SqliteFailure(e, _)) if e.code == rusqlite::ErrorCode::ConstraintViolation => {}
             Err(e) => return Err(e.into()),
+        }
+    }
+
+    // 10b. Medical Leave Records
+    for item in &bundle.medical_leave_records {
+        total_received += 1;
+        let id = item["id"].as_str().unwrap_or_default();
+        let personnel_id = item["personnel_id"].as_str().unwrap_or_default();
+        let start_date = item["start_date"].as_str().unwrap_or_default();
+        let end_date = item["end_date"].as_str().unwrap_or_default();
+        let diagnosis = item["diagnosis"].as_str();
+        let doctor_name = item["doctor_name"].as_str();
+        let cert_name = item["certificate_file_name"].as_str();
+        let cert_data = item["certificate_data"].as_str();
+        let remarks = item["remarks"].as_str();
+        let created_at = item["created_at"].as_str().unwrap_or("");
+        let leave_type = item["leave_type"].as_str().unwrap_or("ENFERMEDAD");
+        if id.is_empty() || personnel_id.is_empty() {
+            continue;
+        }
+        let changes = tx.execute(
+            "INSERT INTO medical_leave_records (
+                id, personnel_id, start_date, end_date, diagnosis, doctor_name,
+                certificate_file_name, certificate_data, remarks, created_at, leave_type
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+             ON CONFLICT(id) DO UPDATE SET
+                start_date = excluded.start_date,
+                end_date = excluded.end_date,
+                diagnosis = COALESCE(excluded.diagnosis, medical_leave_records.diagnosis),
+                doctor_name = COALESCE(excluded.doctor_name, medical_leave_records.doctor_name),
+                certificate_file_name = COALESCE(excluded.certificate_file_name, medical_leave_records.certificate_file_name),
+                certificate_data = COALESCE(excluded.certificate_data, medical_leave_records.certificate_data),
+                remarks = COALESCE(excluded.remarks, medical_leave_records.remarks),
+                leave_type = excluded.leave_type",
+            params![
+                id, personnel_id, start_date, end_date, diagnosis, doctor_name,
+                cert_name, cert_data, remarks, created_at, leave_type
+            ],
+        )?;
+        if changes > 0 {
+            total_applied += 1;
+        }
+    }
+
+    // 10c. Rehearsal Cast Groups
+    for item in &bundle.rehearsal_cast_groups {
+        total_received += 1;
+        let id = item["id"].as_str().unwrap_or_default();
+        let block_id = item["rehearsal_block_id"].as_str().unwrap_or_default();
+        let group_order = item["group_order"].as_i64().unwrap_or(1);
+        let group_label = item["group_label"].as_str();
+        let display_expr = item["display_expression"].as_str();
+        let is_to_confirm = if item["is_to_confirm"].as_bool().unwrap_or(false) { 1 } else { 0 };
+        if id.is_empty() || block_id.is_empty() {
+            continue;
+        }
+        let changes = tx.execute(
+            "INSERT INTO rehearsal_cast_groups (
+                id, rehearsal_block_id, group_order, group_label, display_expression, is_to_confirm
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+             ON CONFLICT(id) DO UPDATE SET
+                group_order = excluded.group_order,
+                group_label = excluded.group_label,
+                display_expression = excluded.display_expression,
+                is_to_confirm = excluded.is_to_confirm",
+            params![id, block_id, group_order, group_label, display_expr, is_to_confirm],
+        )?;
+        if changes > 0 {
+            total_applied += 1;
+        }
+    }
+
+    // 10d. Rehearsal Cast Members
+    for item in &bundle.rehearsal_cast_members {
+        total_received += 1;
+        let id = item["id"].as_str().unwrap_or_default();
+        let group_id = item["cast_group_id"].as_str().unwrap_or_default();
+        let personnel_id = item["personnel_id"].as_str().unwrap_or_default();
+        let character_role = item["character_role"].as_str();
+        let partner_id = item["partner_personnel_id"].as_str();
+        let cond = item["assignment_condition"].as_str().unwrap_or("TITULAR");
+        let sort_order = item["sort_order"].as_i64().unwrap_or(0);
+        if id.is_empty() || group_id.is_empty() || personnel_id.is_empty() {
+            continue;
+        }
+        let result = tx.execute(
+            "INSERT INTO rehearsal_cast_members (
+                id, cast_group_id, personnel_id, character_role, partner_personnel_id, assignment_condition, sort_order
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+             ON CONFLICT(id) DO UPDATE SET
+                character_role = excluded.character_role,
+                partner_personnel_id = excluded.partner_personnel_id,
+                assignment_condition = excluded.assignment_condition,
+                sort_order = excluded.sort_order",
+            params![id, group_id, personnel_id, character_role, partner_id, cond, sort_order],
+        );
+        match result {
+            Ok(n) if n > 0 => total_applied += 1,
+            Ok(_) => {}
+            Err(rusqlite::Error::SqliteFailure(e, _)) if e.code == rusqlite::ErrorCode::ConstraintViolation => {}
+            Err(e) => return Err(e.into()),
+        }
+    }
+
+    // 10e. Soloist Certifications
+    for item in &bundle.soloist_certifications {
+        total_received += 1;
+        let id = item["id"].as_str().unwrap_or_default();
+        let program_title = item["program_title"].as_str().unwrap_or_default();
+        let hall_name = item["hall_name"].as_str().unwrap_or("Sala Mayor del Teatro del Libertador Gral. San Martín");
+        let document_date = item["document_date"].as_str().unwrap_or_default();
+        let recipient_name = item["recipient_name"].as_str().unwrap_or_default();
+        let recipient_title = item["recipient_title"].as_str().unwrap_or_default();
+        let intro_body = item["intro_body"].as_str().unwrap_or("");
+        let closing_text = item["closing_text"].as_str().unwrap_or("Sin otro particular saludo a Ud. Atte.");
+        let status = item["status"].as_str().unwrap_or("DRAFT");
+        let notes = item["notes"].as_str();
+        let created_at = item["created_at"].as_str().unwrap_or("");
+        let updated_at = item["updated_at"].as_str().unwrap_or("");
+        if id.is_empty() {
+            continue;
+        }
+        let changes = tx.execute(
+            "INSERT INTO soloist_certifications (
+                id, program_title, hall_name, document_date, recipient_name, recipient_title,
+                intro_body, closing_text, status, notes, created_at, updated_at
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
+             ON CONFLICT(id) DO UPDATE SET
+                program_title = excluded.program_title,
+                hall_name = excluded.hall_name,
+                document_date = excluded.document_date,
+                recipient_name = excluded.recipient_name,
+                recipient_title = excluded.recipient_title,
+                intro_body = excluded.intro_body,
+                closing_text = excluded.closing_text,
+                status = excluded.status,
+                notes = excluded.notes,
+                updated_at = excluded.updated_at
+             WHERE excluded.updated_at >= soloist_certifications.updated_at",
+            params![
+                id, program_title, hall_name, document_date, recipient_name, recipient_title,
+                intro_body, closing_text, status, notes, created_at, updated_at
+            ],
+        )?;
+        if changes > 0 {
+            total_applied += 1;
+        }
+    }
+
+    // 10f. Soloist Certification Items
+    for item in &bundle.soloist_certification_items {
+        total_received += 1;
+        let id = item["id"].as_str().unwrap_or_default();
+        let cert_id = item["certification_id"].as_str().unwrap_or_default();
+        let raw_personnel_id = item["personnel_id"].as_str();
+        let personnel_id = match raw_personnel_id {
+            Some(pid) if !pid.is_empty() => {
+                let exists: bool = tx.query_row(
+                    "SELECT EXISTS(SELECT 1 FROM personnel WHERE id = ?1)",
+                    [pid],
+                    |r| r.get(0),
+                )?;
+                if exists { Some(pid) } else { None }
+            }
+            _ => None,
+        };
+        let dancer_name = item["dancer_name"].as_str().unwrap_or_default();
+        let work_role = item["work_role"].as_str().unwrap_or_default();
+        let perf_dates = item["performance_dates"].as_str().unwrap_or_default();
+        let perf_count = item["performance_count"].as_i64().unwrap_or(1);
+        let sort_order = item["sort_order"].as_i64().unwrap_or(0);
+        if id.is_empty() || cert_id.is_empty() {
+            continue;
+        }
+        let changes = tx.execute(
+            "INSERT INTO soloist_certification_items (
+                id, certification_id, personnel_id, dancer_name, work_role,
+                performance_dates, performance_count, sort_order
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+             ON CONFLICT(id) DO UPDATE SET
+                personnel_id = excluded.personnel_id,
+                dancer_name = excluded.dancer_name,
+                work_role = excluded.work_role,
+                performance_dates = excluded.performance_dates,
+                performance_count = excluded.performance_count,
+                sort_order = excluded.sort_order",
+            params![id, cert_id, personnel_id, dancer_name, work_role, perf_dates, perf_count, sort_order],
+        )?;
+        if changes > 0 {
+            total_applied += 1;
+        }
+    }
+
+    // 10g. Inspection Vault Documents
+    for item in &bundle.inspection_vault_documents {
+        total_received += 1;
+        let id = item["id"].as_str().unwrap_or_default();
+        let title = item["title"].as_str().unwrap_or_default();
+        let category = item["category"].as_str().unwrap_or("OTRO");
+        let document_date = item["document_date"].as_str().unwrap_or_default();
+        let raw_personnel_id = item["personnel_id"].as_str();
+        let personnel_id = match raw_personnel_id {
+            Some(pid) if !pid.is_empty() => {
+                let exists: bool = tx.query_row(
+                    "SELECT EXISTS(SELECT 1 FROM personnel WHERE id = ?1)",
+                    [pid],
+                    |r| r.get(0),
+                )?;
+                if exists { Some(pid) } else { None }
+            }
+            _ => None,
+        };
+        let file_name = item["file_name"].as_str().unwrap_or_default();
+        let file_type = item["file_type"].as_str().unwrap_or("application/octet-stream");
+        let file_size_bytes = item["file_size_bytes"].as_i64().unwrap_or(0);
+        let file_data = item["file_data"].as_str().unwrap_or("");
+        let amount_ars = item["amount_ars"].as_f64();
+        let supplier_vendor = item["supplier_vendor"].as_str();
+        let notes = item["notes"].as_str();
+        let created_at = item["created_at"].as_str().unwrap_or("");
+        let updated_at = item["updated_at"].as_str().unwrap_or("");
+        if id.is_empty() || file_data.is_empty() {
+            continue;
+        }
+        let changes = tx.execute(
+            "INSERT INTO inspection_vault_documents (
+                id, title, category, document_date, personnel_id, file_name, file_type,
+                file_size_bytes, file_data, amount_ars, supplier_vendor, notes, created_at, updated_at
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
+             ON CONFLICT(id) DO UPDATE SET
+                title = excluded.title,
+                category = excluded.category,
+                document_date = excluded.document_date,
+                personnel_id = excluded.personnel_id,
+                file_name = excluded.file_name,
+                file_type = excluded.file_type,
+                file_size_bytes = excluded.file_size_bytes,
+                file_data = excluded.file_data,
+                amount_ars = excluded.amount_ars,
+                supplier_vendor = excluded.supplier_vendor,
+                notes = excluded.notes,
+                updated_at = excluded.updated_at
+             WHERE excluded.updated_at >= inspection_vault_documents.updated_at",
+            params![
+                id, title, category, document_date, personnel_id, file_name, file_type,
+                file_size_bytes, file_data, amount_ars, supplier_vendor, notes, created_at, updated_at
+            ],
+        )?;
+        if changes > 0 {
+            total_applied += 1;
         }
     }
 

@@ -174,8 +174,7 @@ try {
     function Refresh-StatusBadges {
         $state = Check-Installations
         if ($state.GestionPath) {
-            $licText = if ($state.GestionLic) { "(Licencia OK)" } else { "(Sin Licencia)" }
-            $lblStatusGestion.Text = "✔ TeatroGestión: $licText en $($state.GestionPath)"
+            $lblStatusGestion.Text = "✔ TeatroGestión v1.6.0 (Libre) en $($state.GestionPath)"
             $lblStatusGestion.ForeColor = [System.Drawing.Color]::FromArgb(76, 175, 80)
         } else {
             $lblStatusGestion.Text = "○ TeatroGestión: No detectado en esta PC"
@@ -183,8 +182,7 @@ try {
         }
 
         if ($state.CuePath) {
-            $licText = if ($state.CueLic) { "(Licencia OK)" } else { "(Sin Licencia)" }
-            $lblStatusCue.Text = "✔ TeatroCue: $licText en $($state.CuePath)"
+            $lblStatusCue.Text = "✔ TeatroCue v0.2.0 (Libre) en $($state.CuePath)"
             $lblStatusCue.ForeColor = [System.Drawing.Color]::FromArgb(76, 175, 80)
         } else {
             $lblStatusCue.Text = "○ TeatroCue: No detectado en esta PC"
@@ -608,7 +606,7 @@ try {
                 Log-Msg "Ejecutando Actualizador de TeatroGestión..."
                 $code = Run-LoggedProcess $exeGestionUpdate "--si"
                 if ($code -eq 0) {
-                    Log-Msg "✔ TeatroGestión actualizado con éxito a la versión v1.3.0 (Plantel Oficial de 64 integrantes migrado)."
+                    Log-Msg "✔ TeatroGestión actualizado con éxito a la versión v1.6.0 (Edición Libre, sin licencia)."
                 } else {
                     Log-Msg "⚠ Actualizador de TeatroGestión finalizó con código: $code"
                 }

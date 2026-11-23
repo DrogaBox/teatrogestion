@@ -80,17 +80,77 @@ pub fn get_node_id() -> String {
 }
 
 pub fn detect_local_ip() -> String {
-    if let Ok(socket) = UdpSocket::bind("0.0.0.0:0") {
-        if socket.connect("8.8.8.8:80").is_ok() {
-            if let Ok(addr) = socket.local_addr() {
-                let ip = addr.ip().to_string();
-                if ip != "0.0.0.0" {
-                    return ip;
+    // 1. Probar rutas UDP (internet y subredes LAN / hotspot offline sin puerta de enlace a Internet)
+    let probes = [
+        "8.8.8.8:80",
+        "192.168.1.1:80",
+        "192.168.0.1:80",
+        "192.168.43.1:80",
+        "10.0.0.1:80",
+        "172.16.0.1:80",
+        "224.0.0.251:5353",
+    ];
+    for target in probes {
+        if let Ok(socket) = UdpSocket::bind("0.0.0.0:0") {
+            if socket.connect(target).is_ok() {
+                if let Ok(addr) = socket.local_addr() {
+                    if let std::net::IpAddr::V4(v4) = addr.ip() {
+                        if !v4.is_loopback() && !v4.is_unspecified() && !v4.is_link_local() {
+                            return v4.to_string();
+                        }
+                    }
                 }
             }
         }
     }
+
+    // 2. Fallback en Linux/Android: enumerar direcciones IPv4 locales en /proc/net/fib_trie
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    if let Some(ip) = detect_linux_fib_trie_ip() {
+        return ip;
+    }
+
+    // 3. Fallback adicional en Windows/otros: resolver nombre local si apunta a una IPv4 de LAN
+    #[cfg(target_os = "windows")]
+    if let Ok(host) = std::env::var("COMPUTERNAME") {
+        use std::net::ToSocketAddrs;
+        if let Ok(addrs) = (host.as_str(), 0u16).to_socket_addrs() {
+            for addr in addrs {
+                if let std::net::IpAddr::V4(v4) = addr.ip() {
+                    if !v4.is_loopback() && !v4.is_unspecified() && !v4.is_link_local() {
+                        return v4.to_string();
+                    }
+                }
+            }
+        }
+    }
+
     "127.0.0.1".to_string()
+}
+
+#[cfg(any(target_os = "linux", target_os = "android"))]
+fn detect_linux_fib_trie_ip() -> Option<String> {
+    let content = std::fs::read_to_string("/proc/net/fib_trie").ok()?;
+    let mut prev_ip: Option<std::net::Ipv4Addr> = None;
+    let mut fallback: Option<String> = None;
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if let Some(rest) = trimmed.strip_prefix("|-- ") {
+            prev_ip = rest.trim().parse::<std::net::Ipv4Addr>().ok();
+        } else if trimmed.contains("/32 host LOCAL") {
+            if let Some(ip) = prev_ip {
+                if !ip.is_loopback() && !ip.is_unspecified() && !ip.is_link_local() {
+                    if ip.is_private() {
+                        return Some(ip.to_string());
+                    }
+                    if fallback.is_none() {
+                        fallback = Some(ip.to_string());
+                    }
+                }
+            }
+        }
+    }
+    fallback
 }
 
 pub fn start_lan_sync_server(db: Arc<Mutex<DatabaseManager>>, port: u16) {

@@ -1,3 +1,4 @@
+import { todayLocalIso } from '../lib/date';
 // Arnés de revisión visual en navegador (NO entra en la app real): datos de ejemplo.
 const names = ['Altamirano, Ignacio','Beacon, Federico','Bravo, Silvia','Cornejo, Facundo Miguel','Cornejo, Matías','Gacitúa, Rodrigo','Gil, Nicolás','González, Martina','González, Sofía','Gómez, Sofía','Hazel, Ezequiel','Marcato, Lucía','Marenchino, María Belén','Martini, Valentín','Mauro, Agustín'];
 const codes = ['P','P','P','EI','P','SP','IJ','P','LC','P'];
@@ -17,7 +18,7 @@ function matrix(year: number, month: number) {
   return { year, month, month_name: 'Septiembre', days_in_month: dim, days_header, rows };
 }
 const schedule = {
-  id: 'S1', schedule_date: new Date().toISOString().slice(0,10), regime: 'ORDINARY', mandatory_checkin_time: '08:45', nominal_end_time: '13:45',
+  id: 'S1', schedule_date: todayLocalIso(), regime: 'ORDINARY', mandatory_checkin_time: '08:45', nominal_end_time: '13:45',
   minimum_intershift_rest_hours: 12, class_to_rehearsal_rest_minutes: 15, is_compensatory_rest_day: false, compensatory_rest_policy: 'x', footer_legal_clause: 'REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS.',
   morning_classes: [{ id: 'm1', room: 'SALA_1', gender_division: 'FEMALE', start_time: '09:00', end_time: '10:15', master_id: 'a', master_name: 'Prof. Rivas', pianist_id: 'b', pianist_name: 'Pianista Luna' }],
   rehearsal_blocks: [{ id: 'r1', schedule_id: 'S1', room: 'SALA_2', start_time: '10:30', end_time: '13:45', activity_type: 'STUDIO_REHEARSAL', work_id: null, work_title: 'Giselle', passage_id: null, passage_name: 'Acto II – Willis', confirmation_state: 'CONFIRMED', sound_requirement: '', teatrocue_cue_ref: null, master_id: null, master_name: 'Prof. Rivas', pianist_id: null, pianist_name: null, allow_shared_room: false, cast_groups: [] }],
@@ -41,6 +42,8 @@ export async function invoke(cmd: string, args: any = {}): Promise<any> {
     case 'list_attendance_for_date': return att;
     case 'list_personnel': case 'search_dancer_quick': return pers;
     case 'list_stock_catalog': return stock;
+    case 'list_active_reservations': return [];
+    case 'get_vault_document_data': return '';
     case 'get_agent_monthly_attendance_sheet': {
       const dim = 31; const dn = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
       const entries = Array.from({ length: dim }, (_, i) => { const d = i + 1, wd = new Date(2026, 9, d).getDay();

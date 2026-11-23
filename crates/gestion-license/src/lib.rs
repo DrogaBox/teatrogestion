@@ -285,7 +285,7 @@ impl LicenseInfo {
             is_locked: false,
             state: "NotEnforced".to_string(),
             reason: None,
-            licensee: Some("Ballet Oficial de Córdoba (Modo Desarrollo)".to_string()),
+            licensee: Some("Ballet Oficial de Córdoba".to_string()),
             machine_id,
             issued_date: None,
             expires_date: None,
@@ -359,12 +359,7 @@ impl LicenseInfo {
     }
 
     pub fn detect() -> Self {
-        // En Windows por defecto o con enforce-license
-        if cfg!(feature = "enforce-license") || cfg!(windows) {
-            Self::from_status(&check_installed())
-        } else {
-            Self::not_enforced()
-        }
+        Self::not_enforced()
     }
 }
 

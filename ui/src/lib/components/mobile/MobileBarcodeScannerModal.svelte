@@ -56,8 +56,10 @@
   // Motores de decodificación
   let nativeDetector: any = null;
   let zxingReader: BrowserMultiFormatReader | null = null;
-  let scanInterval: any = null;
+  let scanTimer: ReturnType<typeof setTimeout> | null = null;
   let isLoopActive = false;
+  let isFrameBusy = false;
+  let cameraSessionId = 0;
   let offscreenCanvas: HTMLCanvasElement | null = null;
   let offscreenCtx: CanvasRenderingContext2D | null = null;
 
@@ -102,6 +104,7 @@
 
   async function startCamera() {
     stopCamera();
+    const mySession = ++cameraSessionId;
     hasCameraError = false;
     cameraErrorMessage = '';
     isScanning = true;
@@ -111,23 +114,44 @@
         throw new Error('La interfaz de cámara no está disponible en este dispositivo.');
       }
 
-      // Priorizar cámara trasera con resolución óptima y autofocus
+      // Priorizar cámara trasera con resolución ideal (sin exigir min 1280 que falla en webcams 720p/VGA)
       const videoConstraints: MediaTrackConstraints = selectedDeviceId
         ? {
             deviceId: { exact: selectedDeviceId },
-            width: { ideal: 1920, min: 1280 },
-            height: { ideal: 1080, min: 720 },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
           }
         : {
             facingMode: { ideal: 'environment' },
-            width: { ideal: 1920, min: 1280 },
-            height: { ideal: 1080, min: 720 },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
           };
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: videoConstraints,
-        audio: false
-      });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: videoConstraints,
+          audio: false
+        });
+      } catch (constraintErr: any) {
+        if (
+          constraintErr?.name === 'OverconstrainedError' ||
+          constraintErr?.name === 'ConstraintNotSatisfiedError'
+        ) {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: selectedDeviceId ? { deviceId: { ideal: selectedDeviceId } } : true,
+            audio: false
+          });
+        } else {
+          throw constraintErr;
+        }
+      }
+
+      // Si el modal se cerró o se inició otra sesión mientras esperábamos getUserMedia, liberar stream inmediatamente
+      if (!isOpen || mySession !== cameraSessionId) {
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
 
       currentStream = stream;
       const track = stream.getVideoTracks()[0];
@@ -151,6 +175,11 @@
       }
       isTorchOn = false;
 
+      if (!isOpen || mySession !== cameraSessionId) {
+        stopCamera();
+        return;
+      }
+
       if (videoElement) {
         videoElement.srcObject = stream;
         await videoElement.play().catch(console.warn);
@@ -159,9 +188,15 @@
       // Una vez concedido el permiso, consultar etiquetas de dispositivos
       await refreshDevicesList();
 
-      // Iniciar bucle continuo y resiliente de escaneo
+      if (!isOpen || mySession !== cameraSessionId) {
+        stopCamera();
+        return;
+      }
+
+      // Iniciar bucle continuo no-reentrante de escaneo
       startScanLoop();
     } catch (err: any) {
+      if (!isOpen || mySession !== cameraSessionId) return;
       console.error('Error al iniciar cámara:', err);
       hasCameraError = true;
       cameraErrorMessage = err?.message || 'No se pudo acceder a la cámara o el permiso fue denegado.';
@@ -203,10 +238,12 @@
   }
 
   function stopCamera() {
+    cameraSessionId += 1;
     isLoopActive = false;
-    if (scanInterval) {
-      clearInterval(scanInterval);
-      scanInterval = null;
+    isFrameBusy = false;
+    if (scanTimer) {
+      clearTimeout(scanTimer);
+      scanTimer = null;
     }
 
     if (currentTrack) {
@@ -239,23 +276,32 @@
 
   function startScanLoop() {
     isLoopActive = true;
-    if (scanInterval) clearInterval(scanInterval);
+    if (scanTimer) {
+      clearTimeout(scanTimer);
+      scanTimer = null;
+    }
 
-    scanInterval = setInterval(async () => {
-      if (!isLoopActive || !videoElement || scannedBarcode) return;
-      if (videoElement.readyState < 2 || videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
-        return;
-      }
-
-      try {
-        const code = await scanCurrentVideoFrame();
-        if (code && code !== scannedBarcode) {
-          handleBarcodeScanned(code);
+    const tick = async () => {
+      if (!isLoopActive) return;
+      if (!isFrameBusy && videoElement && !scannedBarcode && videoElement.readyState >= 2 && videoElement.videoWidth > 0 && videoElement.videoHeight > 0) {
+        isFrameBusy = true;
+        try {
+          const code = await scanCurrentVideoFrame();
+          if (isLoopActive && code && code !== scannedBarcode) {
+            handleBarcodeScanned(code);
+          }
+        } catch (e) {
+          // Ignorar fallos de cuadro no decodificado
+        } finally {
+          isFrameBusy = false;
         }
-      } catch (e) {
-        // Ignorar fallos de cuadro no decodificado
       }
-    }, 125); // ~8 veces por segundo
+      if (isLoopActive) {
+        scanTimer = setTimeout(tick, 140);
+      }
+    };
+
+    scanTimer = setTimeout(tick, 140);
   }
 
   async function scanCurrentVideoFrame(): Promise<string | null> {

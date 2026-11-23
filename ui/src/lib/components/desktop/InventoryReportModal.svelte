@@ -1,5 +1,6 @@
 <script lang="ts">
   import { saveBlob } from '../../nativeOutput';
+  import { todayLocalIso } from '../../date';
   import { onMount } from 'svelte';
   import {
     api,
@@ -187,7 +188,7 @@
     csv += '\n"★ REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS. ★"\n';
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    saveBlob(blob, `Inventario_Oficial_Ballet_Oficial_Cordoba_${new Date().toISOString().split('T')[0]}.csv`).catch((e) => alert(e?.message || e));
+    saveBlob(blob, `Inventario_Oficial_Ballet_Oficial_Cordoba_${todayLocalIso()}.csv`).catch((e) => alert(e?.message || e));
   }
 
   // Totales calculados

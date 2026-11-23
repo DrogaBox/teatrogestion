@@ -1,6 +1,14 @@
 <script lang="ts">
-  import { api, type PersonnelWithQuotaDto } from '../../ipc/client';
+  import { api, type PersonnelWithQuotaDto, type StockItemAvailabilityDto } from '../../ipc/client';
   import VoucherDeliveryModal from './VoucherDeliveryModal.svelte';
+
+  let {
+    initialStockItem = null,
+    onClearInitialStockItem
+  } = $props<{
+    initialStockItem?: StockItemAvailabilityDto | null;
+    onClearInitialStockItem?: () => void;
+  }>();
 
   let dancers = $state<PersonnelWithQuotaDto[]>([]);
   let searchQuery = $state('');
@@ -40,6 +48,27 @@
 </script>
 
 <div class="space-y-3">
+  {#if initialStockItem}
+    <div class="bg-amber/15 border border-amber/40 rounded p-2.5 flex items-center justify-between gap-2 text-xs">
+      <div class="min-w-0">
+        <div class="text-[10px] font-mono font-bold uppercase text-amber">Ítem escaneado listo para entregar</div>
+        <div class="font-semibold text-ink truncate">
+          {initialStockItem.brand} {initialStockItem.model_name} — Talle {initialStockItem.size_value} {initialStockItem.width_value || ''}
+        </div>
+        <div class="text-[10px] text-dim">Tocá «Entregar» en el bailarín correspondiente para abrir el vale preseleccionado.</div>
+      </div>
+      {#if onClearInitialStockItem}
+        <button
+          type="button"
+          onclick={onClearInitialStockItem}
+          class="px-2 py-1 bg-void border border-grid rounded text-[11px] text-dim hover:text-ink shrink-0"
+        >
+          Quitar
+        </button>
+      {/if}
+    </div>
+  {/if}
+
   <!-- Barra de búsqueda con icono integrado -->
   <div class="relative">
     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-amber">
@@ -169,8 +198,10 @@
 {#if selectedDancer}
   <VoucherDeliveryModal
     dancer={selectedDancer}
+    {initialStockItem}
     onClose={() => selectedDancer = null}
     onDelivered={() => {
+      onClearInitialStockItem?.();
       search(searchQuery);
     }}
   />

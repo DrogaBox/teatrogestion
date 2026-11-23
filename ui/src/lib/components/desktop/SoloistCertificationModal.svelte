@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { todayLocalIso } from '../../date';
   import {
     api,
     type PersonnelWithQuotaDto,
@@ -40,7 +41,7 @@
   // Datos editables del documento actual
   let editProgramTitle = $state('');
   let editHallName = $state('Sala Mayor del Teatro del Libertador Gral. San Martín');
-  let editDocumentDate = $state(new Date().toISOString().slice(0, 10));
+  let editDocumentDate = $state(todayLocalIso());
   let editRecipientName = $state('Hadrián Ávila Arzuza');
   let editRecipientTitle = $state('Director del Teatro del Libertador');
   let editIntroBody = $state('');
@@ -79,6 +80,20 @@
     }
   }
 
+  function findMatchingPersonnelId(dancerName: string): string | null {
+    if (!dancerName) return null;
+    const norm = dancerName.toLowerCase().replace(/,/g, ' ');
+    const found = personnelList.find(p => {
+      const pNorm = `${p.last_name} ${p.first_name}`.toLowerCase();
+      const pRev = `${p.first_name} ${p.last_name}`.toLowerCase();
+      return (
+        norm.includes(p.last_name.toLowerCase()) &&
+        (norm.includes(p.first_name.toLowerCase()) || pNorm.includes(norm) || pRev.includes(norm))
+      );
+    });
+    return found ? found.id : null;
+  }
+
   function selectCertification(id: string) {
     selectedCertId = id;
     const found = certifications.find(c => c.id === id);
@@ -93,7 +108,7 @@
       editClosingText = found.closing_text;
       editItems = found.items.map(i => ({
         id: i.id,
-        personnel_id: i.personnel_id,
+        personnel_id: i.personnel_id ?? findMatchingPersonnelId(i.dancer_name),
         dancer_name: i.dancer_name,
         work_role: i.work_role,
         performance_dates: i.performance_dates,
@@ -103,23 +118,10 @@
     }
   }
 
+  /** Función pura para renderizado en Svelte 5 (sin mutar estado durante el template). */
   function resolvePersonnelId(item: SaveSoloistItemPayload): string {
     if (item.personnel_id) return item.personnel_id;
-    if (!item.dancer_name) return '';
-    const norm = item.dancer_name.toLowerCase().replace(/,/g, ' ');
-    const found = personnelList.find(p => {
-      const pNorm = `${p.last_name} ${p.first_name}`.toLowerCase();
-      const pRev = `${p.first_name} ${p.last_name}`.toLowerCase();
-      return (
-        norm.includes(p.last_name.toLowerCase()) &&
-        (norm.includes(p.first_name.toLowerCase()) || pNorm.includes(norm) || pRev.includes(norm))
-      );
-    });
-    if (found) {
-      item.personnel_id = found.id;
-      return found.id;
-    }
-    return '';
+    return findMatchingPersonnelId(item.dancer_name) ?? '';
   }
 
   function createNewCertification() {
@@ -127,7 +129,7 @@
     currentCert = null;
     editProgramTitle = '';
     editHallName = 'Sala Mayor del Teatro del Libertador Gral. San Martín';
-    editDocumentDate = new Date().toISOString().slice(0, 10);
+    editDocumentDate = todayLocalIso();
     editRecipientName = 'Hadrián Ávila Arzuza';
     editRecipientTitle = 'Director del Teatro del Libertador';
     editIntroBody = 'Me dirijo a Ud. a los fines de informarle los solísticos correspondientes al Ballet Oficial de la Pcia. con respecto a las funciones programadas en la Sala Mayor del Teatro del Libertador Gral. San Martín se cumplió según el siguiente detalle:';
@@ -229,8 +231,8 @@
       hall_name: field('hall_name') || editHallName,
       document_date: editDocumentDate,
       recipient_name: field('recipient_name') || editRecipientName,
-      recipient_title: editRecipientTitle,
-      intro_body: editIntroBody,
+      recipient_title: field('recipient_title') || editRecipientTitle,
+      intro_body: field('intro_body') || editIntroBody,
       closing_text: field('closing_text') || editClosingText,
       status: 'APPROVED',
       items: editItems,
@@ -469,15 +471,18 @@
               <!-- 3. DESTINATARIO PROTOCOLAR -->
               <div class="text-left text-xs leading-relaxed font-serif text-neutral-900 pb-6">
                 <p>Al Sr.</p>
-                <p class="font-bold">Director del</p>
-                <p class="font-bold">Teatro del Libertador</p>
+                <p class="font-bold whitespace-pre-line"><span data-field="recipient_title">{editRecipientTitle || 'Director del Teatro del Libertador'}</span></p>
                 <p class="font-bold text-sm tracking-wide"><span data-field="recipient_name">{editRecipientName}</span></p>
                 <p class="tracking-widest font-mono text-[11px]">S................../.................D</p>
               </div>
 
               <!-- 4. TEXTO INTRODUCTORIO FORMAL -->
-              <div class="text-justify text-xs font-serif leading-relaxed text-neutral-800 pb-5 indent-6">
-                Me dirijo a Ud. a los fines de informarle los solísticos correspondientes al Ballet Oficial de la Pcia. con respecto a las funciones <strong class="font-sans font-bold">"<span data-field="program_title">{editProgramTitle}</span>"</strong> programadas en la <span data-field="hall_name">{editHallName}</span> los días 01, 02, 03 y 04 de octubre de 2026 se cumplió según el siguiente detalle:
+              <div class="text-justify text-xs font-serif leading-relaxed text-neutral-800 pb-5 indent-6 whitespace-pre-line">
+                {#if editIntroBody && editIntroBody.trim().length > 0}
+                  <span data-field="intro_body">{editIntroBody}</span>
+                {:else}
+                  <span data-field="intro_body">Me dirijo a Ud. a los fines de informarle los solísticos correspondientes al Ballet Oficial de la Pcia. con respecto a las funciones "<span data-field="program_title">{editProgramTitle}</span>" programadas en la <span data-field="hall_name">{editHallName}</span>, según el siguiente detalle:</span>
+                {/if}
               </div>
 
               <!-- 5. TABLA OFICIAL DE PRESTACIONES SOLÍSTICAS -->
@@ -666,6 +671,28 @@
                     id="edit-recip-title"
                     type="text"
                     bind:value={editRecipientTitle}
+                    class="w-full h-8 px-2 bg-panel border border-grid rounded text-xs text-ink outline-none"
+                  />
+                </div>
+              </div>
+
+              <div class="space-y-2 pt-2">
+                <div>
+                  <label for="edit-intro-body" class="block text-[10px] uppercase font-mono text-dim mb-1">Texto Introductorio de la Nota:</label>
+                  <textarea
+                    id="edit-intro-body"
+                    rows="3"
+                    bind:value={editIntroBody}
+                    placeholder="Me dirijo a Ud. a los fines de informarle los solísticos correspondientes..."
+                    class="w-full p-2 bg-panel border border-grid rounded text-xs text-ink outline-none focus:border-amber resize-y"
+                  ></textarea>
+                </div>
+                <div>
+                  <label for="edit-closing-text" class="block text-[10px] uppercase font-mono text-dim mb-1">Saludo de Cierre:</label>
+                  <input
+                    id="edit-closing-text"
+                    type="text"
+                    bind:value={editClosingText}
                     class="w-full h-8 px-2 bg-panel border border-grid rounded text-xs text-ink outline-none"
                   />
                 </div>

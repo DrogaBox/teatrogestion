@@ -382,9 +382,14 @@
 
   async function setAllPresentForDay(date: string) {
     if (!matrix) return;
-    if (!confirm(`¿Marcar "P" (Presente) a todos los bailarines en la fecha ${date}?`)) return;
+    if (!confirm(`¿Marcar "P" (Presente) al personal activo en la fecha ${date}?\n\n(Se omitirán jubilados y licencias médicas activas EI/ART.)`)) return;
     try {
       for (const row of matrix.rows) {
+        if (row.is_retired) continue;
+        const existingCell = row.cells.find(c => c.date === date);
+        if (existingCell && (existingCell.code === 'EI' || existingCell.code === 'ART')) {
+          continue;
+        }
         await api.updateBopMatrixCell({
           date,
           personnel_id: row.personnel_id,
@@ -688,7 +693,7 @@
                 <th class="border-r border-grid px-1 py-1 text-green font-bold w-8 print:border-black" title="Total Presentes (P)">P</th>
                 <th class="border-r border-grid px-1 py-1 text-cyan font-bold w-8 print:border-black" title="Total Enfermedad Inculpable / Carpeta Médica (EI)">EI</th>
                 <th class="border-r border-grid px-1 py-1 text-red font-bold w-8 print:border-black" title="Total Sin Presencia / Inasistencia Injustificada (SP)">SP</th>
-                <th class="px-1 py-1 text-ink font-bold w-11 print:border-black" title="Otras Licencias Justificadas (LC: Franco Compensatorio, ART: Accidente Laboral, LA: Vacaciones, ES: Estudio)">Otras</th>
+                <th class="px-1 py-1 text-ink font-bold w-11 print:border-black" title="Otras Licencias y Novedades (LC: Franco Compensatorio, ART: Accidente Laboral, LA: Vacaciones, IJ: Inasistencia Justificada, AT: Adecuación de Tareas, ES: Ensayo Suspendido)">Otras</th>
               </tr>
 
               <!-- Fila 2: Letra del día de la semana (L, M, M, J, V, S, D) -->

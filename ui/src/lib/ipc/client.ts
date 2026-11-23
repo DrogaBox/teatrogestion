@@ -5,7 +5,7 @@ import { invoke } from '@tauri-apps/api/core';
 // =============================================================================
 
 export type PersonnelRole = 'DANCER' | 'MASTER' | 'PIANIST' | 'INSPECTOR' | 'SOUND_TECH';
-export type GenderGroup = 'FEMALE' | 'MALE' | 'NON_BINARY' | 'NOT_APPLICABLE';
+export type GenderGroup = 'FEMALE' | 'MALE' | 'NON_BINARY' | 'NOT_APPLICABLE' | 'UNIFIED_SPECIAL';
 export type WorkRegime = 'ORDINARY' | 'PRE_FUNCTION' | 'EXTRAORDINARY';
 export type RoomCode =
   | 'SALA_1'
@@ -86,6 +86,9 @@ export interface PersonnelWithQuotaDto {
   effective_flat_quota: number;
   consumed_flat_qty: number;
   remaining_flat_qty: number;
+  is_retired?: boolean;
+  retirement_notes?: string | null;
+  specific_position?: string | null;
 }
 
 export interface MorningClassSlot {
@@ -142,6 +145,7 @@ export interface RehearsalBlock {
   sound_tech_id: string | null;
   sound_tech_name: string | null;
   allow_shared_room: boolean;
+  notes?: string | null;
   cast_groups: RehearsalCastGroup[];
 }
 
@@ -157,6 +161,7 @@ export interface DailyScheduleAggregate {
   compensatory_rest_days?: number;
   compensatory_rest_policy: string;
   footer_legal_clause: string;
+  general_notes?: string | null;
   morning_classes: MorningClassSlot[];
   rehearsal_blocks: RehearsalBlock[];
 }
@@ -312,6 +317,7 @@ export interface MonthlyAttendanceSheetDto {
   days_physiotherapy: number;
   days_not_in_class: number;
   days_absent: number;
+  days_justified_absence?: number;
   presence_percentage: number;
   entries: MonthlyDailyEntryDto[];
 }
@@ -449,6 +455,23 @@ export interface ExecuteVoucherPayload {
   items: ExecuteVoucherItemPayload[];
 }
 
+export interface ActiveReservationDto {
+  id: string;
+  stock_item_id: string;
+  sku_code: string;
+  brand: string;
+  model_name: string;
+  raw_factory_code: string | null;
+  size_value: string;
+  width_value: string | null;
+  quota_bucket: QuotaBucket | string;
+  personnel_id: string;
+  reserved_for_label: string;
+  quantity: number;
+  notes: string | null;
+  created_at: string;
+}
+
 export interface VoucherReceiptDto {
   voucher_id: string;
   voucher_number: string;
@@ -507,6 +530,8 @@ export interface AttendanceLogDto {
   leave_start_date: string | null;
   leave_end_date: string | null;
   leave_type: LeaveType | null;
+  is_retired?: boolean;
+  retirement_notes?: string | null;
   physio_notes: string | null;
   current_physio_diagnosis: string | null;
   physio_tracking_notes: string | null;
@@ -606,6 +631,9 @@ export const api = {
 
   listStockCatalog: (filter?: StockFilterPayload): Promise<StockItemAvailabilityDto[]> =>
     invoke('list_stock_catalog', { filter: filter ?? {} }),
+
+  listActiveReservations: (personnelId?: string | null): Promise<ActiveReservationDto[]> =>
+    invoke('list_active_reservations', { personnelId: personnelId ?? null }),
 
   upsertStockItem: (payload: UpsertStockItemPayload): Promise<StockItemAvailabilityDto> =>
     invoke('upsert_stock_item', { payload }),
@@ -732,6 +760,9 @@ export const api = {
   // Bóveda Documental de Inspección (Carina Lion)
   listVaultDocuments: (filter: InspectionVaultFilterPayload): Promise<InspectionVaultDocumentDto[]> =>
     invoke('list_vault_documents', { filter }),
+
+  getVaultDocumentData: (id: string): Promise<string> =>
+    invoke('get_vault_document_data', { id }),
 
   createVaultDocument: (payload: CreateInspectionDocumentPayload): Promise<InspectionVaultDocumentDto> =>
     invoke('create_vault_document', { payload }),
@@ -960,6 +991,7 @@ export interface BopMatrixRowDto {
   dancer_name: string;
   legajo: string | null;
   role: string;
+  is_retired?: boolean;
   cells: BopMatrixCellDto[];
   total_p: number;
   total_ei: number;

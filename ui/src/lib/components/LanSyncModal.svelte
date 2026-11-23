@@ -1,5 +1,6 @@
 <script lang="ts">
   import { saveBlob } from '../nativeOutput';
+  import { todayLocalIso } from '../date';
   import { onMount } from 'svelte';
   import { api, type LanSyncInfo, type SyncReportDto } from '../ipc/client';
   import ModalHeader from './shared/ModalHeader.svelte';
@@ -18,12 +19,13 @@
   let syncInfo = $state<LanSyncInfo>({
     local_ip: 'Detectando...',
     port: 45870,
-    is_server_active: true,
+    is_server_active: false,
     device_name: 'TeatroGestión',
   });
 
-  let peerIp = $state('192.168.100.32');
+  let peerIp = $state('');
   let isLoading = $state(false);
+  let isImportingJson = $state(false);
   let syncReport = $state<SyncReportDto | null>(null);
   let errorMessage = $state('');
 
@@ -127,9 +129,30 @@
     try {
       const bundle = await api.exportLocalSyncBundle();
       const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
-      await saveBlob(blob, `teatro_gestion_respaldo_${new Date().toISOString().slice(0, 10)}.json`);
+      await saveBlob(blob, `teatro_gestion_respaldo_${todayLocalIso()}.json`);
     } catch (e: any) {
       errorMessage = 'Error exportando archivo JSON: ' + (e.message || e);
+    }
+  }
+
+  async function handleImportJsonFile(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    input.value = '';
+    isImportingJson = true;
+    errorMessage = '';
+    syncReport = null;
+    try {
+      const raw = await file.text();
+      const parsed = JSON.parse(raw);
+      const res = await api.importRemoteSyncBundle(parsed);
+      syncReport = res;
+      onSyncCompleted();
+    } catch (e: any) {
+      errorMessage = 'Error importando respaldo JSON: ' + (e?.message || e);
+    } finally {
+      isImportingJson = false;
     }
   }
 </script>
@@ -152,10 +175,17 @@
         <div class="bg-void rounded p-3.5 border border-grid space-y-2">
           <div class="flex items-center justify-between">
             <span class="text-xs font-semibold uppercase tracking-wider text-dim">Este Dispositivo:</span>
-            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-green/15 text-green border border-green/30">
-              <span class="w-1.5 h-1.5 rounded-full bg-green"></span>
-              Servidor Activo (Puerto {syncInfo.port})
-            </span>
+            {#if syncInfo.is_server_active}
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-green/15 text-green border border-green/30">
+                <span class="w-1.5 h-1.5 rounded-full bg-green"></span>
+                Servidor Activo (Puerto {syncInfo.port})
+              </span>
+            {:else}
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-red/15 text-red border border-red/30">
+                <span class="w-1.5 h-1.5 rounded-full bg-red"></span>
+                Servidor Inactivo (Puerto {syncInfo.port})
+              </span>
+            {/if}
           </div>
           <div class="text-sm font-bold text-ink">{syncInfo.device_name}</div>
           <div class="flex items-center justify-between text-xs text-amber bg-panel px-3 py-1.5 rounded border border-grid">
@@ -207,7 +237,7 @@
               id="peer-ip-input"
               type="text"
               bind:value={peerIp}
-              placeholder="ej. 192.168.100.32"
+              placeholder="ej. 192.168.1.50"
               class="flex-1 bg-void border border-grid rounded px-3 py-2 text-xs text-ink font-mono focus:outline-none focus:border-amber transition-colors"
             />
             <button
@@ -247,14 +277,27 @@
         {/if}
 
         <!-- Respaldo alternativo -->
-        <div class="pt-3 border-t border-grid flex items-center justify-between">
+        <div class="pt-3 border-t border-grid flex flex-wrap items-center justify-between gap-2">
           <span class="text-xs text-dim">¿Sin red Wi-Fi disponible?</span>
-          <button
-            onclick={handleExportJson}
-            class="px-3 py-1.5 bg-raised hover:bg-grid border border-grid text-dim hover:text-ink rounded text-xs font-medium transition-colors"
-          >
-            Exportar Respaldo JSON
-          </button>
+          <div class="flex items-center gap-2">
+            <label
+              class="px-3 py-1.5 bg-raised hover:bg-grid border border-grid text-amber hover:text-ink rounded text-xs font-medium transition-colors cursor-pointer {isImportingJson ? 'opacity-50 pointer-events-none' : ''}"
+            >
+              <span>{isImportingJson ? 'Importando...' : 'Importar Respaldo JSON'}</span>
+              <input
+                type="file"
+                accept=".json,application/json"
+                onchange={handleImportJsonFile}
+                class="hidden"
+              />
+            </label>
+            <button
+              onclick={handleExportJson}
+              class="px-3 py-1.5 bg-raised hover:bg-grid border border-grid text-dim hover:text-ink rounded text-xs font-medium transition-colors"
+            >
+              Exportar Respaldo JSON
+            </button>
+          </div>
         </div>
 
       </div>

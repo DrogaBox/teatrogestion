@@ -1,5 +1,7 @@
 <script lang="ts">
   import { saveBlob, saveDataUrl } from '../../nativeOutput';
+  import { todayLocalIso } from '../../date';
+  import { computeAttendanceStats } from '../../attendanceStats';
   import { onMount } from 'svelte';
   import {
     api,
@@ -71,6 +73,63 @@
   let lateMinutes = $state(15);
   let lateCheckinTime = $state('09:00');
   let lateRemarks = $state('');
+  let isMarkingPending = $state(false);
+  let showRetiredSection = $state(false);
+
+  function openMedicalModal(dancer: AttendanceLogDto) {
+    medDiagnosis = dancer.medical_diagnosis || '';
+    medDoctor = dancer.doctor_details || '';
+    medLeaveType = dancer.leave_type ?? 'ENFERMEDAD';
+    medLeaveStartDate = dancer.leave_start_date || activeDate || scheduleDate;
+    medLeaveEndDate = dancer.leave_end_date || activeDate || scheduleDate;
+    medRemarks = dancer.remarks || '';
+    medFileName = dancer.certificate_file_name || '';
+    medFileData = dancer.certificate_data || '';
+    medicalModalDancer = dancer;
+  }
+
+  function openPhysioModal(dancer: AttendanceLogDto) {
+    physDiagnosis = dancer.current_physio_diagnosis || '';
+    physTreatment = 'Masoterapia y kinesiología';
+    physEvolution = dancer.physio_notes || '';
+    physRestriction = 'NORMAL';
+    physDoctorName = 'Dra. de Fisioterapia';
+    physAttachmentName = '';
+    physAttachmentData = '';
+    physioModalDancer = dancer;
+  }
+
+  function openLateModal(dancer: AttendanceLogDto) {
+    lateMinutes = dancer.minutes_late > 0 ? dancer.minutes_late : 15;
+    lateCheckinTime = dancer.actual_checkin_time || '09:00';
+    lateRemarks = dancer.remarks || '';
+    lateModalDancer = dancer;
+  }
+
+  async function markAllPendingPresent() {
+    const targets = shownLogs.filter(
+      (l) => !l.is_retired && l.attendance_status === 'PENDING' && !l.leave_start_date
+    );
+    if (targets.length === 0) return;
+    if (!confirm(`¿Marcar como "Está (Presente)" a los ${targets.length} agentes pendientes de esta lista?\n\n(Se omiten jubilados, licencias médicas y quienes ya tienen estado cargado.)`)) {
+      return;
+    }
+    isMarkingPending = true;
+    try {
+      for (const dancer of targets) {
+        const updated = await api.recordAttendance({
+          schedule_date: activeDate,
+          personnel_id: dancer.personnel_id,
+          attendance_status: 'PRESENT',
+        });
+        logs = logs.map((l) => (l.personnel_id === updated.personnel_id ? updated : l));
+      }
+    } catch (err: any) {
+      alert(`Error al marcar pendientes: ${err?.message || err}`);
+    } finally {
+      isMarkingPending = false;
+    }
+  }
 
   async function loadAttendance() {
     isLoading = true;
@@ -115,11 +174,7 @@
   }
 
   function goToToday() {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    selectDate(`${y}-${m}-${day}`);
+    selectDate(todayLocalIso());
   }
 
   async function updateStatus(
@@ -210,8 +265,8 @@
     await updateStatus(medicalModalDancer, 'MEDICAL_LEAVE', {
       medical_diagnosis: medDiagnosis,
       doctor_details: medDoctor,
-      leave_start_date: medLeaveStartDate || scheduleDate,
-      leave_end_date: medLeaveEndDate || scheduleDate,
+      leave_start_date: medLeaveStartDate || activeDate || scheduleDate,
+      leave_end_date: medLeaveEndDate || activeDate || scheduleDate,
       leave_type: medLeaveType,
       remarks: medRemarks,
       certificate_file_name: medFileName || undefined,
@@ -243,7 +298,7 @@
     try {
       const payload: CreatePhysioSessionPayload = {
         personnel_id: physioModalDancer.personnel_id,
-        session_date: scheduleDate,
+        session_date: activeDate || scheduleDate,
         session_time: '09:15',
         doctor_name: physDoctorName,
         diagnosis: physDiagnosis || undefined,
@@ -288,11 +343,15 @@
     )
   );
 
-  // Mujeres y Varones por separado, en orden alfabético (con acentos en su lugar). Quien no tenga
-  // cargada ninguna de las dos va en una tercera, para que nadie quede afuera de la planilla.
+  // Mujeres y Varones activos por separado, en orden alfabético; jubilados agrupados aparte en acordeón colapsable.
   const byName = new Intl.Collator('es', { sensitivity: 'base' });
+  const isRetiredEntry = (l: AttendanceLogDto) => Boolean(l.is_retired || l.attendance_status === 'RETIRED_EXEMPT');
+  const activeFilteredLogs = $derived(filteredLogs.filter((l) => !isRetiredEntry(l)));
+  const retiredFilteredLogs = $derived(
+    filteredLogs.filter((l) => isRetiredEntry(l)).sort((a, b) => byName.compare(a.dancer_name, b.dancer_name))
+  );
   const attendanceGroups = $derived.by(() => {
-    const sorted = [...filteredLogs].sort((a, b) => byName.compare(a.dancer_name, b.dancer_name));
+    const sorted = [...activeFilteredLogs].sort((a, b) => byName.compare(a.dancer_name, b.dancer_name));
     return [
       { key: 'FEMALE', label: 'Mujeres', items: sorted.filter((l) => l.gender_group === 'FEMALE') },
       { key: 'MALE', label: 'Varones', items: sorted.filter((l) => l.gender_group === 'MALE') },
@@ -300,7 +359,8 @@
     ].filter((g) => g.items.length > 0);
   });
 
-  // Estadísticas rápidas
+  // Estadísticas rápidas y % Presentismo unificado con Dashboard
+  const unifiedStats = $derived(computeAttendanceStats(shownLogs));
   const countPresent = $derived(shownLogs.filter((l) => l.attendance_status === 'PRESENT').length);
   const countNotInClass = $derived(shownLogs.filter((l) => l.attendance_status === 'NOT_IN_CLASS').length);
   const countPhysio = $derived(shownLogs.filter((l) => l.attendance_status === 'IN_PHYSIOTHERAPY').length);
@@ -310,8 +370,19 @@
   const countNoPart = $derived(shownLogs.filter((l) => l.attendance_status === 'NO_PART').length);
   const countTask = $derived(shownLogs.filter((l) => l.attendance_status === 'TASK_ADJUSTMENT').length);
   const countJustified = $derived(shownLogs.filter((l) => l.attendance_status === 'JUSTIFIED_ABSENCE').length);
-  const countPending = $derived(shownLogs.filter((l) => l.attendance_status === 'PENDING').length);
-  const countRetired = $derived(shownLogs.filter((l) => l.is_retired && l.attendance_status === 'RETIRED_EXEMPT').length);
+  const countPending = $derived(shownLogs.filter((l) => !isRetiredEntry(l) && l.attendance_status === 'PENDING').length);
+  const countRetired = $derived(shownLogs.filter((l) => isRetiredEntry(l)).length);
+  const eligiblePendingCount = $derived(
+    shownLogs.filter((l) => !isRetiredEntry(l) && l.attendance_status === 'PENDING' && !l.leave_start_date).length
+  );
+
+  const PRESENT_CHECKIN_STATUSES = new Set<AttendanceStatus>([
+    'PRESENT',
+    'LATE',
+    'NOT_IN_CLASS',
+    'IN_PHYSIOTHERAPY',
+    'TASK_ADJUSTMENT',
+  ]);
 
   // Exportar Excel (CSV con BOM)
   function exportExcel() {
@@ -319,7 +390,7 @@
     csv += 'FECHA;DNI;NOMBRE Y APELLIDO;ESTADO ASISTENCIA;CLASE MATUTINA;FICHADA;DEMORA (MIN);DIAGNOSTICO / NOTAS FISIO;CERTIFICADO;MEDICO\n';
 
     shownLogs.forEach((l) => {
-      let stLabel = l.attendance_status;
+      let stLabel: string = l.attendance_status;
       if (l.attendance_status === 'PRESENT') stLabel = 'Está (Presente)';
       else if (l.attendance_status === 'NOT_IN_CLASS') stLabel = 'No está en clase';
       else if (l.attendance_status === 'IN_PHYSIOTHERAPY') stLabel = 'En fisioterapia';
@@ -329,10 +400,13 @@
       else if (l.attendance_status === 'NO_PART') stLabel = 'Sin parte';
       else if (l.attendance_status === 'JUSTIFIED_ABSENCE') stLabel = 'Inasistencia justificada (IJ)';
       else if (l.attendance_status === 'TASK_ADJUSTMENT') stLabel = 'Adecuación de tareas';
+      else if (l.attendance_status === 'RETIRED_EXEMPT' || l.is_retired) stLabel = 'Estado jubilatorio';
       else if (l.attendance_status === 'PENDING') stLabel = '?';
 
       const inClass = l.is_in_class ? 'Sí' : 'No';
-      const checkin = l.actual_checkin_time || '08:45';
+      const checkin = PRESENT_CHECKIN_STATUSES.has(l.attendance_status)
+        ? (l.actual_checkin_time || l.expected_checkin_time || '08:45')
+        : '';
       const diag = (l.medical_diagnosis || l.physio_notes || l.current_physio_diagnosis || '').replace(/;/g, ',');
       const cert = l.certificate_file_name ? 'Adjunto' : 'Sin adjunto';
       const doc = (l.doctor_details || '').replace(/;/g, ',');
@@ -342,7 +416,7 @@
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const suffix = genderView === 'FEMALE' ? '_Mujeres' : genderView === 'MALE' ? '_Varones' : '';
-    saveBlob(blob, `Asistencia_Ballet_${scheduleDate}${suffix}.csv`).catch((e) => alert(e?.message || e));
+    saveBlob(blob, `Asistencia_Ballet_${activeDate || scheduleDate}${suffix}.csv`).catch((e) => alert(e?.message || e));
   }
 
   function formatFullDate(isoDate: string): string {
@@ -363,10 +437,9 @@
     }
   }
 
-  const effectivePresenceCount = $derived(countPresent + countNotInClass);
-  const operationalPercent = $derived(
-    shownLogs.length > 0 ? ((effectivePresenceCount / shownLogs.length) * 100).toFixed(1) : '100.0'
-  );
+  const effectivePresenceCount = $derived(unifiedStats.presentCount);
+  const activeDenominatorCount = $derived(unifiedStats.totalActive);
+  const operationalPercent = $derived(String(unifiedStats.presencePct));
 </script>
 
 <div bind:this={printableEl} class="bg-panel border border-grid rounded-md p-4 mb-6">
@@ -427,8 +500,8 @@
         </div>
 
         <div class="bg-panel border border-grid px-3 py-1.5 rounded">
-          <span class="text-dim uppercase text-[10px] block font-semibold">Dotación Operativa</span>
-          <span class="text-amber font-semibold">{effectivePresenceCount}/{shownLogs.length} ({operationalPercent}%)</span>
+          <span class="text-dim uppercase text-[10px] block font-semibold">Presentismo Activo</span>
+          <span class="text-amber font-semibold">{effectivePresenceCount}/{activeDenominatorCount} ({operationalPercent}%)</span>
         </div>
       </div>
     </div>
@@ -446,7 +519,17 @@
     </div>
 
     <!-- Botones de Acción Global -->
-    <div class="flex items-center gap-2 flex-wrap">
+    <div data-print-skip class="flex items-center gap-2 flex-wrap">
+      {#if eligiblePendingCount > 0}
+        <button
+          onclick={markAllPendingPresent}
+          disabled={isMarkingPending}
+          class="px-3 py-1.5 bg-green hover:bg-green/90 text-black rounded text-xs font-bold transition-colors disabled:opacity-50"
+          title="Marca como Presentes (Está) en 1 clic solo a los agentes pendientes activos (omite jubilados y licencias médicas)"
+        >
+          {isMarkingPending ? 'Marcando...' : `✓ Marcar pendientes como Presentes (${eligiblePendingCount})`}
+        </button>
+      {/if}
       <button
         onclick={() => showBopMatrixModal = true}
         class="px-3 py-1.5 bg-raised hover:bg-grid text-amber border border-grid rounded text-xs font-semibold font-mono transition-colors"
@@ -549,7 +632,7 @@
     />
   </div>
 
-  {#if logs.length > 0 && attendanceGroups.length === 0}
+  {#if logs.length > 0 && attendanceGroups.length === 0 && retiredFilteredLogs.length === 0}
     <p data-print-skip class="mb-4 p-4 text-center text-sm text-dim border border-grid rounded">
       No aparece nadie en esta lista{searchQuery ? ' con esa búsqueda' : ''}. Probá con «Todos».
     </p>
@@ -647,85 +730,70 @@
                 <button
                   onclick={() => updateStatus(dancer, 'PRESENT')}
                   title="Marcar Presente en horario (08:45)"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-green/15 hover:bg-green/25 text-green border border-green/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold border transition-colors {dancer.attendance_status === 'PRESENT' ? 'bg-green text-black border-green ring-1 ring-green shadow-sm' : 'bg-green/15 hover:bg-green/25 text-green border-green/30'}"
                 >
                   Está
                 </button>
                 <button
                   onclick={() => updateStatus(dancer, 'NOT_IN_CLASS', { remarks: 'Eximido/a de clase matutina' })}
                   title="Presente en el teatro pero no hace la barra/clase"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-amber/15 hover:bg-amber/25 text-amber border border-amber/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold border transition-colors {dancer.attendance_status === 'NOT_IN_CLASS' ? 'bg-amber text-black border-amber ring-1 ring-amber shadow-sm' : 'bg-amber/15 hover:bg-amber/25 text-amber border-amber/30'}"
                 >
                   No en clase
                 </button>
                 <button
-                  onclick={() => {
-                    physioModalDancer = dancer;
-                    physDiagnosis = dancer.current_physio_diagnosis || '';
-                    physEvolution = dancer.physio_notes || '';
-                  }}
+                  onclick={() => openPhysioModal(dancer)}
                   title="Registrar atención con la Dra. de Fisioterapia"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-cyan/15 hover:bg-cyan/25 text-cyan border border-cyan/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold border transition-colors {dancer.attendance_status === 'IN_PHYSIOTHERAPY' ? 'bg-cyan text-black border-cyan ring-1 ring-cyan shadow-sm' : 'bg-cyan/15 hover:bg-cyan/25 text-cyan border-cyan/30'}"
                 >
                   Fisio
                 </button>
                 <button
-                  onclick={() => {
-                    lateModalDancer = dancer;
-                    lateMinutes = 15;
-                    lateCheckinTime = '09:00';
-                  }}
+                  onclick={() => openLateModal(dancer)}
                   title="Registrar llegada tarde con minutos de demora"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold border transition-colors {dancer.attendance_status === 'LATE' ? 'bg-amber-400 text-black border-amber-400 ring-1 ring-amber-400 shadow-sm' : 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border-amber-500/30'}"
                 >
                   Tarde
                 </button>
                 <button
-                  onclick={() => {
-                    medicalModalDancer = dancer;
-                    medDiagnosis = dancer.medical_diagnosis || '';
-                    medDoctor = dancer.doctor_details || '';
-                    medLeaveType = dancer.leave_type ?? 'ENFERMEDAD';
-                    medLeaveStartDate = dancer.leave_start_date || scheduleDate;
-                    medLeaveEndDate = dancer.leave_end_date || scheduleDate;
-                  }}
+                  onclick={() => openMedicalModal(dancer)}
                   title="Cargar carpeta médica y adjuntar certificado"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-purple-500/15 hover:bg-purple-500/25 text-purple-400 border border-purple-500/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold border transition-colors {dancer.attendance_status === 'MEDICAL_LEAVE' ? 'bg-purple-500 text-white border-purple-400 ring-1 ring-purple-400 shadow-sm' : 'bg-purple-500/15 hover:bg-purple-500/25 text-purple-400 border-purple-500/30'}"
                 >
                   Licencia
                 </button>
                 <button
                   onclick={() => updateStatus(dancer, 'ABSENT')}
                   title="Marcar Ausente"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-red/15 hover:bg-red/25 text-red border border-red/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold border transition-colors {dancer.attendance_status === 'ABSENT' ? 'bg-red text-white border-red ring-1 ring-red shadow-sm' : 'bg-red/15 hover:bg-red/25 text-red border-red/30'}"
                 >
                   No está
                 </button>
                 <button
                   onclick={() => updateStatus(dancer, 'NO_PART', { remarks: 'Sin convocar al parte diario' })}
                   title="Sin parte / No convocado al parte del día"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold border transition-colors {dancer.attendance_status === 'NO_PART' ? 'bg-purple-400 text-black border-purple-300 ring-1 ring-purple-300 shadow-sm' : 'bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border-purple-500/30'}"
                 >
                   Sin parte
                 </button>
                 <button
                   onclick={() => updateStatus(dancer, 'JUSTIFIED_ABSENCE', { remarks: 'Inasistencia justificada' })}
                   title="Inasistencia justificada (IJ): máximo 2 por mes y 10 por año"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-blue/15 hover:bg-blue/25 text-blue border border-blue/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold border transition-colors {dancer.attendance_status === 'JUSTIFIED_ABSENCE' ? 'bg-blue text-black border-blue ring-1 ring-blue shadow-sm' : 'bg-blue/15 hover:bg-blue/25 text-blue border-blue/30'}"
                 >
                   Justificada
                 </button>
                 <button
                   onclick={() => updateStatus(dancer, 'TASK_ADJUSTMENT', { remarks: 'Adecuación de tareas (trabaja en otra área)' })}
                   title="Adecuación de tareas: trabaja en otra área, no es falta"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-blue/15 hover:bg-blue/25 text-blue border border-blue/30 transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold border transition-colors {dancer.attendance_status === 'TASK_ADJUSTMENT' ? 'bg-blue text-black border-blue ring-1 ring-blue shadow-sm' : 'bg-blue/15 hover:bg-blue/25 text-blue border-blue/30'}"
                 >
                   Adecuación
                 </button>
                 <button
                   onclick={() => updateStatus(dancer, 'PENDING')}
                   title="Restablecer a pendiente / ?"
-                  class="px-2 py-1 rounded text-[10px] font-semibold bg-raised hover:bg-grid text-dim border border-grid transition-colors"
+                  class="px-2 py-1 rounded text-[10px] font-semibold border transition-colors {dancer.attendance_status === 'PENDING' ? 'bg-ink text-void border-ink' : 'bg-raised hover:bg-grid text-dim border-grid'}"
                 >
                   ?
                 </button>
@@ -874,33 +942,25 @@
         <div class="grid grid-cols-4 gap-1.5 mb-1.5">
           <button
             onclick={() => updateStatus(dancer, 'PRESENT')}
-            class="h-10 rounded text-[11px] font-semibold bg-green/15 hover:bg-green/25 text-green border border-green/30 transition-colors flex items-center justify-center"
+            class="h-10 rounded text-[11px] font-semibold border transition-colors flex items-center justify-center {dancer.attendance_status === 'PRESENT' ? 'bg-green text-black border-green ring-1 ring-green' : 'bg-green/15 hover:bg-green/25 text-green border-green/30'}"
           >
             Está
           </button>
           <button
             onclick={() => updateStatus(dancer, 'NOT_IN_CLASS', { remarks: 'Eximido/a de clase matutina' })}
-            class="h-10 rounded text-[10px] font-semibold bg-amber/15 hover:bg-amber/25 text-amber border border-amber/30 transition-colors flex items-center justify-center"
+            class="h-10 rounded text-[10px] font-semibold border transition-colors flex items-center justify-center {dancer.attendance_status === 'NOT_IN_CLASS' ? 'bg-amber text-black border-amber ring-1 ring-amber' : 'bg-amber/15 hover:bg-amber/25 text-amber border-amber/30'}"
           >
             No clase
           </button>
           <button
-            onclick={() => {
-              physioModalDancer = dancer;
-              physDiagnosis = dancer.current_physio_diagnosis || '';
-              physEvolution = dancer.physio_notes || '';
-            }}
-            class="h-10 rounded text-[11px] font-semibold bg-cyan/15 hover:bg-cyan/25 text-cyan border border-cyan/30 transition-colors flex items-center justify-center"
+            onclick={() => openPhysioModal(dancer)}
+            class="h-10 rounded text-[11px] font-semibold border transition-colors flex items-center justify-center {dancer.attendance_status === 'IN_PHYSIOTHERAPY' ? 'bg-cyan text-black border-cyan ring-1 ring-cyan' : 'bg-cyan/15 hover:bg-cyan/25 text-cyan border-cyan/30'}"
           >
             Fisio
           </button>
           <button
-            onclick={() => {
-              lateModalDancer = dancer;
-              lateMinutes = 15;
-              lateCheckinTime = '09:00';
-            }}
-            class="h-10 rounded text-[11px] font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 transition-colors flex items-center justify-center"
+            onclick={() => openLateModal(dancer)}
+            class="h-10 rounded text-[11px] font-semibold border transition-colors flex items-center justify-center {dancer.attendance_status === 'LATE' ? 'bg-amber-400 text-black border-amber-400 ring-1 ring-amber-400' : 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border-amber-500/30'}"
           >
             Tarde
           </button>
@@ -908,45 +968,38 @@
 
         <div class="grid grid-cols-4 gap-1.5 mb-1.5">
           <button
-            onclick={() => {
-              medicalModalDancer = dancer;
-              medDiagnosis = dancer.medical_diagnosis || '';
-              medDoctor = dancer.doctor_details || '';
-              medLeaveType = dancer.leave_type ?? 'ENFERMEDAD';
-              medLeaveStartDate = dancer.leave_start_date || scheduleDate;
-              medLeaveEndDate = dancer.leave_end_date || scheduleDate;
-            }}
-            class="h-9 rounded text-[10px] font-semibold bg-purple-500/15 hover:bg-purple-500/25 text-purple-400 border border-purple-500/30 transition-colors flex items-center justify-center"
+            onclick={() => openMedicalModal(dancer)}
+            class="h-9 rounded text-[10px] font-semibold border transition-colors flex items-center justify-center {dancer.attendance_status === 'MEDICAL_LEAVE' ? 'bg-purple-500 text-white border-purple-400 ring-1 ring-purple-400' : 'bg-purple-500/15 hover:bg-purple-500/25 text-purple-400 border-purple-500/30'}"
           >
             Licencia
           </button>
           <button
             onclick={() => updateStatus(dancer, 'ABSENT')}
-            class="h-9 rounded text-[10px] font-semibold bg-red/15 hover:bg-red/25 text-red border border-red/30 transition-colors flex items-center justify-center"
+            class="h-9 rounded text-[10px] font-semibold border transition-colors flex items-center justify-center {dancer.attendance_status === 'ABSENT' ? 'bg-red text-white border-red ring-1 ring-red' : 'bg-red/15 hover:bg-red/25 text-red border-red/30'}"
           >
             No está
           </button>
           <button
             onclick={() => updateStatus(dancer, 'NO_PART', { remarks: 'Sin convocar al parte diario' })}
-            class="h-9 rounded text-[10px] font-semibold bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 transition-colors flex items-center justify-center"
+            class="h-9 rounded text-[10px] font-semibold border transition-colors flex items-center justify-center {dancer.attendance_status === 'NO_PART' ? 'bg-purple-400 text-black border-purple-300 ring-1 ring-purple-300' : 'bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border-purple-500/30'}"
           >
             Sin parte
           </button>
           <button
             onclick={() => updateStatus(dancer, 'JUSTIFIED_ABSENCE', { remarks: 'Inasistencia justificada' })}
-            class="h-9 rounded text-[10px] font-semibold bg-blue/15 hover:bg-blue/25 text-blue border border-blue/30 transition-colors flex items-center justify-center"
+            class="h-9 rounded text-[10px] font-semibold border transition-colors flex items-center justify-center {dancer.attendance_status === 'JUSTIFIED_ABSENCE' ? 'bg-blue text-black border-blue ring-1 ring-blue' : 'bg-blue/15 hover:bg-blue/25 text-blue border-blue/30'}"
           >
             Justificada
           </button>
           <button
             onclick={() => updateStatus(dancer, 'TASK_ADJUSTMENT', { remarks: 'Adecuación de tareas (trabaja en otra área)' })}
-            class="h-9 rounded text-[10px] font-semibold bg-blue/15 hover:bg-blue/25 text-blue border border-blue/30 transition-colors flex items-center justify-center"
+            class="h-9 rounded text-[10px] font-semibold border transition-colors flex items-center justify-center {dancer.attendance_status === 'TASK_ADJUSTMENT' ? 'bg-blue text-black border-blue ring-1 ring-blue' : 'bg-blue/15 hover:bg-blue/25 text-blue border-blue/30'}"
           >
             Adecuación
           </button>
           <button
             onclick={() => updateStatus(dancer, 'PENDING')}
-            class="h-9 rounded text-[10px] font-semibold bg-raised hover:bg-grid text-dim border border-grid transition-colors flex items-center justify-center"
+            class="h-9 rounded text-[10px] font-semibold border transition-colors flex items-center justify-center {dancer.attendance_status === 'PENDING' ? 'bg-ink text-void border-ink' : 'bg-raised hover:bg-grid text-dim border-grid'}"
           >
             ?
           </button>
@@ -971,6 +1024,61 @@
     {/each}
     {/each}
   </div>
+
+  <!-- 3. ACORDEÓN COLAPSABLE DE ESTADO JUBILATORIO (NO CONCURREN) -->
+  {#if retiredFilteredLogs.length > 0}
+    <div class="mt-4 border border-amber/30 rounded bg-void overflow-hidden">
+      <button
+        type="button"
+        onclick={() => (showRetiredSection = !showRetiredSection)}
+        aria-expanded={showRetiredSection}
+        class="w-full px-3.5 py-2.5 flex items-center justify-between text-left bg-alt hover:bg-raised transition-colors"
+      >
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-amber">
+            Estado Jubilatorio / Eximidos de Concurrencia ({retiredFilteredLogs.length})
+          </span>
+          <span class="text-[10px] text-dim font-mono hidden sm:inline">
+            No computan en el presentismo activo
+          </span>
+        </div>
+        <span class="text-xs font-mono text-amber">{showRetiredSection ? '▲ Ocultar' : '▼ Mostrar'}</span>
+      </button>
+
+      {#if showRetiredSection}
+        <div class="divide-y divide-grid/60 p-2">
+          {#each retiredFilteredLogs as dancer}
+            <div class="flex flex-wrap items-center justify-between gap-2 px-2.5 py-2 text-xs hover:bg-raised/40 rounded">
+              <div>
+                <span class="font-semibold text-ink">{dancer.dancer_name}</span>
+                <span class="text-[10px] font-mono text-dim ml-2">DNI: {dancer.legajo || 'S/D'}</span>
+                {#if dancer.retirement_notes}
+                  <div class="text-[10px] text-amber/90 mt-0.5">{dancer.retirement_notes}</div>
+                {/if}
+              </div>
+              <div data-print-skip class="flex items-center gap-1.5">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber/15 text-amber border border-amber/30">
+                  Jubilatorio (No concurre)
+                </span>
+                <button
+                  onclick={() => openRectify(dancer)}
+                  class="px-2 py-1 rounded text-[10px] font-semibold bg-raised hover:bg-amber hover:text-black text-amber border border-amber/30 transition-colors"
+                >
+                  Rectificar
+                </button>
+                <button
+                  onclick={() => openMonthlyForDancer(dancer.personnel_id)}
+                  class="px-2 py-1 rounded text-[10px] font-semibold bg-raised hover:bg-grid text-cyan border border-cyan/30 transition-colors"
+                >
+                  Mes
+                </button>
+              </div>
+            </div>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  {/if}
 </div>
 
 <!-- ======================================================================= -->
@@ -1362,7 +1470,7 @@
   isOpen={showBopMatrixModal}
   onClose={() => {
     showBopMatrixModal = false;
-    loadLogs();
+    loadAttendance();
   }}
 />
 

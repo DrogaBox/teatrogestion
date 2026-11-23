@@ -239,6 +239,24 @@ pub struct ExecuteVoucherItemPayload {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ActiveReservationDto {
+    pub id: String,
+    pub stock_item_id: String,
+    pub sku_code: String,
+    pub brand: String,
+    pub model_name: String,
+    pub raw_factory_code: Option<String>,
+    pub size_value: String,
+    pub width_value: Option<String>,
+    pub quota_bucket: String,
+    pub personnel_id: String,
+    pub reserved_for_label: String,
+    pub quantity: u32,
+    pub notes: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct VoucherReceiptDto {
     pub voucher_id: String,
     pub voucher_number: String,
@@ -278,6 +296,27 @@ pub struct SyncBundle {
     /// Clases matutinas. Ausente en paquetes de versiones anteriores.
     #[serde(default)]
     pub morning_classes: Vec<serde_json::Value>,
+    /// Tablas adicionales incorporadas en el protocolo P2P completo (retrocompatible con #[serde(default)]).
+    #[serde(default)]
+    pub medical_leave_records: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub works: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub work_passages: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub work_cast_plans: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub work_cast_plan_members: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub rehearsal_cast_groups: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub rehearsal_cast_members: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub soloist_certifications: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub soloist_certification_items: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub inspection_vault_documents: Vec<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -325,6 +364,8 @@ pub struct MonthlyAttendanceSheetDto {
     pub days_physiotherapy: i32,
     pub days_not_in_class: i32,
     pub days_absent: i32,
+    #[serde(default)]
+    pub days_justified_absence: i32,
     pub presence_percentage: f32,
     pub entries: Vec<MonthlyDailyEntryDto>,
 }
@@ -456,6 +497,8 @@ pub struct BopMatrixRowDto {
     pub dancer_name: String, // "Álvarez, Mercedes"
     pub legajo: Option<String>,
     pub role: String,
+    #[serde(default)]
+    pub is_retired: bool,
     pub cells: Vec<BopMatrixCellDto>,
     pub total_p: i32,
     pub total_ei: i32,

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { regimeLabel, roomLabel } from './lib/labels';
+  import { toLocalIso, todayLocalIso } from './lib/date';
   import { onMount } from 'svelte';
   import {
     api,
@@ -55,7 +56,9 @@
     screenBridge?.setFullscreen?.(fullscreenOn);
   }
   let viewMode = $state<'desktop' | 'mobile'>('desktop');
-  let mobileTab = $state<'home' | 'stock' | 'inventory' | 'attendance' | 'gaynor' | 'schedule'>('home');
+  let manualViewMode = $state<'desktop' | 'mobile' | null>(null);
+  let mobileTab = $state<'home' | 'attendance' | 'schedule' | 'stock' | 'inventory'>('home');
+  let showMobileGaynorGuide = $state(false);
   let desktopTab = $state<'home' | 'schedule' | 'attendance'>('home');
   let scheduleViewMode = $state<'day' | 'week' | 'month'>('day');
   let showDesktopStockModal = $state(false);
@@ -77,6 +80,7 @@
   let foundUpdate = $state<UpdateInfo | null>(null);
   let licenseInfo = $state<LicenseInfo | null>(null);
   let prefilledStockItem = $state<StockItemAvailabilityDto | null>(null);
+  let scannedDeliverItem = $state<StockItemAvailabilityDto | null>(null);
 
   // Busca versiones nuevas como máximo una vez cada 24 horas, solo si ya hay token cargado.
   async function autoCheckForUpdate() {
@@ -104,27 +108,20 @@
     }
   }
 
-  function getLocalDateIsoString(d = new Date()): string {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
   function changeDate(deltaDays: number) {
     const parts = currentDate.split('-').map(Number);
     const d = new Date(parts[0], parts[1] - 1, parts[2] + deltaDays);
-    currentDate = getLocalDateIsoString(d);
+    currentDate = toLocalIso(d);
     loadSchedule(currentDate);
   }
 
   function goToToday() {
-    currentDate = getLocalDateIsoString();
+    currentDate = todayLocalIso();
     loadSchedule(currentDate);
   }
 
   // Fecha de trabajo (hora local del dispositivo en Argentina, no UTC)
-  let currentDate = $state(getLocalDateIsoString());
+  let currentDate = $state(todayLocalIso());
   let schedule = $state<DailyScheduleAggregate | null>(null);
   let conflicts = $state<ScheduleConflict[]>([]);
   let isLoading = $state(true);
@@ -157,13 +154,23 @@
     }
   }
 
+  function syncResponsiveViewMode() {
+    const isNarrow = window.innerWidth < 768;
+    const isTouchMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isNarrow) {
+      viewMode = 'mobile';
+    } else if (manualViewMode) {
+      viewMode = manualViewMode;
+    } else {
+      viewMode = isTouchMobile ? 'mobile' : 'desktop';
+    }
+  }
+
   onMount(() => {
     loadLicenseInfo();
-    // Detección automática de factor de forma inicial (Desktop vs Mobile)
-    if (window.innerWidth <= 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      viewMode = 'mobile';
-    } else {
-      viewMode = 'desktop';
+    // Detección automática de factor de forma inicial y al redimensionar la ventana
+    syncResponsiveViewMode();
+    if (viewMode === 'desktop') {
       // Asistente Paso por Paso al iniciar por primera vez en PC
       const setupDone = localStorage.getItem('tg_onboarding_completed');
       if (!setupDone) {
@@ -179,6 +186,11 @@
     } catch { /* sin almacenamiento: no se muestra */ }
     autoCheckForUpdate();
     loadSchedule(currentDate);
+
+    window.addEventListener('resize', syncResponsiveViewMode);
+    return () => {
+      window.removeEventListener('resize', syncResponsiveViewMode);
+    };
   });
 </script>
 
@@ -271,16 +283,16 @@
           />
 
           <!-- Selector Vista PC / Móvil -->
-          <div class="{isAndroidDevice ? 'hidden' : 'inline-flex'} bg-void p-0.5 rounded border border-grid ml-1" role="group" aria-label="Tipo de pantalla">
+          <div class="{isAndroidDevice ? 'hidden' : 'hidden md:inline-flex'} bg-void p-0.5 rounded border border-grid ml-1" role="group" aria-label="Tipo de pantalla">
             <button
               type="button"
-              onclick={() => (viewMode = 'desktop')}
+              onclick={() => { manualViewMode = 'desktop'; viewMode = 'desktop'; }}
               class="h-8 px-2.5 rounded text-xs font-bold transition-colors {viewMode === 'desktop' ? 'bg-amber text-void' : 'text-dim hover:text-ink'}"
               title="Vista de computadora"
             >PC</button>
             <button
               type="button"
-              onclick={() => (viewMode = 'mobile')}
+              onclick={() => { manualViewMode = 'mobile'; viewMode = 'mobile'; }}
               class="h-8 px-2.5 rounded text-xs font-bold transition-colors {viewMode === 'mobile' ? 'bg-amber text-void' : 'text-dim hover:text-ink'}"
               title="Vista de celular"
             >Móvil</button>
@@ -432,8 +444,31 @@
   onOpenLicense={() => showLicenseModal = true}
 />
           {:else if mobileTab === 'stock'}
-            <div>
-              <DancerDepositSearch />
+            <div class="space-y-3">
+              <div class="grid grid-cols-2 gap-1 bg-void p-1 rounded border border-grid">
+                <button
+                  type="button"
+                  onclick={() => (showMobileGaynorGuide = false)}
+                  class="h-9 rounded text-xs font-bold transition-colors {!showMobileGaynorGuide ? 'bg-amber text-void' : 'text-dim'}"
+                >
+                  Entregas y Vales
+                </button>
+                <button
+                  type="button"
+                  onclick={() => (showMobileGaynorGuide = true)}
+                  class="h-9 rounded text-xs font-bold transition-colors {showMobileGaynorGuide ? 'bg-amber text-void' : 'text-dim'}"
+                >
+                  Guía Gaynor
+                </button>
+              </div>
+              {#if showMobileGaynorGuide}
+                <GaynorDecoder />
+              {:else}
+                <DancerDepositSearch
+                  initialStockItem={scannedDeliverItem}
+                  onClearInitialStockItem={() => (scannedDeliverItem = null)}
+                />
+              {/if}
             </div>
 
           <!-- Pestaña 2: Inventario Integral Móvil y Reportes -->
@@ -554,13 +589,7 @@
               />
             </div>
 
-          <!-- Pestaña 4: Decodificador Gaynor Visual Táctil -->
-          {:else if mobileTab === 'gaynor'}
-            <div>
-              <GaynorDecoder />
-            </div>
-
-          <!-- Pestaña 5: Vista Rápida del Parte Diario Móvil -->
+          <!-- Pestaña 4: Vista Rápida del Parte Diario Móvil -->
           {:else if mobileTab === 'schedule'}
             <div class="space-y-3">
               <!-- Navegador de Fecha Móvil -->
@@ -660,12 +689,15 @@
 
   <!-- Modal Desplegable de Stock / Entregas en Escritorio -->
   {#if showDesktopStockModal}
-    <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" use:modalBehavior={{ onclose: () => showDesktopStockModal = false }}>
+    <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" use:modalBehavior={{ onclose: () => { showDesktopStockModal = false; scannedDeliverItem = null; } }}>
       <div class="tg-modal max-w-2xl">
-        <ModalHeader title="Entregas de Calzado y Vales a Bailarines" onclose={() => showDesktopStockModal = false} />
+        <ModalHeader title="Entregas de Calzado y Vales a Bailarines" onclose={() => { showDesktopStockModal = false; scannedDeliverItem = null; }} />
 
         <div class="tg-modal-body space-y-4">
-          <DancerDepositSearch />
+          <DancerDepositSearch
+            initialStockItem={scannedDeliverItem}
+            onClearInitialStockItem={() => (scannedDeliverItem = null)}
+          />
           <div class="pt-3 border-t border-grid">
             <GaynorDecoder />
           </div>
@@ -747,12 +779,19 @@
     onClose={() => showBarcodeScannerModal = false}
     onDeliverItem={(item) => {
       showBarcodeScannerModal = false;
-      showInventoryReportModal = true;
+      scannedDeliverItem = item;
+      if (viewMode === 'mobile') {
+        mobileTab = 'stock';
+        showMobileGaynorGuide = false;
+      } else {
+        showDesktopStockModal = true;
+      }
     }}
     onNewProductWithBarcode={(barcode) => {
       showBarcodeScannerModal = false;
       prefilledStockItem = {
         id: '',
+        sku_code: '',
         subcategory: 'MEDIA_PUNTA_TELA',
         family: 'WOMENS_FLAT',
         quota_bucket: 'FLAT',
@@ -765,11 +804,11 @@
         size_value: '6',
         width_value: 'B',
         physical_qty: 10,
+        reserved_qty: 0,
+        free_available_qty: 10,
         min_alert_qty: 2,
+        is_low_stock: false,
         storage_bin_location: 'ESTANTERIA_A',
-        is_active: true,
-        created_at: '',
-        updated_at: ''
       };
       showNewStockModal = true;
     }}
@@ -795,8 +834,8 @@
   <!-- ===================================================================== -->
   {#if viewMode === 'mobile'}
     <nav class="fixed bottom-0 left-0 right-0 z-40 bg-panel border-t border-grid ">
-      <!-- 5 Pestañas Ergonómicas Táctiles -->
-      <div class="tg-phone-nav grid grid-cols-6 h-16 max-w-lg mx-auto px-1">
+      <!-- 5 Pestañas Ergonómicas Táctiles (sin superposición en 360px) -->
+      <div class="tg-phone-nav grid grid-cols-5 h-16 max-w-lg mx-auto px-1">
 
         <button
           onclick={() => mobileTab = 'home'}
@@ -807,35 +846,11 @@
         </button>
 
         <button
-          onclick={() => mobileTab = 'stock'}
-          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'stock' ? 'text-amber' : 'text-dim hover:text-ink'}"
-        >
-          <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>
-          <span class="text-[10px] leading-none tracking-tight">Entregas</span>
-        </button>
-
-        <button
-          onclick={() => mobileTab = 'inventory'}
-          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'inventory' ? 'text-amber' : 'text-dim hover:text-ink'}"
-        >
-          <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9"/><path d="M10 13h4"/></svg>
-          <span class="text-[10px] leading-none tracking-tight">Inventario</span>
-        </button>
-
-        <button
           onclick={() => mobileTab = 'attendance'}
           class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'attendance' ? 'text-amber' : 'text-dim hover:text-ink'}"
         >
           <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9z"/><path d="m9 14 2 2 4-4"/></svg>
           <span class="text-[10px] leading-none tracking-tight">Asistencia</span>
-        </button>
-
-        <button
-          onclick={() => mobileTab = 'gaynor'}
-          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'gaynor' ? 'text-amber' : 'text-dim hover:text-ink'}"
-        >
-          <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>
-          <span class="text-[10px] leading-none tracking-tight">Gaynor</span>
         </button>
 
         <button
@@ -852,6 +867,22 @@
             </div>
           </div>
           <span class="text-[10px] leading-none tracking-tight">Parte</span>
+        </button>
+
+        <button
+          onclick={() => mobileTab = 'stock'}
+          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'stock' ? 'text-amber' : 'text-dim hover:text-ink'}"
+        >
+          <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>
+          <span class="text-[10px] leading-none tracking-tight">Entregas</span>
+        </button>
+
+        <button
+          onclick={() => mobileTab = 'inventory'}
+          class="flex flex-col items-center justify-center gap-0.5 transition-colors {mobileTab === 'inventory' ? 'text-amber' : 'text-dim hover:text-ink'}"
+        >
+          <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9"/><path d="M10 13h4"/></svg>
+          <span class="text-[10px] leading-none tracking-tight">Depósito</span>
         </button>
 
       </div>

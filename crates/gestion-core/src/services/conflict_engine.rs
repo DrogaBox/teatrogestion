@@ -281,19 +281,21 @@ pub fn audit_daily_schedule(
                     role: PersonnelRole::Master,
                 });
 
-            person_intervals
-                .entry(mc.pianist_id.clone())
-                .or_default()
-                .push(PersonIntervalEntry {
-                    block_id: mc.id.clone(),
-                    room: mc.room,
-                    passage_label: "Clase Técnica Matutina".to_string(),
-                    start_min: s,
-                    end_min: e,
-                    person_id: mc.pianist_id.clone(),
-                    person_name: mc.pianist_name.clone(),
-                    role: PersonnelRole::Pianist,
-                });
+            if mc.pianist_id != "PER_SOUND_TEATROCUE" {
+                person_intervals
+                    .entry(mc.pianist_id.clone())
+                    .or_default()
+                    .push(PersonIntervalEntry {
+                        block_id: mc.id.clone(),
+                        room: mc.room,
+                        passage_label: "Clase Técnica Matutina".to_string(),
+                        start_min: s,
+                        end_min: e,
+                        person_id: mc.pianist_id.clone(),
+                        person_name: mc.pianist_name.clone(),
+                        role: PersonnelRole::Pianist,
+                    });
+            }
 
             if let (Some(t_id), Some(t_name)) = (&mc.sound_tech_id, &mc.sound_tech_name) {
                 person_intervals
@@ -338,19 +340,21 @@ pub fn audit_daily_schedule(
         }
 
         if let (Some(p_id), Some(p_name)) = (&block.pianist_id, &block.pianist_name) {
-            person_intervals
-                .entry(p_id.clone())
-                .or_default()
-                .push(PersonIntervalEntry {
-                    block_id: block.id.clone(),
-                    room: block.room,
-                    passage_label: block.passage_name.clone(),
-                    start_min: s,
-                    end_min: e,
-                    person_id: p_id.clone(),
-                    person_name: p_name.clone(),
-                    role: PersonnelRole::Pianist,
-                });
+            if p_id != "PER_SOUND_TEATROCUE" {
+                person_intervals
+                    .entry(p_id.clone())
+                    .or_default()
+                    .push(PersonIntervalEntry {
+                        block_id: block.id.clone(),
+                        room: block.room,
+                        passage_label: block.passage_name.clone(),
+                        start_min: s,
+                        end_min: e,
+                        person_id: p_id.clone(),
+                        person_name: p_name.clone(),
+                        role: PersonnelRole::Pianist,
+                    });
+            }
         }
 
         if let (Some(t_id), Some(t_name)) = (&block.sound_tech_id, &block.sound_tech_name) {

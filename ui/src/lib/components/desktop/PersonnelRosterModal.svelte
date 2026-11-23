@@ -1,8 +1,10 @@
 <script lang="ts">
   import { saveBlob } from '../../nativeOutput';
   import { roleLabel } from '../../labels';
+  import { todayLocalIso } from '../../date';
   import {
     api,
+    type GenderGroup,
     type ImportPersonnelResult,
     type PersonnelRole,
     type PersonnelWithQuotaDto,
@@ -39,9 +41,11 @@
   let formNickname = $state('');
   let formRole = $state<PersonnelRole>('DANCER');
   let formSpecificPosition = $state('');
-  let formGender = $state<'FEMALE' | 'MALE'>('FEMALE');
+  let formGender = $state<GenderGroup>('FEMALE');
   let formCategoryId = $state('CAT_CUERPO_BAILE');
   let formCategoryName = $state('Cuerpo de Baile Estable');
+  let formPointeCode = $state('');
+  let formFlatSize = $state('');
   let formIsRetired = $state(false);
   let formRetirementNotes = $state('');
   let formIsActive = $state(true);
@@ -104,6 +108,8 @@
     formGender = 'FEMALE';
     formCategoryId = 'CAT_CUERPO_BAILE';
     formCategoryName = 'Cuerpo de Baile Estable';
+    formPointeCode = '';
+    formFlatSize = '';
     formIsRetired = false;
     formRetirementNotes = '';
     formIsActive = true;
@@ -119,10 +125,12 @@
     formNickname = p.nickname || '';
     formRole = p.role;
     formSpecificPosition = p.specific_position || '';
-    formGender = (p.gender_group === 'MALE' ? 'MALE' : 'FEMALE');
+    formGender = p.gender_group === 'MALE' ? 'MALE' : p.gender_group === 'NON_BINARY' ? 'NON_BINARY' : p.gender_group === 'NOT_APPLICABLE' ? 'NOT_APPLICABLE' : 'FEMALE';
     formCategoryId = p.category_id;
     formCategoryName = p.category_name;
-    formIsRetired = p.is_retired;
+    formPointeCode = p.default_pointe_raw_code || '';
+    formFlatSize = p.default_flat_size || '';
+    formIsRetired = !!p.is_retired;
     formRetirementNotes = p.retirement_notes || '';
     formIsActive = p.is_active;
     formNotes = '';
@@ -147,8 +155,8 @@
         gender_group: formGender,
         category_id: formCategoryId,
         category_name: formCategoryName.trim() || null,
-        default_pointe_raw_code: null,
-        default_flat_size: null,
+        default_pointe_raw_code: formPointeCode.trim() || null,
+        default_flat_size: formFlatSize.trim() || null,
         is_active: formIsActive,
         is_retired: formIsRetired,
         retirement_notes: formRetirementNotes.trim() || null,
@@ -282,7 +290,7 @@
     csv += '\n"★ REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS. ★"\n';
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    saveBlob(blob, `Padron_Oficial_Ballet_Oficial_Cordoba_${new Date().toISOString().split('T')[0]}.csv`).catch((e) => alert(e?.message || e));
+    saveBlob(blob, `Padron_Oficial_Ballet_Oficial_Cordoba_${todayLocalIso()}.csv`).catch((e) => alert(e?.message || e));
   }
 </script>
 
@@ -481,9 +489,13 @@
                       {p.category_name}
                     </td>
 
-                    <!-- Estado Jubilatorio -->
+                    <!-- Estado Jubilatorio / Activo / Baja -->
                     <td class="py-2 px-3 text-center">
-                      {#if p.is_retired}
+                      {#if !p.is_active}
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red/15 text-red border border-red/30 print:border-black print:text-black">
+                          De Baja (Inactivo)
+                        </span>
+                      {:else if p.is_retired}
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber/15 text-amber border border-amber/30 print:border-black print:text-black" title={p.retirement_notes || 'En trámite jubilatorio'}>
                           Jubilatorio (No concurre)
                         </span>
@@ -648,21 +660,59 @@
           </div>
         </div>
 
-        <div>
-          <label class="block text-dim font-bold mb-1 text-[10px] uppercase" for="category-select">Categoría de Revista</label>
-          <input
-            id="category-select"
-            type="text"
-            list="category-options"
-            bind:value={formCategoryName}
-            placeholder="Elegí una o escribí otra (Figurante, Pasante...)"
-            class="w-full h-8 px-2.5 bg-void border border-grid rounded text-ink font-bold outline-none focus:border-amber"
-          />
-          <datalist id="category-options">
-            {#each categoryOptions as c (c)}
-              <option value={c}></option>
-            {/each}
-          </datalist>
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-dim font-bold mb-1 text-[10px] uppercase" for="gender-select">Grupo / Género *</label>
+            <select
+              id="gender-select"
+              bind:value={formGender}
+              class="w-full h-8 px-2 bg-void border border-grid rounded text-ink font-bold outline-none focus:border-amber"
+            >
+              <option value="FEMALE">Mujeres</option>
+              <option value="MALE">Varones</option>
+              <option value="NON_BINARY">No binario</option>
+              <option value="NOT_APPLICABLE">No aplica (Staff/Técnica)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-dim font-bold mb-1 text-[10px] uppercase" for="category-select">Categoría de Revista</label>
+            <input
+              id="category-select"
+              type="text"
+              list="category-options"
+              bind:value={formCategoryName}
+              placeholder="Elegí una o escribí otra (Figurante, Pasante...)"
+              class="w-full h-8 px-2.5 bg-void border border-grid rounded text-ink font-bold outline-none focus:border-amber"
+            />
+            <datalist id="category-options">
+              {#each categoryOptions as c (c)}
+                <option value={c}></option>
+              {/each}
+            </datalist>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-dim font-bold mb-1 text-[10px] uppercase" for="pointe-code-input">Talle / Código Punta (Gaynor/Bloch)</label>
+            <input
+              id="pointe-code-input"
+              type="text"
+              bind:value={formPointeCode}
+              placeholder="Ej: SC - 7.5W4PDH"
+              class="w-full h-8 px-2.5 bg-void border border-grid rounded text-ink font-mono font-bold outline-none focus:border-amber"
+            />
+          </div>
+          <div>
+            <label class="block text-dim font-bold mb-1 text-[10px] uppercase" for="flat-size-input">Talle Media Punta</label>
+            <input
+              id="flat-size-input"
+              type="text"
+              bind:value={formFlatSize}
+              placeholder="Ej: 7.5D o 10M"
+              class="w-full h-8 px-2.5 bg-void border border-grid rounded text-ink font-mono font-bold outline-none focus:border-amber"
+            />
+          </div>
         </div>
 
         <!-- Casillero de Estado Jubilatorio -->
@@ -770,9 +820,21 @@
         </div>
 
         {#if importResult}
-          <div class="p-2.5 bg-alt border border-green/40 rounded text-green">
-            <p class="font-bold text-xs">✓ Importación completada con éxito:</p>
-            <p class="text-[11px] font-mono">Insertados: <strong>{importResult.inserted_count}</strong> | Actualizados: <strong>{importResult.updated_count}</strong></p>
+          <div class="p-2.5 bg-alt border {importResult.errors.length > 0 ? 'border-amber/50' : 'border-green/40'} rounded space-y-1.5">
+            <p class="font-bold text-xs {importResult.errors.length > 0 ? 'text-amber' : 'text-green'}">
+              {importResult.errors.length > 0 ? 'Importación completada con advertencias:' : '✓ Importación completada con éxito:'}
+            </p>
+            <p class="text-[11px] font-mono text-ink">
+              Procesados: <strong>{importResult.total_processed}</strong> | Insertados: <strong class="text-green">{importResult.inserted_count}</strong> | Actualizados: <strong class="text-cyan">{importResult.updated_count}</strong>
+            </p>
+            {#if importResult.errors.length > 0}
+              <div class="mt-2 p-2 bg-void border border-red/40 rounded max-h-32 overflow-y-auto text-[11px] font-mono text-red space-y-0.5">
+                <div class="font-bold uppercase text-[10px]">Errores ({importResult.errors.length}):</div>
+                {#each importResult.errors as errLine}
+                  <div>• {errLine}</div>
+                {/each}
+              </div>
+            {/if}
           </div>
         {/if}
 

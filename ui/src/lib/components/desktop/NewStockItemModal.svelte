@@ -118,8 +118,8 @@
 
     try {
       const payload: UpsertStockItemPayload = {
-        id: initialItem ? initialItem.id : null,
-        sku_code: initialItem ? initialItem.sku_code : null,
+        id: initialItem?.id ? initialItem.id : null,
+        sku_code: initialItem?.sku_code ? initialItem.sku_code : null,
         family,
         subcategory,
         quota_bucket: quotaBucket,
@@ -158,7 +158,7 @@
 
       <!-- Encabezado del Modal -->
       <ModalHeader
-        title={initialItem ? 'Modificar Ítem de Inventario' : 'Alta de Nuevo Ítem de Inventario'}
+        title={initialItem?.id ? 'Modificar Ítem de Inventario' : 'Alta de Nuevo Ítem de Inventario'}
         subtitle="Ballet Oficial de Córdoba • Depósito de Calzado e Indumentaria"
         onclose={onClose}
       />
@@ -227,6 +227,20 @@
               required
             />
           </div>
+        </div>
+
+        <!-- Código de Fábrica / Código de Barras / Gaynor -->
+        <div>
+          <label class="block text-dim font-semibold mb-1 text-[10px] uppercase tracking-wider" for="raw-factory-code-input">
+            Código de Fábrica / Barras / Gaynor (Opcional)
+          </label>
+          <input
+            id="raw-factory-code-input"
+            type="text"
+            bind:value={rawFactoryCode}
+            placeholder="Ej: 7.5W4PDH, EAN-13, código de caja..."
+            class="w-full h-10 px-3 bg-void border border-grid focus:border-amber rounded text-amber font-mono outline-none"
+          />
         </div>
 
         <!-- Color y Material -->

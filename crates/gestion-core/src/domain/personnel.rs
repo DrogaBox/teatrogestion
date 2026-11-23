@@ -40,6 +40,7 @@ pub enum GenderGroup {
     Male,
     NonBinary,
     NotApplicable,
+    UnifiedSpecial,
 }
 
 impl GenderGroup {
@@ -49,6 +50,7 @@ impl GenderGroup {
             Self::Male => "MALE",
             Self::NonBinary => "NON_BINARY",
             Self::NotApplicable => "NOT_APPLICABLE",
+            Self::UnifiedSpecial => "UNIFIED_SPECIAL",
         }
     }
 
@@ -58,6 +60,7 @@ impl GenderGroup {
             "MALE" => Some(Self::Male),
             "NON_BINARY" => Some(Self::NonBinary),
             "NOT_APPLICABLE" => Some(Self::NotApplicable),
+            "UNIFIED_SPECIAL" => Some(Self::UnifiedSpecial),
             _ => None,
         }
     }

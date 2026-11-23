@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     api,
+    type ActiveReservationDto,
     type PersonnelWithQuotaDto,
     type StockItemAvailabilityDto,
     type VoucherReceiptDto,
@@ -11,15 +12,18 @@
 
   let {
     dancer,
+    initialStockItem = null,
     onClose,
     onDelivered
   } = $props<{
     dancer: PersonnelWithQuotaDto;
+    initialStockItem?: StockItemAvailabilityDto | null;
     onClose: () => void;
     onDelivered: () => void;
   }>();
 
   let catalog = $state<StockItemAvailabilityDto[]>([]);
+  let activeReservations = $state<ActiveReservationDto[]>([]);
   let selectedItem = $state<StockItemAvailabilityDto | null>(null);
   let quantity = $state<number>(1);
   let isException = $state<boolean>(false);
@@ -28,12 +32,22 @@
   let receipt = $state<VoucherReceiptDto | null>(null);
   let errorMsg = $state<string | null>(null);
 
-  // Cargar catálogo de stock disponible
+  // Cargar catálogo de stock disponible y reservas activas reales desde SQLite
   async function loadStock() {
     try {
-      catalog = await api.listStockCatalog({ low_stock_only: false });
-      // Pre-seleccionar si coincide con su código habitual
-      if (dancer.default_pointe_raw_code) {
+      const [items, reservations] = await Promise.all([
+        api.listStockCatalog({ low_stock_only: false }),
+        api.listActiveReservations(dancer.id),
+      ]);
+      catalog = items;
+      activeReservations = reservations;
+      // 1. Pre-seleccionar ítem escaneado / pasado explícitamente si existe
+      if (initialStockItem) {
+        const byId = catalog.find(i => i.id === initialStockItem.id);
+        if (byId) selectedItem = byId;
+      }
+      // 2. Si no, pre-seleccionar si coincide con su código habitual
+      if (!selectedItem && dancer.default_pointe_raw_code) {
         const found = catalog.find(i => i.raw_factory_code === dancer.default_pointe_raw_code);
         if (found) selectedItem = found;
       }
@@ -47,34 +61,11 @@
 
   loadStock();
 
-  // Detectar si el bailarín tiene una reserva nominativa especial por apodo
-  let reservationPreset = $derived.by(() => {
-    if (dancer.nickname === 'Popi') {
-      return {
-        id: 'RES_INIT_POPI_01',
-        label: 'Reserva Activa: Popi (2 pares Gaynor Sculpted 7.5W4PDH)',
-        stock_sku: 'GM-EUR-SC-7.5W4PDH',
-        qty: 2,
-        bucket: 'POINTE' as QuotaBucket,
-      };
-    } else if (dancer.nickname === 'Brenda') {
-      return {
-        id: 'RES_INIT_BRENDA_01',
-        label: 'Reserva Activa: Brenda (2 pares Gaynor Sleek 8.5M4HDL)',
-        stock_sku: 'GM-LYR-SK-8.5M4HDL',
-        qty: 2,
-        bucket: 'POINTE' as QuotaBucket,
-      };
-    }
-    return null;
-  });
-
-  async function executeDirectReservation() {
-    if (!reservationPreset) return;
+  async function executeDirectReservation(reservation: ActiveReservationDto) {
     isSubmitting = true;
     errorMsg = null;
     try {
-      const item = catalog.find(i => i.sku_code === reservationPreset?.stock_sku) || catalog[0];
+      const label = `${reservation.quantity} × ${reservation.brand} ${reservation.model_name} (Talle ${reservation.size_value})`;
       const res = await api.executeVoucherDelivery({
         personnel_id: dancer.id,
         season_year: null, // la temporada en curso la pone el backend
@@ -83,17 +74,18 @@
         signature_svg_strokes: '<svg>touch-sign</svg>',
         is_quota_exception: false,
         exception_reason: null,
-        notes: `Entrega rápida de reserva nominativa (${reservationPreset.label})`,
+        notes: `Entrega rápida de reserva nominativa (${label})`,
         items: [
           {
-            stock_item_id: item.id,
-            reservation_id: reservationPreset.id,
-            quantity: reservationPreset.qty,
-            quota_bucket: reservationPreset.bucket,
+            stock_item_id: reservation.stock_item_id,
+            reservation_id: reservation.id,
+            quantity: reservation.quantity,
+            quota_bucket: reservation.quota_bucket,
           }
         ]
       });
       receipt = res;
+      activeReservations = activeReservations.filter(r => r.id !== reservation.id);
       onDelivered();
     } catch (e: any) {
       errorMsg = e?.message || 'Error ejecutando valera';
@@ -147,14 +139,14 @@
 <div class="fixed inset-0 z-50 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4" use:modalBehavior={{ onclose: onClose, backdrop: false }}>
   <div class="tg-modal w-full sm:max-w-lg rounded-t-md sm:rounded-md text-ink">
     <!-- Header -->
-    <ModalHeader title={dancer.last_name + ', ' + dancer.first_name + (dancer.nickname ? ` ("${dancer.nickname})` : '')} subtitle="Entrega y Asignación de Inventario — {dancer.category_name}" onclose={onClose} />
+    <ModalHeader title={dancer.last_name + ', ' + dancer.first_name + (dancer.nickname ? ` ("${dancer.nickname}")` : '')} subtitle="Entrega y Asignación de Inventario — {dancer.category_name}" onclose={onClose} />
 
     <!-- Contenido desplazable -->
     <div class="tg-modal-body">
 
     <!-- Saldo de Cupos en Vivo -->
     <div class="bg-void p-3 rounded border border-grid mb-3">
-      <div class="text-[10px] font-semibold text-dim mb-2 uppercase tracking-wider">Saldo de Cupo Anual 2026</div>
+      <div class="text-[10px] font-semibold text-dim mb-2 uppercase tracking-wider">Saldo de Cupo Anual {new Date().getFullYear()}</div>
       <div class="space-y-2">
         <div>
           <div class="flex justify-between text-xs mb-1 font-medium">
@@ -198,22 +190,32 @@
         </button>
       </div>
     {:else}
-      <!-- ATALLO 1 TOQUE: Si tiene Reserva Nominativa Previa -->
-      {#if reservationPreset}
-        <div class="bg-amber/10 border border-amber/40 rounded p-3 mb-3">
-          <div class="text-[10px] font-semibold uppercase tracking-wider text-amber mb-1">Reserva Nominativa Detectada</div>
-          <div class="text-xs font-medium text-ink mb-2">{reservationPreset.label}</div>
-          <button
-            disabled={isSubmitting}
-            onclick={executeDirectReservation}
-            class="w-full h-10 bg-amber hover:bg-amber text-black font-semibold text-xs rounded transition-colors flex items-center justify-center disabled:opacity-50 uppercase tracking-wider"
-          >
-            {#if isSubmitting}
-              <span>Registrando...</span>
-            {:else}
-              <span>Entregar Reserva (1 Toque)</span>
-            {/if}
-          </button>
+      <!-- ATAJO 1 TOQUE: Reservas Nominativas Activas desde SQLite -->
+      {#if activeReservations.length > 0}
+        <div class="space-y-2 mb-3">
+          {#each activeReservations as res (res.id)}
+            <div class="bg-amber/10 border border-amber/40 rounded p-3">
+              <div class="text-[10px] font-semibold uppercase tracking-wider text-amber mb-1">Reserva Nominativa Activa</div>
+              <div class="text-xs font-medium text-ink mb-1">
+                {res.quantity} {res.quantity === 1 ? 'par' : 'pares'} · {res.brand} {res.model_name}
+                {res.raw_factory_code ? ` (${res.raw_factory_code})` : ''} — Talle {res.size_value} {res.width_value || ''}
+              </div>
+              {#if res.notes}
+                <div class="text-[11px] text-dim mb-2">{res.notes}</div>
+              {/if}
+              <button
+                disabled={isSubmitting}
+                onclick={() => executeDirectReservation(res)}
+                class="w-full h-10 bg-amber hover:bg-amber text-black font-semibold text-xs rounded transition-colors flex items-center justify-center disabled:opacity-50 uppercase tracking-wider"
+              >
+                {#if isSubmitting}
+                  <span>Registrando...</span>
+                {:else}
+                  <span>Entregar Reserva (1 Toque)</span>
+                {/if}
+              </button>
+            </div>
+          {/each}
         </div>
       {/if}
 

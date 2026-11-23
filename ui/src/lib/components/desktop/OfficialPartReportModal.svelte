@@ -1,7 +1,8 @@
 <script lang="ts">
   import { saveBlob } from '../../nativeOutput';
   import { regimeLabel, roomLabel } from '../../labels';
-  import type { DailyScheduleAggregate } from '../../ipc/client';
+  import { toLocalIso } from '../../date';
+  import { api, type DailyScheduleAggregate } from '../../ipc/client';
   import { modalBehavior } from '../../actions/modalBehavior';
   import PrintPreviewModal from '../shared/PrintPreviewModal.svelte';
   import ZoomControls from '../shared/ZoomControls.svelte';
@@ -26,123 +27,205 @@
 
   let activeReportTab = $state<'classes' | 'rehearsals' | 'today'>('today');
 
-  // Datos de la semana oficial (19 al 23 de octubre 2026) según la planilla oficial de la inspección
-  const weekClasses = [
-    {
-      day: 'Lunes 19/10',
-      slots: [
-        { time: '9 a 10.15 h', room: '1', dancers: 'Mujeres', master: 'Ananiev', pianist: 'Romero' },
-        { time: '9 a 10.15 h', room: '3', dancers: 'Varones', master: 'Benites', pianist: 'Villegas' },
-      ],
-    },
-    {
-      day: 'Martes 20/10',
-      slots: [
-        { time: '9 a 10.15 h', room: '1', dancers: 'Varones', master: 'Ananiev', pianist: 'Brusutti' },
-        { time: '9 a 10.15 h', room: '3', dancers: 'Mujeres', master: 'Pino', pianist: 'Romero' },
-      ],
-    },
-    {
-      day: 'Miércoles 21/10',
-      slots: [
-        { time: '9 a 10.15 h', room: '1', dancers: 'Mujeres', master: 'Ananiev', pianist: 'Villegas' },
-        { time: '9 a 10.15 h', room: '3', dancers: 'Varones', master: 'Benites', pianist: 'Brusutti' },
-      ],
-    },
-    {
-      day: 'Jueves 22/10',
-      slots: [
-        { time: '9 a 10.15 h', room: '1', dancers: 'Varones', master: 'Pino', pianist: 'Romero' },
-        { time: '9 a 10.15 h', room: '3', dancers: 'Mujeres', master: 'Benites', pianist: 'Villegas' },
-      ],
-    },
-    {
-      day: 'Viernes 23/10',
-      slots: [
-        { time: '9 a 10.15 h', room: '1', dancers: 'Mujeres', master: 'Pino', pianist: 'Brusutti' },
-        { time: '9 a 10.15 h', room: '3', dancers: 'Varones', master: 'Ananiev', pianist: 'Romero' },
-      ],
-    },
-  ];
+  interface WeeklyDayReport {
+    iso: string;
+    label: string;
+    schedule: DailyScheduleAggregate | null;
+  }
 
-  const weekRehearsals = [
-    {
-      day: 'Lunes 19/10',
-      masterGroup: 'Baca – Benites – Ananiev – Pino',
-      soundReq: 'Sonido',
-      blocks: [
-        { time: '10.30h a 11.30h', room: 'Sala 1', work: 'Princesas y Bufón\n(Refuerzos – Gacitúa – Beacon – Hazel – Martini)', master: '', sound: '' },
-        { time: '11.30 a 12.30h', room: 'Sala 1', work: 'Danza Española\n(Álvarez/Marcato – Morchio C/Gil)', master: 'Baca – Benites – Ananiev – Pino', sound: 'Sonido' },
-        { time: '12.30 a 13.45h', room: 'Sala 1', work: 'Danza Napolitana\n(Pérez L/Natali – Pérez F/Paredes)', master: '', sound: '' },
-      ],
-    },
-    {
-      day: 'Martes 20/10',
-      masterGroup: 'Baca – Benites – Ananiev – Pino',
-      soundReq: 'Sonido',
-      blocks: [
-        { time: '10.30 a 12h', room: 'Sala 1', work: 'Pas de deux – Odette y Sigfrido\n(Morchio J/Bravo -Vera/Altamirano)', master: 'Baca – Benites – Ananiev – Pino', sound: 'Sonido' },
-        { time: '12 a 13h', room: 'Sala 1', work: 'Diana y Action\n(González/Altamirano – Morchio C/Cornejo – Ragessi/Mauro)', master: '', sound: '' },
-      ],
-    },
-    {
-      day: 'Miércoles 21/10',
-      masterGroup: 'Baca – Benites – Ananiev – Pino',
-      soundReq: 'Sonido',
-      blocks: [
-        { time: '10.30h a 11.30h', room: 'Sala 1', work: 'Danza Húngara\n(Reparto a confirmar)', master: 'Baca – Benites – Ananiev – Pino', sound: 'Sonido' },
-        { time: '11.30 a 12h', room: 'Sala 1', work: 'Princesas y Bufón', master: '', sound: '' },
-        { time: '12 a 13.30h', room: 'Sala 1', work: 'Pas de deux – Cisne Negro\n(Reparto a confirmar)', master: '', sound: '' },
-      ],
-    },
-    {
-      day: 'Jueves 22/10',
-      masterGroup: 'Baca – Benites – Ananiev – Pino',
-      soundReq: 'Sonido',
-      blocks: [
-        { time: '10.30 a 11.30h', room: 'Sala 1', work: 'Danza Mazurca\n(Reparto a confirmar)', master: 'Baca – Benites – Ananiev – Pino', sound: 'Sonido' },
-        { time: '11.30 a 12h', room: 'Sala 1', work: 'Danza Napolitana\n(Pérez L/Natali – Pérez F/Paredes)', master: '', sound: '' },
-        { time: '12 a 13.45h', room: 'Sala 1', work: 'Danza Húngara y Danza Española', master: '', sound: '' },
-      ],
-    },
-    {
-      day: 'Viernes 23/10',
-      masterGroup: 'Baca – Benites – Ananiev – Pino',
-      soundReq: 'Sonido',
-      blocks: [
-        { time: '10.30 a fin', room: 'Sala 1', work: 'ENSAYO A CONFIRMAR', master: 'Baca – Benites – Ananiev – Pino', sound: 'Sonido' },
-      ],
-    },
-  ];
+  let weekDays = $state<WeeklyDayReport[]>([]);
+  let weekRangeLabel = $state('');
+  let isLoadingWeek = $state(false);
+  let loadedWeekKey = $state('');
+
+  const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+  function getMondayFromIso(iso: string): Date {
+    const [y, m, d] = iso.split('-').map(Number);
+    const base = new Date(y, (m || 1) - 1, d || 1);
+    const dow = base.getDay();
+    const diff = base.getDate() - dow + (dow === 0 ? -6 : 1);
+    return new Date(base.getFullYear(), base.getMonth(), diff);
+  }
+
+  function formatDayMonth(d: Date): string {
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  async function loadWeekSchedules(baseIso: string) {
+    const monday = getMondayFromIso(baseIso);
+    const weekKey = toLocalIso(monday);
+    isLoadingWeek = true;
+    try {
+      const daysMeta = Array.from({ length: 7 }, (_, i) => {
+        const dt = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+        return {
+          iso: toLocalIso(dt),
+          label: `${DAY_NAMES[i]} ${formatDayMonth(dt)}`,
+          dt,
+        };
+      });
+
+      const sunday = daysMeta[6].dt;
+      weekRangeLabel = `Semana del ${formatDayMonth(monday)} al ${formatDayMonth(sunday)}/${sunday.getFullYear()}`;
+
+      const results = await Promise.all(
+        daysMeta.map(async (dm) => {
+          if (dm.iso === schedule.schedule_date) {
+            return { iso: dm.iso, label: dm.label, schedule };
+          }
+          try {
+            const res = await api.getOrCreateDailySchedule(dm.iso);
+            return { iso: dm.iso, label: dm.label, schedule: res.schedule };
+          } catch (e) {
+            console.error(`Error cargando día ${dm.iso}:`, e);
+            return { iso: dm.iso, label: dm.label, schedule: null };
+          }
+        })
+      );
+
+      weekDays = results;
+      loadedWeekKey = weekKey;
+    } finally {
+      isLoadingWeek = false;
+    }
+  }
+
+  $effect(() => {
+    if (isOpen && schedule?.schedule_date) {
+      loadWeekSchedules(schedule.schedule_date);
+    }
+  });
+
+  function shortName(fullName?: string | null): string {
+    if (!fullName) return '—';
+    return fullName.split(',')[0].trim();
+  }
+
+  function csvEscape(v: string): string {
+    return `"${(v || '').replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;
+  }
+
+  function exportTodayExcel() {
+    let csv = '\uFEFF'; // BOM UTF-8
+    csv += `PARTE OFICIAL DE CLASES Y ENSAYOS - ${schedule.schedule_date}\n`;
+    csv += `REGIMEN;${csvEscape(regimeLabel(schedule.regime))};MARCADA;${csvEscape(schedule.mandatory_checkin_time)};CIERRE;${csvEscape(schedule.nominal_end_time)}\n\n`;
+
+    csv += 'CLASES TECNICAS MATUTINAS\n';
+    csv += 'HORARIO;SALA;DIVISION;MAESTRO/A;ACOMPANAMIENTO;SONIDISTA\n';
+    if (schedule.morning_classes.length === 0) {
+      csv += '"Sin clases matutinas programadas";"";"";"";"";""\n';
+    } else {
+      schedule.morning_classes.forEach((c) => {
+        const div = c.gender_division === 'FEMALE' ? 'Mujeres' : c.gender_division === 'MALE' ? 'Varones' : 'General Compañía';
+        csv += [
+          `${c.start_time} - ${c.end_time}`,
+          roomLabel(c.room),
+          div,
+          c.master_name || '',
+          c.pianist_name || '',
+          shortName(c.sound_tech_name),
+        ].map(csvEscape).join(';') + '\n';
+      });
+    }
+
+    csv += '\nENSAYOS Y PUESTA EN ESCENA\n';
+    csv += 'HORARIO;SALA;PASAJE / OBRA;REPARTO DE ESTUDIO;MAESTRO;SONIDO;SONIDISTA\n';
+    if (schedule.rehearsal_blocks.length === 0) {
+      csv += '"Sin bloques de ensayo asignados";"";"";"";"";"";""\n';
+    } else {
+      schedule.rehearsal_blocks.forEach((b) => {
+        const cast = b.cast_groups.length > 0 && b.cast_groups[0].formatted_line
+          ? b.cast_groups[0].formatted_line
+          : 'Reparto a confirmar';
+        csv += [
+          `${b.start_time} - ${b.end_time}`,
+          roomLabel(b.room),
+          b.passage_name,
+          cast,
+          shortName(b.master_name),
+          b.sound_requirement || '',
+          shortName(b.sound_tech_name),
+        ].map(csvEscape).join(';') + '\n';
+      });
+    }
+
+    csv += `\n${csvEscape(schedule.footer_legal_clause || 'REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS.')}\n`;
+    downloadCsv(csv, `Parte_Diario_${schedule.schedule_date}.csv`);
+  }
 
   function exportClassesExcel() {
     let csv = '\uFEFF'; // BOM UTF-8
-    csv += 'PARTE DE CLASES - SEMANA 19 al 23 octubre 2026\n\n';
-    csv += 'DIA;HORARIO;SALA;BAILARINES;MAESTROS;PIANISTAS\n';
+    csv += `PARTE DE CLASES - ${weekRangeLabel.toUpperCase()}\n\n`;
+    csv += 'DIA;FECHA;HORARIO;SALA;BAILARINES;MAESTROS;ACOMPANAMIENTO;SONIDISTA\n';
 
-    weekClasses.forEach((d) => {
-      d.slots.forEach((s) => {
-        csv += `"${d.day}";"${s.time}";"${s.room}";"${s.dancers}";"${s.master}";"${s.pianist}"\n`;
-      });
+    weekDays.forEach((d) => {
+      const classes = d.schedule?.morning_classes ?? [];
+      if (classes.length === 0) {
+        csv += [d.label, d.iso, '—', '—', 'Sin clases programadas', '—', '—', '—'].map(csvEscape).join(';') + '\n';
+      } else {
+        classes.forEach((s) => {
+          const div = s.gender_division === 'FEMALE' ? 'Mujeres' : s.gender_division === 'MALE' ? 'Varones' : 'General Compañía';
+          csv += [
+            d.label,
+            d.iso,
+            `${s.start_time} a ${s.end_time} h`,
+            roomLabel(s.room),
+            div,
+            shortName(s.master_name),
+            shortName(s.pianist_name),
+            shortName(s.sound_tech_name),
+          ].map(csvEscape).join(';') + '\n';
+        });
+      }
     });
 
-    downloadCsv(csv, 'Parte_de_Clases_Semana_19_23_Octubre.csv');
+    const slug = loadedWeekKey || schedule.schedule_date;
+    downloadCsv(csv, `Parte_de_Clases_Semana_${slug}.csv`);
   }
 
   function exportRehearsalsExcel() {
     let csv = '\uFEFF'; // BOM UTF-8
-    csv += 'PARTE DE ENSAYO - Semana 19 al 23 octubre\n\n';
-    csv += 'DIA;HORARIO;SALA;OBRA;MAESTROS;SONIDO\n';
+    csv += `PARTE DE ENSAYO - ${weekRangeLabel.toUpperCase()}\n\n`;
+    csv += 'DIA;FECHA;HORARIO;SALA;OBRA / PASAJE;REPARTO;MAESTRO;SONIDO;SONIDISTA\n';
 
-    weekRehearsals.forEach((d) => {
-      d.blocks.forEach((b) => {
-        const cleanWork = b.work.replace(/\n/g, ' ');
-        csv += `"${d.day}";"${b.time}";"${b.room}";"${cleanWork}";"${b.master || d.masterGroup}";"${b.sound || d.soundReq}"\n`;
-      });
+    weekDays.forEach((d) => {
+      const blocks = d.schedule?.rehearsal_blocks ?? [];
+      if (blocks.length === 0) {
+        csv += [d.label, d.iso, '—', '—', 'Sin ensayos citados', '—', '—', '—', '—'].map(csvEscape).join(';') + '\n';
+      } else {
+        blocks.forEach((b) => {
+          const cast = b.cast_groups.length > 0 && b.cast_groups[0].formatted_line
+            ? b.cast_groups[0].formatted_line
+            : 'Reparto a confirmar';
+          csv += [
+            d.label,
+            d.iso,
+            `${b.start_time} a ${b.end_time} h`,
+            roomLabel(b.room),
+            b.passage_name,
+            cast,
+            shortName(b.master_name),
+            b.sound_requirement || '',
+            shortName(b.sound_tech_name),
+          ].map(csvEscape).join(';') + '\n';
+        });
+      }
     });
 
-    csv += '\n"REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS."\n';
-    downloadCsv(csv, 'Parte_de_Ensayo_Semana_19_23_Octubre.csv');
+    csv += `\n${csvEscape(schedule.footer_legal_clause || 'REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS.')}\n`;
+    const slug = loadedWeekKey || schedule.schedule_date;
+    downloadCsv(csv, `Parte_de_Ensayo_Semana_${slug}.csv`);
+  }
+
+  function exportActiveTabExcel() {
+    if (activeReportTab === 'today') {
+      exportTodayExcel();
+    } else if (activeReportTab === 'classes') {
+      exportClassesExcel();
+    } else {
+      exportRehearsalsExcel();
+    }
   }
 
   function downloadCsv(content: string, filename: string) {
@@ -193,21 +276,12 @@
           <!-- Zoom y Botones de Exportación -->
           <div class="flex flex-wrap items-center gap-2">
             <ZoomControls bind:zoom />
-            {#if activeReportTab === 'classes'}
-              <button
-                onclick={exportClassesExcel}
-                class="px-3 py-1.5 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold transition-colors"
-              >
-                Exportar Excel (.csv)
-              </button>
-            {:else}
-              <button
-                onclick={exportRehearsalsExcel}
-                class="px-3 py-1.5 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold transition-colors"
-              >
-                Exportar Excel (.csv)
-              </button>
-            {/if}
+            <button
+              onclick={exportActiveTabExcel}
+              class="px-3 py-1.5 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold transition-colors"
+            >
+              Exportar Excel (.csv)
+            </button>
 
             <button
               onclick={() => (printPreviewOpen = true)}
@@ -346,99 +420,140 @@
             </div>
           </div>
 
-        <!-- PARTE DE CLASES SEMANALES -->
+        <!-- PARTE DE CLASES SEMANALES (7 DÍAS REALES DESDE SQLITE) -->
         {:else if activeReportTab === 'classes'}
           <div class="space-y-4">
             <div class="text-center mb-6">
               <h2 class="text-lg md:text-xl font-black uppercase tracking-wide underline underline-offset-4 decoration-2">
-                PARTE DE CLASES - SEMANA 19 al 23 octubre 2026
+                PARTE DE CLASES — {weekRangeLabel}
               </h2>
             </div>
 
-            {#each weekClasses as d}
-              <table class="w-full border-collapse border border-black text-center text-xs md:text-sm mb-4">
-                <thead>
-                  <tr class="bg-slate-300 font-bold border-b border-black text-[11px] md:text-xs">
-                    <th class="border border-black py-1.5 px-2 w-[16%]">DIA</th>
-                    <th class="border border-black py-1.5 px-2 w-[18%]">HORARIO</th>
-                    <th class="border border-black py-1.5 px-2 w-[12%]">SALA</th>
-                    <th class="border border-black py-1.5 px-2 w-[18%]">BAILARINES</th>
-                    <th class="border border-black py-1.5 px-2 w-[18%]">MAESTROS</th>
-                    <th class="border border-black py-1.5 px-2 w-[18%]">PIANISTAS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {#each d.slots as s, idx}
-                    <tr class="border-b border-black">
-                      {#if idx === 0}
-                        <td rowspan="2" class="border border-black font-bold bg-amber text-xs md:text-sm py-2 px-2 align-middle">
-                          {d.day}
-                        </td>
-                      {/if}
-                      <td class="border border-black py-2 px-2 font-medium">{s.time}</td>
-                      <td class="border border-black py-2 px-2 font-bold">{roomLabel(s.room)}</td>
-                      <td class="border border-black py-2 px-2">{s.dancers}</td>
-                      <td class="border border-black py-2 px-2">{s.master}</td>
-                      <td class="border border-black py-2 px-2">{s.pianist}</td>
+            {#if isLoadingWeek && weekDays.length === 0}
+              <p class="text-xs italic text-slate-600 text-center py-8">Cargando cronograma semanal desde la base de datos...</p>
+            {:else}
+              {#each weekDays as d}
+                {@const slots = d.schedule?.morning_classes ?? []}
+                <table class="w-full border-collapse border border-black text-center text-xs md:text-sm mb-4">
+                  <thead>
+                    <tr class="bg-slate-300 font-bold border-b border-black text-[11px] md:text-xs">
+                      <th class="border border-black py-1.5 px-2 w-[16%]">DIA</th>
+                      <th class="border border-black py-1.5 px-2 w-[16%]">HORARIO</th>
+                      <th class="border border-black py-1.5 px-2 w-[12%]">SALA</th>
+                      <th class="border border-black py-1.5 px-2 w-[16%]">BAILARINES</th>
+                      <th class="border border-black py-1.5 px-2 w-[16%]">MAESTROS</th>
+                      <th class="border border-black py-1.5 px-2 w-[14%]">PIANISTAS</th>
+                      <th class="border border-black py-1.5 px-2 w-[10%]">SONIDISTA</th>
                     </tr>
-                  {/each}
-                </tbody>
-              </table>
-            {/each}
+                  </thead>
+                  <tbody>
+                    {#if slots.length === 0}
+                      <tr class="border-b border-black">
+                        <td class="border border-black font-bold bg-amber text-xs md:text-sm py-2 px-2 align-middle">
+                          {d.label}
+                        </td>
+                        <td colspan="6" class="border border-black py-2 px-2 italic text-slate-500">
+                          Sin clases programadas
+                        </td>
+                      </tr>
+                    {:else}
+                      {#each slots as s, idx}
+                        <tr class="border-b border-black">
+                          {#if idx === 0}
+                            <td rowspan={slots.length} class="border border-black font-bold bg-amber text-xs md:text-sm py-2 px-2 align-middle">
+                              {d.label}
+                            </td>
+                          {/if}
+                          <td class="border border-black py-2 px-2 font-medium font-mono">{s.start_time} a {s.end_time} h</td>
+                          <td class="border border-black py-2 px-2 font-bold">{roomLabel(s.room)}</td>
+                          <td class="border border-black py-2 px-2">{s.gender_division === 'FEMALE' ? 'Mujeres' : s.gender_division === 'MALE' ? 'Varones' : 'General Compañía'}</td>
+                          <td class="border border-black py-2 px-2">{shortName(s.master_name)}</td>
+                          <td class="border border-black py-2 px-2">{shortName(s.pianist_name)}</td>
+                          <td class="border border-black py-2 px-2">{shortName(s.sound_tech_name)}</td>
+                        </tr>
+                      {/each}
+                    {/if}
+                  </tbody>
+                </table>
+              {/each}
+            {/if}
           </div>
 
-        <!-- PARTE DE ENSAYOS (Semana 19 al 23 de octubre) -->
+        <!-- PARTE DE ENSAYOS SEMANALES (7 DÍAS REALES DESDE SQLITE) -->
         {:else}
           <div class="space-y-4">
             <div class="text-center mb-6">
               <h2 class="text-lg md:text-xl font-black uppercase tracking-wide underline underline-offset-4 decoration-2">
-                PARTE DE ENSAYO – Semana 19 al 23 octubre
+                PARTE DE ENSAYO — {weekRangeLabel}
               </h2>
             </div>
 
-            {#each weekRehearsals as d}
-              <table class="w-full border-collapse border border-black text-center text-xs md:text-sm mb-4">
-                <thead>
-                  <tr class="bg-slate-300 font-bold border-b border-black text-[11px] md:text-xs">
-                    <th class="border border-black py-1.5 px-2 w-[14%]">DIA</th>
-                    <th class="border border-black py-1.5 px-2 w-[16%]">HORARIO</th>
-                    <th class="border border-black py-1.5 px-2 w-[12%]">SALA</th>
-                    <th class="border border-black py-1.5 px-2 w-[34%]">OBRA</th>
-                    <th class="border border-black py-1.5 px-2 w-[14%]">MAESTROS</th>
-                    <th class="border border-black py-1.5 px-2 w-[10%]">SONIDO</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {#each d.blocks as b, idx}
-                    <tr class="border-b border-black">
-                      {#if idx === 0}
-                        <td rowspan={d.blocks.length} class="border border-black font-bold bg-amber text-xs md:text-sm py-2 px-2 align-middle">
-                          {d.day}
-                        </td>
-                      {/if}
-                      <td class="border border-black py-2 px-2 font-medium">{b.time}</td>
-                      <td class="border border-black py-2 px-2 font-bold">{roomLabel(b.room)}</td>
-                      <td class="border border-black py-2 px-3 text-left whitespace-pre-line leading-tight font-medium">
-                        {b.work}
-                      </td>
-                      {#if idx === 0}
-                        <td rowspan={d.blocks.length} class="border border-black py-2 px-2 align-middle text-xs font-semibold">
-                          {d.masterGroup}
-                        </td>
-                        <td rowspan={d.blocks.length} class="border border-black py-2 px-2 align-middle font-bold text-xs">
-                          {d.soundReq}
-                        </td>
-                      {/if}
+            {#if isLoadingWeek && weekDays.length === 0}
+              <p class="text-xs italic text-slate-600 text-center py-8">Cargando ensayos semanales desde la base de datos...</p>
+            {:else}
+              {#each weekDays as d}
+                {@const dayBlocks = d.schedule?.rehearsal_blocks ?? []}
+                <table class="w-full border-collapse border border-black text-center text-xs md:text-sm mb-4">
+                  <thead>
+                    <tr class="bg-slate-300 font-bold border-b border-black text-[11px] md:text-xs">
+                      <th class="border border-black py-1.5 px-2 w-[14%]">DIA</th>
+                      <th class="border border-black py-1.5 px-2 w-[15%]">HORARIO</th>
+                      <th class="border border-black py-1.5 px-2 w-[11%]">SALA</th>
+                      <th class="border border-black py-1.5 px-2 w-[32%]">OBRA / REPARTO</th>
+                      <th class="border border-black py-1.5 px-2 w-[12%]">MAESTRO</th>
+                      <th class="border border-black py-1.5 px-2 w-[8%]">SONIDO</th>
+                      <th class="border border-black py-1.5 px-2 w-[8%]">SONIDISTA</th>
                     </tr>
-                  {/each}
-                </tbody>
-              </table>
-            {/each}
+                  </thead>
+                  <tbody>
+                    {#if dayBlocks.length === 0}
+                      <tr class="border-b border-black">
+                        <td class="border border-black font-bold bg-amber text-xs md:text-sm py-2 px-2 align-middle">
+                          {d.label}
+                        </td>
+                        <td colspan="6" class="border border-black py-2 px-2 italic text-slate-500">
+                          Sin ensayos citados
+                        </td>
+                      </tr>
+                    {:else}
+                      {#each dayBlocks as b, idx}
+                        <tr class="border-b border-black">
+                          {#if idx === 0}
+                            <td rowspan={dayBlocks.length} class="border border-black font-bold bg-amber text-xs md:text-sm py-2 px-2 align-middle">
+                              {d.label}
+                            </td>
+                          {/if}
+                          <td class="border border-black py-2 px-2 font-medium font-mono">{b.start_time} a {b.end_time} h</td>
+                          <td class="border border-black py-2 px-2 font-bold">{roomLabel(b.room)}</td>
+                          <td class="border border-black py-2 px-3 text-left leading-tight font-medium">
+                            <div class="font-bold">{b.passage_name}</div>
+                            {#if b.cast_groups.length > 0 && b.cast_groups[0].formatted_line}
+                              <div class="text-[11px] font-mono text-slate-700 mt-0.5">({b.cast_groups[0].formatted_line})</div>
+                            {:else if b.confirmation_state !== 'CONFIRMED'}
+                              <div class="text-[11px] italic text-slate-600 mt-0.5">(A confirmar)</div>
+                            {/if}
+                          </td>
+                          <td class="border border-black py-2 px-2 align-middle text-xs font-semibold">
+                            {shortName(b.master_name)}
+                          </td>
+                          <td class="border border-black py-2 px-2 align-middle font-bold text-xs">
+                            {b.sound_requirement || '—'}
+                          </td>
+                          <td class="border border-black py-2 px-2 align-middle text-xs font-semibold">
+                            {shortName(b.sound_tech_name)}
+                          </td>
+                        </tr>
+                      {/each}
+                    {/if}
+                  </tbody>
+                </table>
+              {/each}
+            {/if}
 
             <!-- Cláusula Legal Invariable al pie -->
             <div class="mt-8 pt-4 text-center">
               <p class="text-xs md:text-sm font-black tracking-wider uppercase font-mono border-t-2 border-black pt-3">
-                REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS.
+                {schedule.footer_legal_clause || 'REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS.'}
               </p>
             </div>
           </div>

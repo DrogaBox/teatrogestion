@@ -21,6 +21,19 @@ pub fn list_vault_documents(
 }
 
 #[tauri::command]
+pub fn get_vault_document_data(
+    state: State<AppState>,
+    id: String,
+) -> Result<String, SerializableCoreError> {
+    let db = state.db.lock().map_err(|_| SerializableCoreError {
+        code: "MUTEX_LOCK_FAILED",
+        message: "No se pudo adquirir el bloqueo de base de datos".into(),
+    })?;
+
+    gestion_core::db::get_vault_document_data(db.connection(), &id).map_err(|e| (&e).into())
+}
+
+#[tauri::command]
 pub fn create_vault_document(
     state: State<AppState>,
     payload: CreateInspectionDocumentPayload,

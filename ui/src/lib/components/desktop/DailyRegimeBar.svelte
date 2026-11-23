@@ -54,6 +54,7 @@
       compensatoryRestDays = schedule.compensatory_rest_days || 1;
       compensatoryRestPolicy = schedule.compensatory_rest_policy || 'NEXT_DAY';
       legalClause = schedule.footer_legal_clause || '★ REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS. ★';
+      generalNotes = schedule.general_notes ?? '';
     }
   });
 

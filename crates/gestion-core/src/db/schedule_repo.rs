@@ -342,7 +342,43 @@ pub fn load_daily_schedule_with_audit(
     schedule_id: &str,
 ) -> CoreResult<DailyScheduleWithAuditDto> {
     let aggregate = load_daily_schedule_aggregate(conn, schedule_id)?;
-    let conflicts = audit_daily_schedule(&aggregate, None);
+    let prev_end: Option<(String, String)> =
+        NaiveDate::parse_from_str(&aggregate.schedule_date, "%Y-%m-%d")
+            .ok()
+            .and_then(|d| d.pred_opt())
+            .and_then(|prev_d| {
+                let prev_str = prev_d.format("%Y-%m-%d").to_string();
+                let mut stmt = conn
+                    .prepare(
+                        "SELECT rb.end_time
+                         FROM rehearsal_blocks rb
+                         JOIN daily_schedules ds ON ds.id = rb.schedule_id
+                         WHERE ds.schedule_date = ?1
+                         UNION ALL
+                         SELECT mc.end_time
+                         FROM morning_classes mc
+                         JOIN daily_schedules ds ON ds.id = mc.schedule_id
+                         WHERE ds.schedule_date = ?1;",
+                    )
+                    .ok()?;
+                let times: Vec<String> = stmt
+                    .query_map([&prev_str], |r| r.get::<_, String>(0))
+                    .ok()?
+                    .filter_map(|res| res.ok())
+                    .collect();
+                let latest = times
+                    .into_iter()
+                    .filter_map(|t| {
+                        crate::services::conflict_engine::parse_hhmm_to_minutes(&t).map(|m| (m, t))
+                    })
+                    .max_by_key(|(m, _)| *m)
+                    .map(|(_, t)| t)?;
+                Some((prev_str, latest))
+            });
+    let conflicts = audit_daily_schedule(
+        &aggregate,
+        prev_end.as_ref().map(|(d, t)| (d.as_str(), t.as_str())),
+    );
     Ok(DailyScheduleWithAuditDto {
         schedule: aggregate,
         conflicts,
@@ -361,6 +397,7 @@ pub fn load_daily_schedule_aggregate(
         nominal_end,
         rest_hours,
         footer_clause,
+        general_notes,
         class_rest_mins,
         is_comp_day,
         comp_days,
@@ -373,13 +410,14 @@ pub fn load_daily_schedule_aggregate(
         String,
         u8,
         String,
+        Option<String>,
         u16,
         bool,
         u8,
         String,
     ) = conn.query_row(
         "SELECT id, schedule_date, regime_type, mandatory_checkin_time, nominal_end_time,
-                minimum_intershift_rest_hours, footer_legal_clause,
+                minimum_intershift_rest_hours, footer_legal_clause, general_notes,
                 COALESCE(class_to_rehearsal_rest_minutes, 15),
                 COALESCE(is_compensatory_rest_day, 0),
                 COALESCE(compensatory_rest_days, 1),
@@ -395,10 +433,11 @@ pub fn load_daily_schedule_aggregate(
                 r.get(4)?,
                 r.get::<_, i64>(5)? as u8,
                 r.get(6)?,
-                r.get::<_, i64>(7)? as u16,
-                r.get::<_, i64>(8)? == 1,
-                r.get::<_, i64>(9)? as u8,
-                r.get(10)?,
+                r.get(7)?,
+                r.get::<_, i64>(8)? as u16,
+                r.get::<_, i64>(9)? == 1,
+                r.get::<_, i64>(10)? as u8,
+                r.get(11)?,
             ))
         },
     ).map_err(|e| match e {
@@ -473,7 +512,8 @@ pub fn load_daily_schedule_aggregate(
                 rb.master_id, (m.last_name || ', ' || m.first_name),
                 rb.pianist_id, (p.last_name || ', ' || p.first_name),
                 rb.allow_shared_room,
-                rb.sound_tech_id, (s.last_name || ', ' || s.first_name)
+                rb.sound_tech_id, (s.last_name || ', ' || s.first_name),
+                rb.notes
          FROM rehearsal_blocks rb
          LEFT JOIN works w ON w.id = rb.work_id
          LEFT JOIN work_passages wp ON wp.id = rb.passage_id
@@ -537,6 +577,7 @@ pub fn load_daily_schedule_aggregate(
             allow_shared_room: r.get::<_, i32>(17)? == 1,
             sound_tech_id: r.get(18)?,
             sound_tech_name: r.get(19)?,
+            notes: r.get(20)?,
             cast_groups: Vec::new(),
         })
     })?;
@@ -634,6 +675,7 @@ pub fn load_daily_schedule_aggregate(
         compensatory_rest_days: comp_days,
         compensatory_rest_policy: comp_policy,
         footer_legal_clause: footer_clause,
+        general_notes,
         morning_classes,
         rehearsal_blocks,
     })
@@ -645,7 +687,13 @@ pub fn upsert_morning_class(
 ) -> CoreResult<DailyScheduleWithAuditDto> {
     let class_id = payload.id.unwrap_or_else(|| format!("MC_{}", Uuid::new_v4().simple()));
     let room_str = payload.room.as_db_str();
-    let gender_str = payload.gender_division.as_db_str();
+    let gender_str = match payload.gender_division {
+        GenderGroup::Female => "FEMALE",
+        GenderGroup::Male => "MALE",
+        GenderGroup::UnifiedSpecial | GenderGroup::NotApplicable | GenderGroup::NonBinary => {
+            "UNIFIED_SPECIAL"
+        }
+    };
 
     conn.execute(
         "INSERT INTO morning_classes (

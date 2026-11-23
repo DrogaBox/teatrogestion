@@ -14,24 +14,38 @@
   let activeTopic = $state<'intro' | 'personnel' | 'regime' | 'attendance' | 'casting' | 'vault' | 'admin_reset' | 'sync_mobile' | 'home' | 'news' | 'updates'>('intro');
 
   const topics = [
-    { id: 'intro', label: '1. Inicio & Licencia Offline', badge: 'Windows 11' },
-    { id: 'personnel', label: '2. Padrón del Personal & DNI', badge: 'Oficial' },
-    { id: 'regime', label: '3. Régimen & Francos Compensatorios', badge: '15 min / 1-4 días' },
-    { id: 'attendance', label: '4. Ausentismo & "Sin Parte" (S/P)', badge: 'Matriz BOP' },
-    { id: 'casting', label: '5. Repartos & Certificación Solísticos', badge: 'Padrón vinculable' },
-    { id: 'vault', label: '6. Bóveda Documental de Inspección', badge: 'Carina Lion' },
-    { id: 'admin_reset', label: '7. Recuperar Contraseña (Admin)', badge: 'master.key.enc' },
-    { id: 'sync_mobile', label: '8. Sincronización LAN & Android', badge: 'P2P / APK' },
-    { id: 'home', label: '9. Pantalla de Inicio', badge: 'Resumen del día' },
-    { id: 'updates', label: '10. Actualizaciones automáticas', badge: 'Más > Actualizaciones' },
-    { id: 'news', label: '11. Novedades de la versión', badge: 'v' + CHANGELOG[0].version },
+    { id: 'intro', label: '1. Inicio & Licencia Offline', badge: 'Windows 11', keywords: 'inicio instalador grafico consola licencia offline windows 11 sqlite wal reloj' },
+    { id: 'personnel', label: '2. Padrón del Personal & DNI', badge: 'Oficial', keywords: 'padron personal dni bailarines cargos altas bajas talles genero jubilado' },
+    { id: 'regime', label: '3. Régimen & Francos Compensatorios', badge: '15 min / 1-4 días', keywords: 'regimen descanso 15 minutos francos compensatorios direccion supervisora sonido sonidista cabina clases ensayos funciones planillas' },
+    { id: 'attendance', label: '4. Ausentismo & "Sin Parte" (S/P)', badge: 'Matriz BOP', keywords: 'ausentismo sin parte s/p sp fisioterapia matriz bop ij inasistencia justificada at adecuacion tareas ei art lc la es' },
+    { id: 'casting', label: '5. Repartos & Certificación Solísticos', badge: 'Padrón vinculable', keywords: 'repartos obras solisticos padron certificados pasajes plus rol agencia cordoba cultura' },
+    { id: 'vault', label: '6. Bóveda Documental de Inspección', badge: 'Carina Lion', keywords: 'boveda documental carina lion certificados medicos caja chica pesos ars memos recibos' },
+    { id: 'admin_reset', label: '7. Recuperar Contraseña (Admin)', badge: 'master.key.enc', keywords: 'recuperar contrasena clave admin master key enc pendrive usb' },
+    { id: 'sync_mobile', label: '8. Sincronización LAN & Android', badge: 'P2P / APK', keywords: 'sincronizacion red lan wifi android celular tablet gaynor escaner codigo barras respaldo json' },
+    { id: 'home', label: '9. Pantalla de Inicio', badge: 'Resumen del día', keywords: 'inicio resumen dia avisos alertas agenda asistencia accesos rapidos' },
+    { id: 'updates', label: '10. Actualizaciones automáticas', badge: 'Más > Actualizaciones', keywords: 'actualizaciones actualizar version nueva token github descargar instalar' },
+    { id: 'news', label: '11. Novedades de la versión', badge: 'v' + CHANGELOG[0].version, keywords: 'novedades cambios version changelog arreglos mejoras' },
   ];
+
+  function normalizeText(text: string): string {
+    return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
 
   function matchesSearch(text: string): boolean {
     if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase().trim();
-    return text.toLowerCase().includes(q);
+    const q = normalizeText(searchQuery).trim();
+    return normalizeText(text).includes(q);
   }
+
+  let filteredTopics = $derived(
+    topics.filter((t) => matchesSearch(`${t.label} ${t.badge} ${t.keywords}`))
+  );
+
+  $effect(() => {
+    if (filteredTopics.length > 0 && !filteredTopics.some((t) => t.id === activeTopic)) {
+      activeTopic = filteredTopics[0].id as typeof activeTopic;
+    }
+  });
 </script>
 
 {#if isOpen}
@@ -98,18 +112,24 @@
         
         <!-- Menú Lateral -->
         <div class="w-full md:w-64 bg-void border-b md:border-b-0 md:border-r border-raised overflow-y-auto p-3 space-y-1">
-          <p class="text-[10px] font-mono uppercase tracking-wider text-dim px-2 py-1">Capítulos Oficiales</p>
-          {#each topics as t}
-            <button
-              onclick={() => activeTopic = t.id as any}
-              class="w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex flex-col items-start gap-1 {activeTopic === t.id ? 'bg-amber text-void font-bold shadow-sm' : 'text-dim hover:bg-raised hover:text-white'}"
-            >
-              <span class="leading-snug">{t.label}</span>
-              <span class="text-[9px] px-1.5 py-0.5 rounded font-mono font-normal {activeTopic === t.id ? 'bg-void/20 text-void' : 'bg-raised text-dim'}">
-                {t.badge}
-              </span>
-            </button>
-          {/each}
+          <p class="text-[10px] font-mono uppercase tracking-wider text-dim px-2 py-1">
+            Capítulos Oficiales {searchQuery.trim() ? `(${filteredTopics.length})` : ''}
+          </p>
+          {#if filteredTopics.length === 0}
+            <p class="text-xs text-dim px-2 py-3">Sin coincidencias para "{searchQuery}".</p>
+          {:else}
+            {#each filteredTopics as t}
+              <button
+                onclick={() => activeTopic = t.id as any}
+                class="w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex flex-col items-start gap-1 {activeTopic === t.id ? 'bg-amber text-void font-bold shadow-sm' : 'text-dim hover:bg-raised hover:text-white'}"
+              >
+                <span class="leading-snug">{t.label}</span>
+                <span class="text-[9px] px-1.5 py-0.5 rounded font-mono font-normal {activeTopic === t.id ? 'bg-void/20 text-void' : 'bg-raised text-dim'}">
+                  {t.badge}
+                </span>
+              </button>
+            {/each}
+          {/if}
 
           <div class="pt-4 px-2">
             <div class="p-3 bg-void border border-raised rounded-lg text-[11px] space-y-2">
@@ -127,8 +147,15 @@
         <!-- Panel de Lectura / Detalle -->
         <div class="tg-manual flex-1 overflow-y-auto p-6 md:px-8 space-y-6 bg-void text-sm leading-relaxed">
 
+          {#if filteredTopics.length === 0}
+            <div class="py-16 text-center text-dim text-xs space-y-2">
+              <p class="font-bold text-white">No se encontraron resultados para "{searchQuery}"</p>
+              <p>Probá con otra palabra (ej: bóveda, solísticos, S/P, DNI, Wi-Fi, Gaynor).</p>
+            </div>
+          {:else}
+
           <!-- CAPÍTULO 1 -->
-          {#if activeTopic === 'intro' && matchesSearch('inicio instalador grafico consola licencia offline windows 11')}
+          {#if activeTopic === 'intro'}
             <div class="space-y-4">
               <div class="border-l-4 border-amber pl-3 py-0.5">
                 <h3 class="text-base font-bold text-white">1. Inicio y Arquitectura Offline en Windows 11</h3>
@@ -170,7 +197,7 @@
           {/if}
 
           <!-- CAPÍTULO 2 -->
-          {#if activeTopic === 'personnel' && matchesSearch('padron personal dni bailarines cargos altas')}
+          {#if activeTopic === 'personnel'}
             <div class="space-y-4">
               <div class="border-l-4 border-amber pl-3 py-0.5">
                 <h3 class="text-base font-bold text-white">2. Padrón del Personal y DNI Oficial</h3>
@@ -199,7 +226,7 @@
           {/if}
 
           <!-- CAPÍTULO 3 -->
-          {#if activeTopic === 'regime' && matchesSearch('regimen descanso 15 minutos francos compensatorios direccion supervisora')}
+          {#if activeTopic === 'regime'}
             <div class="space-y-4">
               <div class="border-l-4 border-amber pl-3 py-0.5">
                 <h3 class="text-base font-bold text-white">3. Régimen Diario & Francos Compensatorios</h3>
@@ -231,7 +258,7 @@
             </div>
           {/if}
 
-          {#if activeTopic === 'regime' && matchesSearch('sonido sonidista cabina clases ensayos funciones planillas')}
+          {#if activeTopic === 'regime'}
             <div class="p-3 bg-void border border-cyan/30 rounded-lg space-y-1 text-xs">
               <p class="font-bold text-cyan">Sonidista a cargo</p>
               <p class="text-blue">Al crear o editar una clase, un ensayo o una función se puede elegir el <strong>sonidista a cargo</strong> (lista de personal con rol «Sonido» del padrón; si no hay ninguno, se da de alta en el Padrón). Se muestra en la tarjeta, en el parte oficial, en el plan semanal impreso y en la agenda de Inicio. Si el mismo sonidista queda en dos lugares a la vez, el cronograma lo avisa como conflicto.</p>
@@ -239,7 +266,7 @@
           {/if}
 
           <!-- CAPÍTULO 4 -->
-          {#if activeTopic === 'attendance' && matchesSearch('ausentismo sin parte sp fisioterapia matriz bop')}
+          {#if activeTopic === 'attendance'}
             <div class="space-y-4">
               <div class="border-l-4 border-amber pl-3 py-0.5">
                 <h3 class="text-base font-bold text-white">4. Control de Ausentismo & Estado "Sin Parte" (S/P)</h3>
@@ -323,7 +350,7 @@
           {/if}
 
           <!-- CAPÍTULO 5 -->
-          {#if activeTopic === 'casting' && matchesSearch('repartos obras solisticos padron certificados pasajes')}
+          {#if activeTopic === 'casting'}
             <div class="space-y-4">
               <div class="border-l-4 border-amber pl-3 py-0.5">
                 <h3 class="text-base font-bold text-white">5. Planificación de Repartos & Certificaciones de Solísticos</h3>
@@ -351,7 +378,7 @@
           {/if}
 
           <!-- CAPÍTULO 6 -->
-          {#if activeTopic === 'vault' && matchesSearch('boveda documental carina lion certificados caja chica pesos ars memos')}
+          {#if activeTopic === 'vault'}
             <div class="space-y-4">
               <div class="border-l-4 border-violet pl-3 py-0.5">
                 <h3 class="text-base font-bold text-white">6. Bóveda Documental de Inspección (Carina Lion)</h3>
@@ -380,7 +407,7 @@
           {/if}
 
           <!-- CAPÍTULO 7 -->
-          {#if activeTopic === 'admin_reset' && matchesSearch('recuperar contrasena admin master key enc pendrive')}
+          {#if activeTopic === 'admin_reset'}
             <div class="space-y-4">
               <div class="border-l-4 border-amber pl-3 py-0.5">
                 <h3 class="text-base font-bold text-white">7. Recuperación Administrativa de Contraseña</h3>
@@ -410,7 +437,7 @@
           {/if}
 
           <!-- CAPÍTULO 8 -->
-          {#if activeTopic === 'sync_mobile' && matchesSearch('sincronizacion red lan wifi android celular tablet gaynor')}
+          {#if activeTopic === 'sync_mobile'}
             <div class="space-y-4">
               <div class="border-l-4 border-green pl-3 py-0.5">
                 <h3 class="text-base font-bold text-white">8. Sincronización en Red Local & Versión Android</h3>
@@ -437,7 +464,7 @@
 
 
           <!-- CAPÍTULO 9 -->
-          {#if activeTopic === 'home' && matchesSearch('inicio resumen dia avisos alertas agenda asistencia')}
+          {#if activeTopic === 'home'}
             <div class="space-y-4">
               <div class="border-l-4 border-amber pl-3 py-0.5">
                 <h3 class="text-base font-bold text-white">9. Pantalla de Inicio</h3>
@@ -454,7 +481,7 @@
           {/if}
 
           <!-- CAPÍTULO 10 -->
-          {#if activeTopic === 'updates' && matchesSearch('actualizaciones actualizar version nueva token github descargar instalar')}
+          {#if activeTopic === 'updates'}
             <div class="space-y-4">
               <div class="border-l-4 border-green pl-3 py-0.5">
                 <h3 class="text-base font-bold text-white">10. Actualizaciones automáticas</h3>
@@ -471,7 +498,7 @@
           {/if}
 
           <!-- CAPÍTULO 11 -->
-          {#if activeTopic === 'news' && matchesSearch('novedades cambios version changelog arreglos')}
+          {#if activeTopic === 'news'}
             <div class="space-y-5">
               <div class="border-l-4 border-green pl-3 py-0.5">
                 <h3 class="text-base font-bold text-white">11. Novedades de cada versión</h3>
@@ -489,6 +516,7 @@
             </div>
           {/if}
 
+          {/if}
         </div>
       </div>
 

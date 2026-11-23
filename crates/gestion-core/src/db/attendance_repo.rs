@@ -20,29 +20,87 @@ fn parse_hhmm_to_min(hhmm: &str) -> Option<i32> {
     Some(h * 60 + m)
 }
 
+fn format_min_to_hhmm(total_minutes: i32) -> String {
+    let clamped = total_minutes.clamp(0, 23 * 60 + 59);
+    format!("{:02}:{:02}", clamped / 60, clamped % 60)
+}
+
+fn day_of_week_for_iso(date: &str) -> u32 {
+    NaiveDate::parse_from_str(date, "%Y-%m-%d")
+        .map(|d| d.weekday().number_from_monday())
+        .unwrap_or(1)
+}
+
+fn get_or_create_schedule_checkin(conn: &Connection, schedule_date: &str) -> CoreResult<(String, String)> {
+    match conn.query_row(
+        "SELECT id, COALESCE(mandatory_checkin_time, '08:45') FROM daily_schedules WHERE schedule_date = ?1",
+        params![schedule_date],
+        |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)),
+    ) {
+        Ok(pair) => Ok(pair),
+        Err(rusqlite::Error::QueryReturnedNoRows) => {
+            let new_id = format!("SCHED_{}", schedule_date.replace('-', "_"));
+            let dow = day_of_week_for_iso(schedule_date);
+            conn.execute(
+                "INSERT OR IGNORE INTO daily_schedules (
+                    id, schedule_date, day_of_week, regime_type, mandatory_checkin_time, nominal_start_time, nominal_end_time, footer_legal_clause
+                ) VALUES (?1, ?2, ?3, 'ORDINARY', '08:45', '09:00', '13:45', 'REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS.')",
+                params![new_id, schedule_date, dow],
+            )?;
+            let pair = conn.query_row(
+                "SELECT id, COALESCE(mandatory_checkin_time, '08:45') FROM daily_schedules WHERE schedule_date = ?1",
+                params![schedule_date],
+                |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)),
+            )?;
+            Ok(pair)
+        }
+        Err(e) => Err(CoreError::Database(e)),
+    }
+}
+
+/// Si una persona deja de estar en licencia médica en `schedule_date`, limpia o acorta
+/// el registro de `medical_leave_records` que cubría esa fecha para no arrastrar una carga errónea.
+fn cleanup_medical_leave_from_date(
+    conn: &Connection,
+    personnel_id: &str,
+    schedule_date: &str,
+) -> CoreResult<()> {
+    let mut stmt = conn.prepare(
+        "SELECT id, start_date, end_date
+         FROM medical_leave_records
+         WHERE personnel_id = ?1 AND start_date <= ?2 AND end_date >= ?2;",
+    )?;
+    let rows: Vec<(String, String, String)> = stmt
+        .query_map(params![personnel_id, schedule_date], |r| {
+            Ok((r.get(0)?, r.get(1)?, r.get(2)?))
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+    drop(stmt);
+
+    let prev_date_opt = NaiveDate::parse_from_str(schedule_date, "%Y-%m-%d")
+        .ok()
+        .and_then(|d| d.pred_opt())
+        .map(|d| d.format("%Y-%m-%d").to_string());
+
+    for (rec_id, start_date, _end_date) in rows {
+        if start_date.as_str() >= schedule_date {
+            conn.execute("DELETE FROM medical_leave_records WHERE id = ?1;", [&rec_id])?;
+        } else if let Some(ref prev_date) = prev_date_opt {
+            conn.execute(
+                "UPDATE medical_leave_records SET end_date = ?1 WHERE id = ?2;",
+                params![prev_date, rec_id],
+            )?;
+        }
+    }
+    Ok(())
+}
+
 pub fn list_attendance_for_date(
     conn: &Connection,
     schedule_date: &str,
 ) -> CoreResult<Vec<AttendanceLogDto>> {
-    // 1. Obtener o crear schedule_id para la fecha
-    let schedule_id: String = match conn.query_row(
-        "SELECT id FROM daily_schedules WHERE schedule_date = ?1",
-        params![schedule_date],
-        |r| r.get(0),
-    ) {
-        Ok(id) => id,
-        Err(rusqlite::Error::QueryReturnedNoRows) => {
-            let new_id = format!("SCHED_{}", schedule_date.replace('-', "_"));
-            conn.execute(
-                "INSERT OR IGNORE INTO daily_schedules (
-                    id, schedule_date, day_of_week, regime_type, mandatory_checkin_time, nominal_start_time, nominal_end_time, footer_legal_clause
-                ) VALUES (?1, ?2, 1, 'ORDINARY', '08:45', '09:00', '13:45', 'REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS.')",
-                params![new_id, schedule_date],
-            )?;
-            new_id
-        }
-        Err(e) => return Err(CoreError::Database(e)),
-    };
+    // 1. Obtener o crear schedule_id y horario de marcada para la fecha
+    let (schedule_id, mandatory_checkin_time) = get_or_create_schedule_checkin(conn, schedule_date)?;
 
     // 2. Traer todo el personal activo con su registro de asistencia si existe
     let mut stmt = conn.prepare(
@@ -55,7 +113,7 @@ pub fn list_attendance_for_date(
             p.role,
             c.name as category_name,
             a.id as log_id,
-            COALESCE(a.expected_checkin_time, '08:45'),
+            COALESCE(a.expected_checkin_time, ?3),
             a.actual_checkin_time,
             COALESCE(
                 a.operational_status,
@@ -102,7 +160,7 @@ pub fn list_attendance_for_date(
             p.first_name ASC",
     )?;
 
-    let rows = stmt.query_map(params![schedule_id, schedule_date], |r| {
+    let rows = stmt.query_map(params![schedule_id, schedule_date, mandatory_checkin_time], |r| {
         let personnel_id: String = r.get(0)?;
         let first_name: String = r.get(1)?;
         let last_name: String = r.get(2)?;
@@ -182,34 +240,20 @@ pub fn record_attendance(
     conn: &Connection,
     payload: RecordAttendancePayload,
 ) -> CoreResult<AttendanceLogDto> {
-    // 1. Obtener o crear schedule_id
-    let schedule_id: String = match conn.query_row(
-        "SELECT id FROM daily_schedules WHERE schedule_date = ?1",
-        params![payload.schedule_date],
-        |r| r.get(0),
-    ) {
-        Ok(id) => id,
-        Err(rusqlite::Error::QueryReturnedNoRows) => {
-            let new_id = format!("SCHED_{}", payload.schedule_date.replace('-', "_"));
-            conn.execute(
-                "INSERT OR IGNORE INTO daily_schedules (
-                    id, schedule_date, day_of_week, regime_type, mandatory_checkin_time, nominal_start_time, nominal_end_time, footer_legal_clause
-                ) VALUES (?1, ?2, 1, 'ORDINARY', '08:45', '09:00', '13:45', 'REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS.')",
-                params![new_id, payload.schedule_date],
-            )?;
-            new_id
-        }
-        Err(e) => return Err(CoreError::Database(e)),
-    };
+    // 1. Obtener o crear schedule_id y horario obligatorio de marcada del día
+    let (schedule_id, mandatory_checkin_time) =
+        get_or_create_schedule_checkin(conn, &payload.schedule_date)?;
+    let benchmark_minutes =
+        parse_hhmm_to_min(&mandatory_checkin_time).unwrap_or(CHECKIN_BENCHMARK_MINUTES);
 
-    // 2. Calcular llegada tarde
+    // 2. Calcular llegada tarde respecto de daily_schedules.mandatory_checkin_time (fallback 08:45)
     let minutes_late = match payload.attendance_status {
         AttendanceStatus::Late => {
             if let Some(explicit) = payload.minutes_late {
                 explicit.max(1)
             } else if let Some(ref checkin) = payload.actual_checkin_time {
                 if let Some(min) = parse_hhmm_to_min(checkin) {
-                    (min - CHECKIN_BENCHMARK_MINUTES).max(1)
+                    (min - benchmark_minutes).max(1)
                 } else {
                     10
                 }
@@ -221,10 +265,15 @@ pub fn record_attendance(
     };
 
     let actual_checkin = match payload.attendance_status {
-        AttendanceStatus::Present | AttendanceStatus::NotInClass | AttendanceStatus::InPhysiotherapy | AttendanceStatus::TaskAdjustment => {
-            payload.actual_checkin_time.or(Some("08:45".to_string()))
-        }
-        AttendanceStatus::Late => payload.actual_checkin_time.or(Some("08:55".to_string())),
+        AttendanceStatus::Present
+        | AttendanceStatus::NotInClass
+        | AttendanceStatus::InPhysiotherapy
+        | AttendanceStatus::TaskAdjustment => payload
+            .actual_checkin_time
+            .or_else(|| Some(mandatory_checkin_time.clone())),
+        AttendanceStatus::Late => payload
+            .actual_checkin_time
+            .or_else(|| Some(format_min_to_hhmm(benchmark_minutes + 10))),
         _ => payload.actual_checkin_time,
     };
 
@@ -236,54 +285,113 @@ pub fn record_attendance(
     let is_in_class_val = if payload.attendance_status.is_in_class() { 1 } else { 0 };
     let log_id = format!("ATT_{}_{}", schedule_id, payload.personnel_id);
 
-    conn.execute(
-        "INSERT INTO attendance_logs (
-            id, schedule_id, personnel_id, expected_checkin_time, actual_checkin_time,
-            attendance_status, operational_status, is_in_class, minutes_late, remarks,
-            certificate_file_name, certificate_data, medical_diagnosis, doctor_details,
-            leave_start_date, leave_end_date, physio_notes, recorded_at
-        ) VALUES (
-            ?1, ?2, ?3, '08:45', ?4,
-            ?5, ?6, ?7, ?8, ?9,
-            ?10, ?11, ?12, ?13,
-            ?14, ?15, ?16, strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-        )
-        ON CONFLICT(schedule_id, personnel_id) DO UPDATE SET
-            actual_checkin_time = excluded.actual_checkin_time,
-            attendance_status = excluded.attendance_status,
-            operational_status = excluded.operational_status,
-            is_in_class = excluded.is_in_class,
-            minutes_late = excluded.minutes_late,
-            remarks = excluded.remarks,
-            certificate_file_name = COALESCE(excluded.certificate_file_name, attendance_logs.certificate_file_name),
-            certificate_data = COALESCE(excluded.certificate_data, attendance_logs.certificate_data),
-            medical_diagnosis = COALESCE(excluded.medical_diagnosis, attendance_logs.medical_diagnosis),
-            doctor_details = COALESCE(excluded.doctor_details, attendance_logs.doctor_details),
-            leave_start_date = COALESCE(excluded.leave_start_date, attendance_logs.leave_start_date),
-            leave_end_date = COALESCE(excluded.leave_end_date, attendance_logs.leave_end_date),
-            physio_notes = COALESCE(excluded.physio_notes, attendance_logs.physio_notes),
-            recorded_at = excluded.recorded_at",
-        params![
-            log_id,
-            schedule_id,
-            payload.personnel_id,
-            actual_checkin,
-            payload.attendance_status.to_db_attendance_status(),
-            payload.attendance_status.as_operational_str(),
-            is_in_class_val,
-            minutes_late,
-            payload.remarks,
-            payload.certificate_file_name,
-            payload.certificate_data,
-            payload.medical_diagnosis,
-            payload.doctor_details,
-            payload.leave_start_date,
-            payload.leave_end_date,
-            payload.physio_notes,
-        ],
-    )?;
+    let keep_medical_fields = matches!(
+        payload.attendance_status,
+        AttendanceStatus::MedicalLeave | AttendanceStatus::InPhysiotherapy
+    );
 
-    // Si es licencia médica, guardar en la tabla permanente medical_leave_records
+    if keep_medical_fields {
+        conn.execute(
+            "INSERT INTO attendance_logs (
+                id, schedule_id, personnel_id, expected_checkin_time, actual_checkin_time,
+                attendance_status, operational_status, is_in_class, minutes_late, remarks,
+                certificate_file_name, certificate_data, medical_diagnosis, doctor_details,
+                leave_start_date, leave_end_date, physio_notes, recorded_at
+            ) VALUES (
+                ?1, ?2, ?3, ?4, ?5,
+                ?6, ?7, ?8, ?9, ?10,
+                ?11, ?12, ?13, ?14,
+                ?15, ?16, ?17, strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+            )
+            ON CONFLICT(schedule_id, personnel_id) DO UPDATE SET
+                expected_checkin_time = excluded.expected_checkin_time,
+                actual_checkin_time = excluded.actual_checkin_time,
+                attendance_status = excluded.attendance_status,
+                operational_status = excluded.operational_status,
+                is_in_class = excluded.is_in_class,
+                minutes_late = excluded.minutes_late,
+                remarks = excluded.remarks,
+                certificate_file_name = COALESCE(excluded.certificate_file_name, attendance_logs.certificate_file_name),
+                certificate_data = COALESCE(excluded.certificate_data, attendance_logs.certificate_data),
+                medical_diagnosis = COALESCE(excluded.medical_diagnosis, attendance_logs.medical_diagnosis),
+                doctor_details = COALESCE(excluded.doctor_details, attendance_logs.doctor_details),
+                leave_start_date = CASE WHEN excluded.operational_status = 'MEDICAL_LEAVE' THEN COALESCE(excluded.leave_start_date, attendance_logs.leave_start_date) ELSE NULL END,
+                leave_end_date = CASE WHEN excluded.operational_status = 'MEDICAL_LEAVE' THEN COALESCE(excluded.leave_end_date, attendance_logs.leave_end_date) ELSE NULL END,
+                physio_notes = COALESCE(excluded.physio_notes, attendance_logs.physio_notes),
+                recorded_at = excluded.recorded_at",
+            params![
+                log_id,
+                schedule_id,
+                payload.personnel_id,
+                mandatory_checkin_time,
+                actual_checkin,
+                payload.attendance_status.to_db_attendance_status(),
+                payload.attendance_status.as_operational_str(),
+                is_in_class_val,
+                minutes_late,
+                payload.remarks,
+                payload.certificate_file_name,
+                payload.certificate_data,
+                payload.medical_diagnosis,
+                payload.doctor_details,
+                payload.leave_start_date,
+                payload.leave_end_date,
+                payload.physio_notes,
+            ],
+        )?;
+    } else {
+        conn.execute(
+            "INSERT INTO attendance_logs (
+                id, schedule_id, personnel_id, expected_checkin_time, actual_checkin_time,
+                attendance_status, operational_status, is_in_class, minutes_late, remarks,
+                certificate_file_name, certificate_data, medical_diagnosis, doctor_details,
+                leave_start_date, leave_end_date, physio_notes, recorded_at
+            ) VALUES (
+                ?1, ?2, ?3, ?4, ?5,
+                ?6, ?7, ?8, ?9, ?10,
+                ?11, ?12, ?13, ?14,
+                ?15, ?16, ?17, strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+            )
+            ON CONFLICT(schedule_id, personnel_id) DO UPDATE SET
+                expected_checkin_time = excluded.expected_checkin_time,
+                actual_checkin_time = excluded.actual_checkin_time,
+                attendance_status = excluded.attendance_status,
+                operational_status = excluded.operational_status,
+                is_in_class = excluded.is_in_class,
+                minutes_late = excluded.minutes_late,
+                remarks = excluded.remarks,
+                certificate_file_name = excluded.certificate_file_name,
+                certificate_data = excluded.certificate_data,
+                medical_diagnosis = excluded.medical_diagnosis,
+                doctor_details = excluded.doctor_details,
+                leave_start_date = NULL,
+                leave_end_date = NULL,
+                physio_notes = excluded.physio_notes,
+                recorded_at = excluded.recorded_at",
+            params![
+                log_id,
+                schedule_id,
+                payload.personnel_id,
+                mandatory_checkin_time,
+                actual_checkin,
+                payload.attendance_status.to_db_attendance_status(),
+                payload.attendance_status.as_operational_str(),
+                is_in_class_val,
+                minutes_late,
+                payload.remarks,
+                payload.certificate_file_name,
+                payload.certificate_data,
+                payload.medical_diagnosis,
+                payload.doctor_details,
+                payload.leave_start_date,
+                payload.leave_end_date,
+                payload.physio_notes,
+            ],
+        )?;
+    }
+
+    // Si es licencia médica, guardar en la tabla permanente medical_leave_records;
+    // si se cambió a otro estado (corrección de error), limpiar/acortar la licencia activa en esa fecha.
     if payload.attendance_status == AttendanceStatus::MedicalLeave {
         let start_date = payload
             .leave_start_date
@@ -324,12 +432,19 @@ pub fn record_attendance(
                 leave_type.as_db_str(),
             ],
         )?;
+    } else {
+        cleanup_medical_leave_from_date(conn, &payload.personnel_id, &payload.schedule_date)?;
     }
 
-    // Si se marcó formalmente en estado jubilatorio
+    // Si se marcó formalmente en estado jubilatorio, activar flag; si se corrige a otro estado, limpiar flag.
     if payload.attendance_status == AttendanceStatus::RetiredExempt {
         conn.execute(
             "UPDATE personnel SET is_retired = 1 WHERE id = ?1",
+            params![payload.personnel_id],
+        )?;
+    } else {
+        conn.execute(
+            "UPDATE personnel SET is_retired = 0 WHERE id = ?1 AND is_retired = 1",
             params![payload.personnel_id],
         )?;
     }
@@ -691,11 +806,14 @@ pub fn get_agent_monthly_attendance_sheet(
     let mut days_physiotherapy = 0;
     let mut days_not_in_class = 0;
     let mut days_absent = 0;
+    let mut days_justified_absence = 0;
     let mut days_not_summoned = 0;
 
     for day in 1..=days_in_month {
         let date_str = format!("{:04}-{:02}-{:02}", year, month, day);
-        let naive_date = NaiveDate::from_ymd_opt(year, month, day).unwrap();
+        let naive_date = NaiveDate::from_ymd_opt(year, month, day).ok_or_else(|| {
+            CoreError::ValidationFailed(format!("Fecha inválida: {:04}-{:02}-{:02}", year, month, day))
+        })?;
         let weekday = naive_date.weekday();
         let is_weekend = weekday == Weekday::Sat || weekday == Weekday::Sun;
         let day_of_week = match weekday {
@@ -714,6 +832,12 @@ pub fn get_agent_monthly_attendance_sheet(
         }
 
         if let Some(log) = logs_map.get(&date_str) {
+            if is_weekend
+                && log.status != AttendanceStatus::Pending
+                && log.status != AttendanceStatus::NoPart
+            {
+                total_working_days += 1;
+            }
             match log.status {
                 AttendanceStatus::Present => days_present += 1,
                 AttendanceStatus::Late => {
@@ -732,8 +856,16 @@ pub fn get_agent_monthly_attendance_sheet(
                 // Adecuación de tareas: cumple jornada en otra área, cuenta como presente
                 AttendanceStatus::TaskAdjustment => days_present += 1,
                 // Sin parte (no convocado): no es falta ni se cuenta en el presentismo
-                AttendanceStatus::NoPart => days_not_summoned += 1,
+                AttendanceStatus::NoPart => {
+                    if !is_weekend {
+                        days_not_summoned += 1;
+                    }
+                }
                 AttendanceStatus::MedicalLeave => days_medical_leave += 1,
+                AttendanceStatus::JustifiedAbsence => {
+                    days_justified_absence += 1;
+                    days_absent += 1;
+                }
                 AttendanceStatus::Absent => days_absent += 1,
                 _ => {}
             }
@@ -820,6 +952,7 @@ pub fn get_agent_monthly_attendance_sheet(
         days_physiotherapy,
         days_not_in_class,
         days_absent,
+        days_justified_absence,
         presence_percentage,
         entries,
     })
@@ -922,7 +1055,9 @@ pub fn get_monthly_bop_matrix(
     let mut days_header = Vec::new();
     for day in 1..=days_in_month {
         let date_str = format!("{:04}-{:02}-{:02}", year, month, day);
-        let naive_date = NaiveDate::from_ymd_opt(year, month, day).unwrap();
+        let naive_date = NaiveDate::from_ymd_opt(year, month, day).ok_or_else(|| {
+            CoreError::ValidationFailed(format!("Fecha inválida: {:04}-{:02}-{:02}", year, month, day))
+        })?;
         let weekday = naive_date.weekday();
         let is_weekend = weekday == Weekday::Sat || weekday == Weekday::Sun;
         let day_name = match weekday {
@@ -1005,7 +1140,7 @@ pub fn get_monthly_bop_matrix(
 
     // 5. Obtener lista de personal activo (orden alfabético por Apellido, Nombre)
     let mut p_stmt = conn.prepare(
-        "SELECT id, legajo, first_name, last_name, nickname, role
+        "SELECT id, legajo, first_name, last_name, nickname, role, COALESCE(is_retired, 0)
          FROM personnel
          WHERE is_active = 1
          ORDER BY 
@@ -1027,13 +1162,14 @@ pub fn get_monthly_bop_matrix(
             r.get::<_, String>(3)?,
             r.get::<_, Option<String>>(4)?,
             r.get::<_, String>(5)?,
+            r.get::<_, i32>(6)? == 1,
         ))
     })?;
 
     let mut rows = Vec::new();
     let mut nro = 1;
     for p_res in p_rows {
-        let (p_id, legajo, first_name, last_name, _nickname, role) = p_res?;
+        let (p_id, legajo, first_name, last_name, _nickname, role, is_retired) = p_res?;
         let dancer_name = format!("{}, {}", last_name, first_name);
 
         let mut cells = Vec::new();
@@ -1044,7 +1180,9 @@ pub fn get_monthly_bop_matrix(
 
         for day in 1..=days_in_month {
             let date_str = format!("{:04}-{:02}-{:02}", year, month, day);
-            let naive_date = NaiveDate::from_ymd_opt(year, month, day).unwrap();
+            let naive_date = NaiveDate::from_ymd_opt(year, month, day).ok_or_else(|| {
+            CoreError::ValidationFailed(format!("Fecha inválida: {:04}-{:02}-{:02}", year, month, day))
+        })?;
             let weekday = naive_date.weekday();
             let is_weekend = weekday == Weekday::Sat || weekday == Weekday::Sun;
 
@@ -1099,6 +1237,7 @@ pub fn get_monthly_bop_matrix(
             dancer_name,
             legajo,
             role,
+            is_retired,
             cells,
             total_p,
             total_ei,
@@ -1136,13 +1275,23 @@ pub fn count_ij(conn: &Connection, personnel_id: &str, prefix: &str, except_date
 }
 
 fn check_ij_limits(conn: &Connection, date: &str, personnel_id: &str) -> CoreResult<()> {
-    let month = count_ij(conn, personnel_id, &date[..7], date)?;
+    let month_prefix = date.get(..7).ok_or_else(|| {
+        CoreError::ValidationFailed(format!(
+            "Fecha inválida para validar tope de IJ (esperado YYYY-MM-DD): {date}"
+        ))
+    })?;
+    let year_prefix = date.get(..4).ok_or_else(|| {
+        CoreError::ValidationFailed(format!(
+            "Fecha inválida para validar tope de IJ (esperado YYYY-MM-DD): {date}"
+        ))
+    })?;
+    let month = count_ij(conn, personnel_id, month_prefix, date)?;
     if month >= IJ_MAX_PER_MONTH {
         return Err(CoreError::ValidationFailed(format!(
             "Tope de IJ alcanzado: ya tiene {month} inasistencias justificadas en el mes (máximo {IJ_MAX_PER_MONTH} por mes)."
         )));
     }
-    let year = count_ij(conn, personnel_id, &date[..4], date)?;
+    let year = count_ij(conn, personnel_id, year_prefix, date)?;
     if year >= IJ_MAX_PER_YEAR {
         return Err(CoreError::ValidationFailed(format!(
             "Tope de IJ alcanzado: ya tiene {year} inasistencias justificadas en el año (máximo {IJ_MAX_PER_YEAR} por año)."
@@ -1158,26 +1307,8 @@ pub fn update_bop_matrix_cell(
     code: &str,
     remarks: Option<&str>,
 ) -> CoreResult<()> {
-    // 1. Obtener o crear schedule_id
-    let schedule_id: String = match conn.query_row(
-        "SELECT id FROM daily_schedules WHERE schedule_date = ?1",
-        [date],
-        |r| r.get(0),
-    ) {
-        Ok(id) => id,
-        Err(rusqlite::Error::QueryReturnedNoRows) => {
-            let new_id = format!("SCHED_{}", date.replace('-', "_"));
-            conn.execute(
-                "INSERT OR IGNORE INTO daily_schedules (
-                    id, schedule_date, day_of_week, regime_type, mandatory_checkin_time, nominal_start_time, nominal_end_time, footer_legal_clause
-                ) VALUES (?1, ?2, 1, 'ORDINARY', '08:45', '09:00', '13:45', 'REPARTO DE ESTUDIO, SIN ORDEN DE PRIORIDAD Y SUJETO A CAMBIOS.')",
-                params![new_id, date],
-            )?;
-            new_id
-        }
-        Err(e) => return Err(CoreError::Database(e)),
-    };
-
+    // 1. Obtener o crear schedule_id y horario de marcada
+    let (schedule_id, mandatory_checkin_time) = get_or_create_schedule_checkin(conn, date)?;
     let log_id = format!("ATT_{}_{}", schedule_id, personnel_id);
 
     if code.trim().is_empty() {
@@ -1185,12 +1316,13 @@ pub fn update_bop_matrix_cell(
             "DELETE FROM attendance_logs WHERE schedule_id = ?1 AND personnel_id = ?2;",
             params![schedule_id, personnel_id],
         )?;
+        cleanup_medical_leave_from_date(conn, personnel_id, date)?;
         return Ok(());
     }
 
     let code_upper = code.trim().to_uppercase();
     let (op_status, att_status, checkin, in_class) = match code_upper.as_str() {
-        "P" => ("PRESENT", "ON_TIME", Some("08:45"), 1),
+        "P" => ("PRESENT", "ON_TIME", Some(mandatory_checkin_time.as_str()), 1),
         "EI" => ("EI", "MEDICAL_LEAVE", None, 0),
         "SP" => ("SP", "ABSENT_UNJUSTIFIED", None, 0),
         "S/P" | "NO_PART" | "SIN_PARTE" => ("NO_PART", "ABSENT_JUSTIFIED", None, 0),
@@ -1198,7 +1330,7 @@ pub fn update_bop_matrix_cell(
         "ART" => ("ART", "MEDICAL_LEAVE", None, 0),
         "LA" => ("LA", "ABSENT_JUSTIFIED", None, 0),
         "ES" => ("ES", "ABSENT_JUSTIFIED", None, 0),
-        "AT" | "ADECUACION" => ("TASK_ADJUSTMENT", "ON_TIME", Some("08:45"), 0),
+        "AT" | "ADECUACION" => ("TASK_ADJUSTMENT", "ON_TIME", Some(mandatory_checkin_time.as_str()), 0),
         "IJ" => {
             check_ij_limits(conn, date, personnel_id)?;
             ("JUSTIFIED_ABSENCE", "ABSENT_JUSTIFIED", None, 0)
@@ -1211,10 +1343,11 @@ pub fn update_bop_matrix_cell(
             id, schedule_id, personnel_id, expected_checkin_time, actual_checkin_time,
             attendance_status, operational_status, is_in_class, minutes_late, remarks, recorded_at
         ) VALUES (
-            ?1, ?2, ?3, '08:45', ?4,
-            ?5, ?6, ?7, 0, ?8, strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+            ?1, ?2, ?3, ?4, ?5,
+            ?6, ?7, ?8, 0, ?9, strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
         )
         ON CONFLICT(schedule_id, personnel_id) DO UPDATE SET
+            expected_checkin_time = excluded.expected_checkin_time,
             actual_checkin_time = excluded.actual_checkin_time,
             attendance_status = excluded.attendance_status,
             operational_status = excluded.operational_status,
@@ -1225,6 +1358,7 @@ pub fn update_bop_matrix_cell(
             log_id,
             schedule_id,
             personnel_id,
+            mandatory_checkin_time,
             checkin,
             att_status,
             op_status,
@@ -1232,6 +1366,10 @@ pub fn update_bop_matrix_cell(
             remarks,
         ],
     )?;
+
+    if !matches!(code_upper.as_str(), "EI" | "ART") {
+        cleanup_medical_leave_from_date(conn, personnel_id, date)?;
+    }
 
     Ok(())
 }

@@ -3,6 +3,8 @@ use crate::domain::{
 };
 use crate::error::{CoreError, CoreResult};
 use rusqlite::{params, Connection};
+use std::collections::HashSet;
+use uuid::Uuid;
 
 pub fn list_soloist_certifications(conn: &Connection) -> CoreResult<Vec<SoloistCertificationDto>> {
     let mut stmt = conn.prepare(
@@ -143,20 +145,18 @@ fn get_certification_items(
 }
 
 pub fn save_soloist_certification(
-    conn: &Connection,
+    conn: &mut Connection,
     payload: SaveSoloistCertificationPayload,
 ) -> CoreResult<SoloistCertificationDto> {
     let cert_id = payload
         .id
         .filter(|s| !s.trim().is_empty())
-        .unwrap_or_else(|| {
-            let sanitized = payload.program_title.to_uppercase().replace(|c: char| !c.is_alphanumeric(), "_");
-            format!("CERT_SOLO_{}_{}", payload.document_date.replace('-', ""), sanitized)
-        });
+        .unwrap_or_else(|| format!("CERT_SOLO_{}", Uuid::new_v4().simple()));
 
     let now_iso = chrono::Utc::now().to_rfc3339();
+    let tx = conn.transaction()?;
 
-    conn.execute(
+    tx.execute(
         "INSERT INTO soloist_certifications (
             id, program_title, hall_name, document_date, recipient_name, recipient_title,
             intro_body, closing_text, status, notes, created_at, updated_at
@@ -190,21 +190,30 @@ pub fn save_soloist_certification(
         ],
     )?;
 
-    // Eliminar ítems previos de esta certificación y reinsertar
-    conn.execute(
+    // Eliminar ítems previos de esta certificación y reinsertar dentro de la misma transacción
+    tx.execute(
         "DELETE FROM soloist_certification_items WHERE certification_id = ?1;",
         [&cert_id],
     )?;
 
+    let mut used_item_ids: HashSet<String> = HashSet::new();
     for (idx, item) in payload.items.iter().enumerate() {
-        let item_id = item
+        let candidate = item
             .id
             .as_deref()
-            .filter(|s| !s.trim().is_empty())
-            .map(|s| s.to_string())
-            .unwrap_or_else(|| format!("ITEM_SOLO_{}_{:02}", cert_id, idx + 1));
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(|s| s.to_string());
+        let item_id = match candidate {
+            Some(id) if used_item_ids.insert(id.clone()) => id,
+            _ => {
+                let fresh = format!("ITEM_SOLO_{}", Uuid::new_v4().simple());
+                used_item_ids.insert(fresh.clone());
+                fresh
+            }
+        };
 
-        conn.execute(
+        tx.execute(
             "INSERT INTO soloist_certification_items (
                 id, certification_id, personnel_id, dancer_name, work_role,
                 performance_dates, performance_count, sort_order
@@ -217,10 +226,12 @@ pub fn save_soloist_certification(
                 item.work_role,
                 item.performance_dates,
                 item.performance_count,
-                item.sort_order.max(idx as i32 + 1),
+                (idx as i32) + 1,
             ],
         )?;
     }
+
+    tx.commit()?;
 
     get_soloist_certification(conn, &cert_id)
 }
@@ -234,7 +245,7 @@ pub fn delete_soloist_certification(conn: &Connection, id: &str) -> CoreResult<(
 }
 
 pub fn generate_soloist_certification_from_work_cast(
-    conn: &Connection,
+    conn: &mut Connection,
     work_id: &str,
     dates_label: &str,
     performances_per_cast: i32,
@@ -250,49 +261,52 @@ pub fn generate_soloist_certification_from_work_cast(
             id: work_id.to_string(),
         })?;
 
-    let mut stmt = conn.prepare(
-        "SELECT m.personnel_id, 
-                CASE 
-                    WHEN p.nickname IS NOT NULL AND p.nickname != '' THEN p.last_name || ', ' || p.first_name || ' (' || p.nickname || ')'
-                    ELSE p.last_name || ', ' || p.first_name
-                END as dancer_name,
-                COALESCE(m.character_role, wp.name, cp.cast_label) as role_label,
-                cp.tier_name
-         FROM work_cast_plan_members m
-         JOIN work_cast_plans cp ON cp.id = m.plan_id
-         JOIN personnel p ON p.id = m.personnel_id
-         LEFT JOIN work_passages wp ON wp.id = cp.passage_id
-         WHERE cp.work_id = ?1
-         ORDER BY cp.tier_name ASC, m.sort_order ASC;",
-    )?;
+    let items = {
+        let mut stmt = conn.prepare(
+            "SELECT m.personnel_id, 
+                    CASE 
+                        WHEN p.nickname IS NOT NULL AND p.nickname != '' THEN p.last_name || ', ' || p.first_name || ' (' || p.nickname || ')'
+                        ELSE p.last_name || ', ' || p.first_name
+                    END as dancer_name,
+                    COALESCE(m.character_role, wp.name, cp.cast_label) as role_label,
+                    cp.tier_name
+             FROM work_cast_plan_members m
+             JOIN work_cast_plans cp ON cp.id = m.plan_id
+             JOIN personnel p ON p.id = m.personnel_id
+             LEFT JOIN work_passages wp ON wp.id = cp.passage_id
+             WHERE cp.work_id = ?1
+             ORDER BY cp.tier_name ASC, m.sort_order ASC;",
+        )?;
 
-    let rows = stmt.query_map([work_id], |r| {
-        Ok((
-            r.get::<_, String>(0)?,
-            r.get::<_, String>(1)?,
-            r.get::<_, String>(2)?,
-            r.get::<_, String>(3)?,
-        ))
-    })?;
+        let rows = stmt.query_map([work_id], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, String>(3)?,
+            ))
+        })?;
 
-    let mut items = Vec::new();
-    let mut sort = 1;
-    for row in rows {
-        let (p_id, dancer, role, tier) = row?;
-        let full_role = format!("{} [{}]", role, tier);
-        items.push(crate::domain::SaveSoloistItemPayload {
-            id: None,
-            personnel_id: Some(p_id),
-            dancer_name: dancer.to_uppercase(),
-            work_role: full_role,
-            performance_dates: dates_label.to_string(),
-            performance_count: performances_per_cast.max(1),
-            sort_order: sort,
-        });
-        sort += 1;
-    }
+        let mut items = Vec::new();
+        let mut sort = 1;
+        for row in rows {
+            let (p_id, dancer, role, tier) = row?;
+            let full_role = format!("{} [{}]", role, tier);
+            items.push(crate::domain::SaveSoloistItemPayload {
+                id: None,
+                personnel_id: Some(p_id),
+                dancer_name: dancer.to_uppercase(),
+                work_role: full_role,
+                performance_dates: dates_label.to_string(),
+                performance_count: performances_per_cast.max(1),
+                sort_order: sort,
+            });
+            sort += 1;
+        }
+        items
+    };
 
-    let today_iso = chrono::Utc::now().format("%Y-%m-%d").to_string();
+    let today_iso = chrono::Local::now().format("%Y-%m-%d").to_string();
     let intro = format!(
         "Me dirijo a Ud. a los fines de informarle los solísticos correspondientes al Ballet Oficial de la Pcia. con respecto a las funciones \"{}\" programadas en la Sala Mayor del Teatro del Libertador Gral. San Martín los días {} se cumplió según el siguiente detalle:",
         work_title, dates_label

@@ -627,8 +627,6 @@ fn test_expanded_inventory_and_dynamic_stock_creation() {
 #[test]
 fn test_export_and_import_sync_bundle_p2p_lan() {
     use crate::db::sync_repo::{export_sync_bundle, import_sync_bundle};
-    use crate::db::schedule_repo::upsert_morning_class;
-    use crate::dto::UpsertMorningClassPayload;
 
     let mut db_mobile = DatabaseManager::open_in_memory().expect("open mobile db");
     let mut db_pc = DatabaseManager::open_in_memory().expect("open pc db");
@@ -1423,4 +1421,529 @@ fn attendance_reports_gender_and_position_of_each_person() {
     assert!(!logs.is_empty());
     assert!(logs.iter().all(|l| !l.gender_group.is_empty()));
     assert!(logs.iter().any(|l| l.gender_group == "FEMALE") && logs.iter().any(|l| l.gender_group == "MALE"));
+}
+
+#[test]
+fn test_morning_classes_unified_special_and_teatrocue_partial_unique() {
+    use crate::db::schedule_repo::upsert_morning_class;
+    use crate::dto::UpsertMorningClassPayload;
+    use crate::services::conflict_engine::ScheduleConflict;
+
+    let mut db = DatabaseManager::open_in_memory().expect("open memory db");
+    let conn = db.connection_mut();
+    let sched = get_or_create_daily_schedule(conn, "2026-11-10").expect("schedule");
+    let sid = sched.schedule.id.clone();
+
+    // Limpiar clases autogeneradas para controlar exactamente las 2 clases del día
+    conn.execute("DELETE FROM morning_classes WHERE schedule_id = ?1", [&sid])
+        .expect("clear morning classes");
+
+    let master_id: String = conn
+        .query_row("SELECT id FROM personnel WHERE role = 'MASTER' LIMIT 1", [], |r| r.get(0))
+        .expect("master");
+    let master2_id: String = conn
+        .query_row("SELECT id FROM personnel WHERE role = 'MASTER' AND id != ?1 LIMIT 1", [&master_id], |r| r.get(0))
+        .expect("master2");
+
+    // Dos clases simultáneas con Pista TeatroCue + una con UNIFIED_SPECIAL (General Compañía)
+    upsert_morning_class(
+        conn,
+        UpsertMorningClassPayload {
+            id: None,
+            schedule_id: sid.clone(),
+            room: RoomCode::Sala1,
+            gender_division: GenderGroup::UnifiedSpecial,
+            start_time: "09:00".to_string(),
+            end_time: "10:15".to_string(),
+            master_id: master_id.clone(),
+            pianist_id: "PER_SOUND_TEATROCUE".to_string(),
+            sound_tech_id: None,
+        },
+    )
+    .expect("first TeatroCue UNIFIED_SPECIAL class succeeds");
+
+    let res = upsert_morning_class(
+        conn,
+        UpsertMorningClassPayload {
+            id: None,
+            schedule_id: sid.clone(),
+            room: RoomCode::Sala2,
+            gender_division: GenderGroup::Male,
+            start_time: "09:00".to_string(),
+            end_time: "10:15".to_string(),
+            master_id: master2_id.clone(),
+            pianist_id: "PER_SOUND_TEATROCUE".to_string(),
+            sound_tech_id: None,
+        },
+    )
+    .expect("second TeatroCue class on same day succeeds");
+
+    assert_eq!(res.schedule.morning_classes.len(), 2);
+    assert!(res.schedule.morning_classes.iter().any(|c| c.gender_division == GenderGroup::UnifiedSpecial));
+    assert!(
+        !res.conflicts.iter().any(|c| matches!(c, ScheduleConflict::PersonDoubleBooked { .. })),
+        "PER_SOUND_TEATROCUE must not trigger PersonDoubleBooked: {:?}",
+        res.conflicts
+    );
+
+    // Un pianista humano real sigue protegido por el índice único parcial
+    let human_pianist: String = conn
+        .query_row(
+            "SELECT id FROM personnel WHERE role = 'PIANIST' AND id != 'PER_SOUND_TEATROCUE' LIMIT 1",
+            [],
+            |r| r.get(0),
+        )
+        .expect("human pianist");
+    conn.execute("DELETE FROM morning_classes WHERE schedule_id = ?1", [&sid]).unwrap();
+    upsert_morning_class(
+        conn,
+        UpsertMorningClassPayload {
+            id: None,
+            schedule_id: sid.clone(),
+            room: RoomCode::Sala1,
+            gender_division: GenderGroup::Female,
+            start_time: "09:00".to_string(),
+            end_time: "10:15".to_string(),
+            master_id: master_id.clone(),
+            pianist_id: human_pianist.clone(),
+            sound_tech_id: None,
+        },
+    )
+    .expect("first human pianist class");
+
+    let dup_human = upsert_morning_class(
+        conn,
+        UpsertMorningClassPayload {
+            id: None,
+            schedule_id: sid.clone(),
+            room: RoomCode::Sala2,
+            gender_division: GenderGroup::Male,
+            start_time: "09:00".to_string(),
+            end_time: "10:15".to_string(),
+            master_id: master2_id,
+            pianist_id: human_pianist,
+            sound_tech_id: None,
+        },
+    );
+    assert!(dup_human.is_err(), "human pianist double-booking in morning_classes must still be rejected");
+}
+
+#[test]
+fn test_interday_rest_audit_and_notes_roundtrip() {
+    use crate::db::schedule_repo::{update_schedule_rules, load_daily_schedule_with_audit};
+    use crate::dto::UpdateScheduleRulesPayload;
+    use crate::services::conflict_engine::ScheduleConflict;
+
+    let mut db = DatabaseManager::open_in_memory().expect("open memory db");
+    let conn = db.connection_mut();
+
+    // Día 1 termina tarde (22:00) en función/ensayo
+    let day1 = get_or_create_daily_schedule(conn, "2026-11-12").expect("day1");
+    set_schedule_regime(conn, &day1.schedule.id, WorkRegime::Extraordinary).expect("regime");
+    update_schedule_rules(
+        conn,
+        UpdateScheduleRulesPayload {
+            schedule_id: day1.schedule.id.clone(),
+            mandatory_checkin_time: "14:00".to_string(),
+            nominal_start_time: "14:15".to_string(),
+            nominal_end_time: "22:30".to_string(),
+            minimum_intershift_rest_hours: 12,
+            class_to_rehearsal_rest_minutes: Some(15),
+            is_compensatory_rest_day: Some(false),
+            compensatory_rest_days: Some(0),
+            compensatory_rest_policy: Some("NONE".to_string()),
+            footer_legal_clause: None,
+            general_notes: Some("Nota general preservada".to_string()),
+        },
+    )
+    .expect("update rules day1");
+
+    let saved_day1 = upsert_rehearsal_block(
+        conn,
+        UpsertRehearsalBlockPayload {
+            id: None,
+            schedule_id: day1.schedule.id.clone(),
+            room: RoomCode::Escenario,
+            start_time: "20:00".to_string(),
+            end_time: "22:00".to_string(),
+            activity_type: ActivityType::Performance,
+            work_id: None,
+            passage_id: None,
+            custom_passage_label: Some("Función Nocturna".to_string()),
+            confirmation_state: ConfirmationState::Confirmed,
+            sound_requirement: "ORQUESTA".to_string(),
+            teatrocue_cue_ref: None,
+            master_id: None,
+            pianist_id: None,
+            sound_tech_id: None,
+            allow_shared_room: false,
+            notes: Some("Traer vestuario completo".to_string()),
+            cast_groups: vec![],
+        },
+    )
+    .expect("save late performance");
+
+    assert_eq!(saved_day1.schedule.general_notes.as_deref(), Some("Nota general preservada"));
+    let blk = saved_day1
+        .schedule
+        .rehearsal_blocks
+        .iter()
+        .find(|b| b.passage_name == "Función Nocturna")
+        .expect("block");
+    assert_eq!(blk.notes.as_deref(), Some("Traer vestuario completo"));
+
+    // Día 2 comienza a las 08:45 (< 12h desde las 22:00 = 10h 45m = 645m < 720m)
+    let day2 = get_or_create_daily_schedule(conn, "2026-11-13").expect("day2");
+    let reloaded_day2 = load_daily_schedule_with_audit(conn, &day2.schedule.id).expect("reload day2");
+    assert!(
+        reloaded_day2.conflicts.iter().any(|c| matches!(
+            c,
+            ScheduleConflict::MinimumIntershiftRestViolation {
+                actual_rest_minutes: 645,
+                required_rest_minutes: 720,
+                ..
+            }
+        )),
+        "expected 12h inter-day rest violation, got {:?}",
+        reloaded_day2.conflicts
+    );
+}
+
+#[test]
+fn test_attendance_dynamic_checkin_cleanup_and_weekend_sheet() {
+    use crate::db::attendance_repo::get_agent_monthly_attendance_sheet;
+    use crate::db::schedule_repo::update_schedule_rules;
+    use crate::dto::UpdateScheduleRulesPayload;
+
+    let mut db = DatabaseManager::open_in_memory().expect("open memory db");
+    let conn = db.connection_mut();
+    let dancer_id = list_personnel(conn, Some(PersonnelRole::Dancer), true)
+        .expect("dancers")[0]
+        .id
+        .clone();
+
+    let empty_payload = |date: &str, status: AttendanceStatus| RecordAttendancePayload {
+        schedule_date: date.to_string(),
+        personnel_id: dancer_id.clone(),
+        attendance_status: status,
+        actual_checkin_time: None,
+        minutes_late: None,
+        remarks: None,
+        certificate_file_name: None,
+        certificate_data: None,
+        medical_diagnosis: None,
+        doctor_details: None,
+        leave_start_date: None,
+        leave_end_date: None,
+        leave_type: None,
+        physio_notes: None,
+        update_permanent_physio_tracking: None,
+    };
+
+    // 1. Checkin dinámico (10:00) -> 10:18 debe ser exactamente 18 min tarde
+    let sched = get_or_create_daily_schedule(conn, "2026-10-20").expect("schedule");
+    update_schedule_rules(
+        conn,
+        UpdateScheduleRulesPayload {
+            schedule_id: sched.schedule.id.clone(),
+            mandatory_checkin_time: "10:00".to_string(),
+            nominal_start_time: "10:15".to_string(),
+            nominal_end_time: "13:45".to_string(),
+            minimum_intershift_rest_hours: 12,
+            class_to_rehearsal_rest_minutes: Some(15),
+            is_compensatory_rest_day: Some(false),
+            compensatory_rest_days: Some(0),
+            compensatory_rest_policy: Some("NONE".to_string()),
+            footer_legal_clause: None,
+            general_notes: None,
+        },
+    )
+    .expect("set checkin 10:00");
+
+    let mut late_p = empty_payload("2026-10-20", AttendanceStatus::Late);
+    late_p.actual_checkin_time = Some("10:18".to_string());
+    let late = record_attendance(conn, late_p).expect("record late");
+    assert_eq!(late.expected_checkin_time, "10:00");
+    assert_eq!(late.minutes_late, 18);
+
+    // 2. Registrar licencia médica y luego corregir a PRESENT -> debe limpiar medical_leave_records
+    let mut med_p = empty_payload("2026-10-21", AttendanceStatus::MedicalLeave);
+    med_p.medical_diagnosis = Some("Certificado de prueba".to_string());
+    med_p.leave_start_date = Some("2026-10-21".to_string());
+    med_p.leave_end_date = Some("2026-10-23".to_string());
+    record_attendance(conn, med_p).expect("record medical leave");
+
+    let active_leaves_before: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM medical_leave_records WHERE personnel_id = ?1",
+            [&dancer_id],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(active_leaves_before, 1);
+
+    let mut fix_med_p = empty_payload("2026-10-21", AttendanceStatus::Present);
+    fix_med_p.actual_checkin_time = Some("08:45".to_string());
+    let corrected = record_attendance(conn, fix_med_p).expect("correct medical leave to present");
+    assert_eq!(corrected.medical_diagnosis, None);
+
+    let active_leaves_after: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM medical_leave_records WHERE personnel_id = ?1",
+            [&dancer_id],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(active_leaves_after, 0);
+
+    // 3. Registrar RETIRED_EXEMPT y luego corregir a PRESENT -> is_retired vuelve a 0
+    record_attendance(conn, empty_payload("2026-10-22", AttendanceStatus::RetiredExempt)).expect("mark retired");
+    let retired_flag: i32 = conn
+        .query_row("SELECT COALESCE(is_retired, 0) FROM personnel WHERE id = ?1", [&dancer_id], |r| r.get(0))
+        .unwrap();
+    assert_eq!(retired_flag, 1);
+
+    let mut revert_ret = empty_payload("2026-10-22", AttendanceStatus::Present);
+    revert_ret.actual_checkin_time = Some("08:45".to_string());
+    record_attendance(conn, revert_ret).expect("revert retired");
+    let retired_flag_after: i32 = conn
+        .query_row("SELECT COALESCE(is_retired, 0) FROM personnel WHERE id = ?1", [&dancer_id], |r| r.get(0))
+        .unwrap();
+    assert_eq!(retired_flag_after, 0);
+
+    // 4. Sábado trabajado (2026-10-24) e IJ (2026-10-23) en planilla mensual + fecha malformada no entra en panic
+    let mut sat_p = empty_payload("2026-10-24", AttendanceStatus::Present);
+    sat_p.actual_checkin_time = Some("18:00".to_string());
+    sat_p.remarks = Some("Función sábado".to_string());
+    record_attendance(conn, sat_p).expect("saturday worked");
+
+    record_attendance(conn, empty_payload("2026-10-23", AttendanceStatus::JustifiedAbsence)).expect("ij weekday");
+
+    let sheet = get_agent_monthly_attendance_sheet(conn, &dancer_id, 2026, 10).expect("monthly sheet");
+    let sat_entry = sheet.entries.iter().find(|e| e.date == "2026-10-24").expect("sat entry");
+    assert!(sat_entry.is_weekend);
+    assert_eq!(sat_entry.status, AttendanceStatus::Present);
+    assert_eq!(sheet.days_justified_absence, 1);
+    assert!(sheet.days_absent >= 1);
+
+    // Fecha corta inválida no debe entrar en panic
+    let bad_date = record_attendance(conn, empty_payload("bad", AttendanceStatus::JustifiedAbsence));
+    assert!(bad_date.is_err());
+}
+
+#[test]
+fn test_active_reservations_delivery_and_sku_uniqueness() {
+    use crate::db::stock_repo::list_active_reservations;
+
+    let mut db = DatabaseManager::open_in_memory().expect("open memory db");
+    let dancer_id = list_personnel(db.connection(), Some(PersonnelRole::Dancer), true)
+        .expect("dancers")[0]
+        .id
+        .clone();
+
+    let item1 = upsert_stock_item(
+        db.connection_mut(),
+        UpsertStockItemPayload {
+            id: None,
+            sku_code: None,
+            family: "POINTE".to_string(),
+            subcategory: "PUNTA_BLOCH".to_string(),
+            quota_bucket: QuotaBucket::Pointe,
+            brand: "Bloch".to_string(),
+            model_name: "Serenade Test".to_string(),
+            raw_factory_code: None,
+            color: "Rosa".to_string(),
+            material: "SATEN".to_string(),
+            size_system: "US".to_string(),
+            size_value: "7".to_string(),
+            width_value: Some("C".to_string()),
+            physical_qty: 10,
+            min_alert_qty: 2,
+            storage_bin_location: None,
+        },
+    )
+    .expect("item1");
+
+    // Crear un segundo artículo activo con la misma combinación sin SKU explícito -> desambigua sin chocar UNIQUE
+    let item2 = upsert_stock_item(
+        db.connection_mut(),
+        UpsertStockItemPayload {
+            id: None,
+            sku_code: None,
+            family: "POINTE".to_string(),
+            subcategory: "PUNTA_BLOCH".to_string(),
+            quota_bucket: QuotaBucket::Pointe,
+            brand: "Bloch".to_string(),
+            model_name: "Serenade Test".to_string(),
+            raw_factory_code: None,
+            color: "Rosa".to_string(),
+            material: "SATEN".to_string(),
+            size_system: "US".to_string(),
+            size_value: "7".to_string(),
+            width_value: Some("C".to_string()),
+            physical_qty: 4,
+            min_alert_qty: 2,
+            storage_bin_location: None,
+        },
+    )
+    .expect("item2 disambiguated SKU");
+    assert_ne!(item1.sku_code, item2.sku_code);
+
+    // Reserva activa + entrega + verificación de delta_reserved y bloqueo de doble entrega
+    let res = create_nominal_reservation(db.connection_mut(), &item1.id, &dancer_id, "Reserva test", 2, None)
+        .expect("create reservation");
+    let active = list_active_reservations(db.connection(), Some(&dancer_id)).expect("list active");
+    assert!(active.iter().any(|r| r.id == res.id && r.quantity == 2));
+
+    let receipt = execute_voucher_delivery(
+        db.connection_mut(),
+        ExecuteVoucherPayload {
+            personnel_id: dancer_id.clone(),
+            season_year: None,
+            delivered_by_inspector_id: "PER_INSPECTOR_MAIN".to_string(),
+            device_id: "TEST".to_string(),
+            signature_svg_strokes: None,
+            is_quota_exception: false,
+            exception_reason: None,
+            notes: Some("Entrega de reserva".to_string()),
+            items: vec![ExecuteVoucherItemPayload {
+                stock_item_id: item1.id.clone(),
+                reservation_id: Some(res.id.clone()),
+                quantity: 2,
+                quota_bucket: QuotaBucket::Pointe,
+            }],
+        },
+    )
+    .expect("deliver reservation");
+    assert!(!receipt.voucher_number.is_empty());
+
+    let delta_reserved: i32 = db
+        .connection()
+        .query_row(
+            "SELECT delta_reserved FROM stock_ledger WHERE stock_item_id = ?1 AND movement_type = 'VOUCHER_DELIVERY_OUT' ORDER BY created_at DESC LIMIT 1",
+            [&item1.id],
+            |r| r.get(0),
+        )
+        .expect("ledger row");
+    assert_eq!(delta_reserved, -2);
+
+    // Reintentar entregar la misma reserva ya cumplida debe fallar
+    let second_try = execute_voucher_delivery(
+        db.connection_mut(),
+        ExecuteVoucherPayload {
+            personnel_id: dancer_id,
+            season_year: None,
+            delivered_by_inspector_id: "PER_INSPECTOR_MAIN".to_string(),
+            device_id: "TEST".to_string(),
+            signature_svg_strokes: None,
+            is_quota_exception: false,
+            exception_reason: None,
+            notes: None,
+            items: vec![ExecuteVoucherItemPayload {
+                stock_item_id: item1.id,
+                reservation_id: Some(res.id),
+                quantity: 2,
+                quota_bucket: QuotaBucket::Pointe,
+            }],
+        },
+    );
+    assert!(second_try.is_err(), "re-delivering fulfilled reservation must fail");
+}
+
+#[test]
+fn test_vault_lazy_data_and_expanded_sync_bundle_roundtrip() {
+    use crate::db::attendance_repo::set_day_schedule_annotation;
+    use crate::db::inspection_vault_repo::{
+        create_vault_document, get_vault_document_data, list_vault_documents,
+    };
+    use crate::db::sync_repo::{export_sync_bundle, import_sync_bundle};
+    use crate::dto::{CreateInspectionDocumentPayload, InspectionVaultFilterPayload};
+
+    let src = DatabaseManager::open_in_memory().expect("src");
+    let mut dst = DatabaseManager::open_in_memory().expect("dst");
+
+    let doc = create_vault_document(
+        src.connection(),
+        CreateInspectionDocumentPayload {
+            id: None,
+            title: "Recibo Colofonia Lazy".to_string(),
+            category: "RECIBO_COMPRA".to_string(),
+            document_date: "2026-11-15".to_string(),
+            personnel_id: None,
+            file_name: "colofonia.png".to_string(),
+            file_type: "image/png".to_string(),
+            file_size_bytes: Some(32),
+            file_data: "data:image/png;base64,LAZYDATA123".to_string(),
+            amount_ars: Some(12500.0),
+            supplier_vendor: Some("Casa Danza".to_string()),
+            notes: Some("Prueba lazy".to_string()),
+        },
+    )
+    .expect("create vault doc");
+
+    // El listado devuelve metadata con file_data vacío; get_vault_document_data trae el blob
+    let listed = list_vault_documents(src.connection(), InspectionVaultFilterPayload::default()).expect("list");
+    let found = listed.iter().find(|d| d.id == doc.id).expect("doc in list");
+    assert!(found.file_data.is_empty(), "list_vault_documents must omit file_data blob");
+    let blob = get_vault_document_data(src.connection(), &doc.id).expect("get blob");
+    assert_eq!(blob, "data:image/png;base64,LAZYDATA123");
+
+    // Registrar una licencia médica y una anotación de día para verificar el sync ampliado
+    let dancer_id = list_personnel(src.connection(), Some(PersonnelRole::Dancer), true).expect("dancers")[0]
+        .id
+        .clone();
+    record_attendance(
+        src.connection(),
+        RecordAttendancePayload {
+            schedule_date: "2026-11-15".to_string(),
+            personnel_id: dancer_id.clone(),
+            attendance_status: AttendanceStatus::MedicalLeave,
+            actual_checkin_time: None,
+            minutes_late: None,
+            remarks: None,
+            certificate_file_name: None,
+            certificate_data: None,
+            medical_diagnosis: Some("Sync leave".to_string()),
+            doctor_details: None,
+            leave_start_date: Some("2026-11-15".to_string()),
+            leave_end_date: Some("2026-11-16".to_string()),
+            leave_type: None,
+            physio_notes: None,
+            update_permanent_physio_tracking: None,
+        },
+    )
+    .expect("medical leave");
+    set_day_schedule_annotation(src.connection(), "2026-11-15", Some("GIRA_INTERIOR"))
+        .expect("day annotation");
+
+    // Exportar e importar en destino
+    let bundle = export_sync_bundle(src.connection(), "PC-SRC", "NODE-SRC").expect("export");
+    assert!(!bundle.inspection_vault_documents.is_empty());
+    assert!(!bundle.medical_leave_records.is_empty());
+    assert!(!bundle.works.is_empty());
+
+    import_sync_bundle(dst.connection_mut(), &bundle).expect("import into dst");
+
+    let dst_blob = get_vault_document_data(dst.connection(), &doc.id).expect("synced vault blob");
+    assert_eq!(dst_blob, "data:image/png;base64,LAZYDATA123");
+
+    let dst_leaves: i64 = dst
+        .connection()
+        .query_row(
+            "SELECT COUNT(*) FROM medical_leave_records WHERE personnel_id = ?1",
+            [&dancer_id],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(dst_leaves, 1);
+
+    let dst_ann: Option<String> = dst
+        .connection()
+        .query_row(
+            "SELECT day_annotation FROM daily_schedules WHERE schedule_date = '2026-11-15'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(dst_ann.as_deref(), Some("GIRA_INTERIOR"));
 }

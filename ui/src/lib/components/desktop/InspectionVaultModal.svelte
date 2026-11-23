@@ -12,6 +12,7 @@
   import ModalHeader from '../shared/ModalHeader.svelte';
   import { modalBehavior } from '../../actions/modalBehavior';
   import { printDocument, saveDataUrl } from '../../nativeOutput';
+  import { todayLocalIso } from '../../date';
   import type { PhotoReader } from '../../documentRecognition';
 
   let {
@@ -60,7 +61,7 @@
   let showUploadModal = $state(false);
   let uploadTitle = $state('');
   let uploadCategory = $state<'RECIBO_COMPRA' | 'CERTIFICADO_MEDICO' | 'MEMO_DISPOSICION' | 'ACUERDO_DIRECCION' | 'SOLISTICO_FIRMA' | 'PARTE' | 'INFORME' | 'OTRO'>('RECIBO_COMPRA');
-  let uploadDate = $state(new Date().toISOString().split('T')[0]);
+  let uploadDate = $state(todayLocalIso());
   let uploadPersonnelId = $state('');
   let uploadAmountArs = $state<number | null>(null);
   let uploadSupplier = $state('');
@@ -71,9 +72,14 @@
   let uploadFileSize = $state(0);
   let uploadError = $state('');
   let isSavingDocument = $state(false);
+  let isCompressingUpload = $state(false);
 
-  // Visor de Documento a Pantalla Completa
+  // Visor de Documento a Pantalla Completa (carga de datos bajo demanda)
   let viewingDocument = $state<InspectionVaultDocumentDto | null>(null);
+  let viewingDocumentData = $state<string>('');
+  let isLoadingDocumentData = $state(false);
+  let viewingDocumentError = $state('');
+  const documentDataCache = new Map<string, string>();
 
   const CATEGORIES = [
     { key: 'ALL', label: 'Todos los Documentos', badge: 'bg-raised text-ink border-grid' },
@@ -109,6 +115,9 @@
     showUploadModal = false;
     showSecurityConfigModal = false;
     viewingDocument = null;
+    viewingDocumentData = '';
+    viewingDocumentError = '';
+    documentDataCache.clear();
   }
 
   async function loadSecurityStatus() {
@@ -126,6 +135,13 @@
 
   async function unlockVault() {
     unlockError = '';
+    if (!securityStatus.has_password) {
+      isUnlocked = true;
+      unlockPassword = '';
+      resetActivityTimer();
+      await loadVaultData();
+      return;
+    }
     isAuthenticating = true;
     try {
       const ok = await api.verifyVaultPassword({ password: unlockPassword });
@@ -142,6 +158,41 @@
     } finally {
       isAuthenticating = false;
     }
+  }
+
+  async function openDocumentViewer(doc: InspectionVaultDocumentDto) {
+    viewingDocument = doc;
+    viewingDocumentError = '';
+    const cached = doc.file_data || documentDataCache.get(doc.id);
+    if (cached) {
+      viewingDocumentData = cached;
+      isLoadingDocumentData = false;
+      return;
+    }
+    viewingDocumentData = '';
+    isLoadingDocumentData = true;
+    try {
+      const data = await api.getVaultDocumentData(doc.id);
+      documentDataCache.set(doc.id, data);
+      if (viewingDocument?.id === doc.id) {
+        viewingDocumentData = data;
+      }
+    } catch (e: any) {
+      if (viewingDocument?.id === doc.id) {
+        viewingDocumentError = e?.message || 'No se pudo cargar el archivo adjunto.';
+      }
+    } finally {
+      if (viewingDocument?.id === doc.id) {
+        isLoadingDocumentData = false;
+      }
+    }
+  }
+
+  function closeDocumentViewer() {
+    viewingDocument = null;
+    viewingDocumentData = '';
+    viewingDocumentError = '';
+    isLoadingDocumentData = false;
   }
 
   async function loadVaultData() {
@@ -176,19 +227,31 @@
     }
   }
 
-  function handleFileSelected(event: Event) {
+  async function handleFileSelected(event: Event) {
     const target = event.target as HTMLInputElement;
     if (!target.files || target.files.length === 0) return;
-    const file = target.files[0];
-    uploadFileName = file.name;
-    uploadFileType = file.type || 'application/octet-stream';
-    uploadFileSize = file.size;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      uploadFileData = reader.result as string;
-    };
-    reader.readAsDataURL(file);
+    const rawFile = target.files[0];
+    uploadError = '';
+    isCompressingUpload = true;
+    try {
+      let finalFile = rawFile;
+      if (rawFile.type.startsWith('image/')) {
+        try {
+          const { compressPhoto } = await import('../../documentRecognition');
+          finalFile = await compressPhoto(rawFile);
+        } catch (compressErr) {
+          console.warn('No se pudo comprimir la imagen, se adjunta original:', compressErr);
+        }
+      }
+      uploadFileName = finalFile.name;
+      uploadFileType = finalFile.type || 'application/octet-stream';
+      uploadFileSize = finalFile.size;
+      uploadFileData = await readAsDataUrl(finalFile);
+    } catch (e: any) {
+      uploadError = e?.message || 'Error leyendo el archivo seleccionado.';
+    } finally {
+      isCompressingUpload = false;
+    }
   }
 
   async function submitDocument() {
@@ -254,7 +317,7 @@
   let isReading = $state(false);
   let nextImportRow = 0;
 
-  const today = () => new Date().toISOString().split('T')[0];
+  const today = () => todayLocalIso();
   const hasCamera = /Android|iPhone|iPad/i.test(navigator.userAgent);
   const importCategories = CATEGORIES.filter((c) => c.key !== 'ALL');
 
@@ -379,7 +442,7 @@
   function resetUploadForm() {
     uploadTitle = '';
     uploadCategory = 'RECIBO_COMPRA';
-    uploadDate = new Date().toISOString().split('T')[0];
+    uploadDate = todayLocalIso();
     uploadPersonnelId = '';
     uploadAmountArs = null;
     uploadSupplier = '';
@@ -395,6 +458,7 @@
     if (!confirm(`¿Eliminar definitivamente "${doc.title}" de la bóveda de inspección? Esta acción no se puede deshacer.`)) return;
     try {
       await api.deleteVaultDocument(doc.id);
+      documentDataCache.delete(doc.id);
       await loadVaultData();
     } catch (e: any) {
       alert(`No se pudo eliminar el documento: ${e?.message || e}`);
@@ -447,12 +511,16 @@
     inactivityInterval = setInterval(checkInactivityLock, 10000); // Chequea cada 10s
     window.addEventListener('mousemove', resetActivityTimer);
     window.addEventListener('keydown', resetActivityTimer);
+    window.addEventListener('touchstart', resetActivityTimer, { passive: true });
+    window.addEventListener('pointerdown', resetActivityTimer, { passive: true });
   });
 
   onDestroy(() => {
     if (inactivityInterval) clearInterval(inactivityInterval);
     window.removeEventListener('mousemove', resetActivityTimer);
     window.removeEventListener('keydown', resetActivityTimer);
+    window.removeEventListener('touchstart', resetActivityTimer);
+    window.removeEventListener('pointerdown', resetActivityTimer);
   });
 
   function formatArs(amount: number | null | undefined): string {
@@ -584,7 +652,7 @@
             <div class="flex items-center gap-2 pt-1">
               <button
                 type="submit"
-                disabled={isAuthenticating || !unlockPassword}
+                disabled={isAuthenticating || (securityStatus.has_password && !unlockPassword)}
                 class="flex-1 h-11 bg-amber hover:bg-amber disabled:opacity-40 text-void font-bold rounded-md text-sm transition-colors flex items-center justify-center gap-2"
               >
                 <span>{isAuthenticating ? 'Verificando...' : 'Desbloquear Bóveda'}</span>
@@ -787,7 +855,7 @@
 
                     <div class="flex items-center gap-1.5">
                       <button
-                        onclick={() => viewingDocument = doc}
+                        onclick={() => openDocumentViewer(doc)}
                         class="px-2.5 py-1 bg-raised hover:bg-amber hover:text-void text-ink rounded text-[10px] font-bold transition-colors"
                         title="Ver documento completo en alta resolución"
                       >
@@ -928,11 +996,14 @@
             id="vault-file-input"
             type="file"
             accept="image/*,application/pdf"
-            capture="environment"
             onchange={handleFileSelected}
             class="w-full text-xs text-dim file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber file:text-void hover:file:bg-amber cursor-pointer"
           />
-          {#if uploadFileName}
+          {#if isCompressingUpload}
+            <div class="mt-1 text-[11px] font-mono text-amber">
+              Optimizando imagen...
+            </div>
+          {:else if uploadFileName}
             <div class="mt-1 text-[11px] font-mono text-green">
               Archivo seleccionado: {uploadFileName} ({formatBytes(uploadFileSize)})
             </div>
@@ -967,10 +1038,10 @@
         </button>
         <button
           onclick={submitDocument}
-          disabled={isSavingDocument}
+          disabled={isSavingDocument || isCompressingUpload}
           class="tg-btn tg-btn-primary disabled:opacity-50"
         >
-          {isSavingDocument ? 'Guardando...' : 'Guardar en Bóveda'}
+          {isSavingDocument ? 'Guardando...' : isCompressingUpload ? 'Procesando...' : 'Guardar en Bóveda'}
         </button>
       </div>
     </div>
@@ -981,7 +1052,7 @@
 <!-- MODAL DE VISOR DE DOCUMENTO A PANTALLA COMPLETA                           -->
 <!-- ========================================================================= -->
 {#if viewingDocument}
-  <div class="fixed inset-0 z-50 bg-black/95 flex flex-col p-4" use:modalBehavior={{ onclose: () => viewingDocument = null }}>
+  <div class="fixed inset-0 z-50 bg-black/95 flex flex-col p-4" use:modalBehavior={{ onclose: closeDocumentViewer }}>
     <div class="flex pb-3 border-b border-grid shrink-0 items-start gap-3">
       <!-- cierre fijo en la esquina: el resto de la barra puede partirse en filas -->
       <div class="flex flex-1 min-w-0 flex-wrap items-center justify-between gap-3">
@@ -997,23 +1068,24 @@
 
         <div class="flex items-center gap-2">
           <a
-            href={viewingDocument.file_data}
+            href={viewingDocumentData || '#'}
             download={viewingDocument.file_name}
-            onclick={(e) => { e.preventDefault(); if (viewingDocument) saveDataUrl(viewingDocument.file_data, viewingDocument.file_name).catch((err) => alert(err?.message || err)); }}
-            class="h-8 px-3 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold flex items-center gap-1 transition-colors"
+            onclick={(e) => { e.preventDefault(); if (viewingDocument && viewingDocumentData) saveDataUrl(viewingDocumentData, viewingDocument.file_name).catch((err) => alert(err?.message || err)); }}
+            class="h-8 px-3 bg-raised hover:bg-grid text-green border border-grid rounded text-xs font-semibold flex items-center gap-1 transition-colors {!viewingDocumentData ? 'opacity-50 pointer-events-none' : ''}"
           >
             Descargar
           </a>
           <button
+            disabled={!viewingDocumentData}
             onclick={() => printDocument(viewingDocument?.title)}
-            class="h-8 px-3 bg-raised hover:bg-grid text-ink border border-grid rounded text-xs font-semibold transition-colors"
+            class="h-8 px-3 bg-raised hover:bg-grid text-ink border border-grid rounded text-xs font-semibold transition-colors disabled:opacity-50"
           >
             Imprimir
           </button>
         </div>
       </div>
       <button
-        onclick={() => viewingDocument = null}
+        onclick={closeDocumentViewer}
         class="tg-modal-close"
         aria-label="Cerrar"
         title="Cerrar"
@@ -1025,9 +1097,17 @@
     </div>
 
     <div class="flex-1 overflow-auto flex items-center justify-center p-4">
-      {#if viewingDocument.file_type.includes('pdf')}
+      {#if isLoadingDocumentData}
+        <div class="text-center text-dim font-mono text-xs p-8">
+          Cargando documento desde la bóveda...
+        </div>
+      {:else if viewingDocumentError}
+        <div class="text-center text-red font-mono text-xs p-8">
+          {viewingDocumentError}
+        </div>
+      {:else if viewingDocument.file_type.includes('pdf')}
         <iframe
-          src={viewingDocument.file_data}
+          src={viewingDocumentData}
           class="w-full h-full rounded border border-grid bg-white"
           title={viewingDocument.title}
         ></iframe>
@@ -1038,7 +1118,7 @@
         </div>
       {:else}
         <img
-          src={viewingDocument.file_data}
+          src={viewingDocumentData}
           alt={viewingDocument.title}
           class="max-w-full max-h-[85vh] object-contain rounded  border border-grid"
         />

@@ -209,6 +209,8 @@ pub struct RehearsalBlock {
     pub sound_tech_id: Option<String>,
     pub sound_tech_name: Option<String>,
     pub allow_shared_room: bool,
+    #[serde(default)]
+    pub notes: Option<String>,
     pub cast_groups: Vec<RehearsalCastGroup>,
 }
 
@@ -225,6 +227,8 @@ pub struct DailyScheduleAggregate {
     pub compensatory_rest_days: u8,
     pub compensatory_rest_policy: String,
     pub footer_legal_clause: String,    // OFFICIAL_LEGAL_FOOTER_CLAUSE
+    #[serde(default)]
+    pub general_notes: Option<String>,
     pub morning_classes: Vec<MorningClassSlot>,
     pub rehearsal_blocks: Vec<RehearsalBlock>,
 }
@@ -243,6 +247,7 @@ impl DailyScheduleAggregate {
             compensatory_rest_days: 1,
             compensatory_rest_policy: "NEXT_DAY".to_string(),
             footer_legal_clause: OFFICIAL_LEGAL_FOOTER_CLAUSE.to_string(),
+            general_notes: None,
             morning_classes: Vec::new(),
             rehearsal_blocks: Vec::new(),
         }

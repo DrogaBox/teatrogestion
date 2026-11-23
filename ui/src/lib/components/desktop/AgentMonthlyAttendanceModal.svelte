@@ -128,7 +128,7 @@
       else if (e.is_weekend) st = 'FRANCO/DESCANSO';
       else st = 'PENDIENTE';
 
-      const clase = e.is_weekend ? 'FRANCO' : e.is_in_class ? 'EN CLASE' : 'NO EN CLASE';
+      const clase = e.is_weekend && e.status === 'PENDING' ? 'FRANCO' : e.is_in_class ? 'EN CLASE' : 'NO EN CLASE';
       csv += `"${e.day_of_week}";"${e.date}";"${clase}";"${st}";${e.minutes_late > 0 ? e.minutes_late : 0};"${(e.medical_diagnosis || '').replace(/;/g, ',')}";"${(e.remarks || '').replace(/;/g, ',')}"\n`;
     });
 
@@ -341,11 +341,11 @@
               </thead>
               <tbody>
                 {#each currentSheet.entries as e}
-                  <tr class="border-b border-black {e.is_weekend ? 'bg-slate-50 text-slate-500 italic' : e.status === 'LATE' ? 'bg-amber-50 font-medium' : e.status === 'MEDICAL_LEAVE' ? 'bg-purple-50 font-medium' : ''}">
+                  <tr class="border-b border-black {e.is_weekend && e.status === 'PENDING' ? 'bg-slate-50 text-slate-500 italic' : e.status === 'LATE' ? 'bg-amber-50 font-medium' : e.status === 'MEDICAL_LEAVE' ? 'bg-purple-50 font-medium' : e.is_weekend ? 'bg-emerald-50/60 font-medium' : ''}">
                     <td class="border border-black py-1 px-1 font-bold">{e.day_of_week.slice(0, 3)}</td>
                     <td class="border border-black py-1 px-1.5 font-mono">{e.date}</td>
                     <td class="border border-black py-1 px-1 font-semibold">
-                      {#if e.is_weekend}
+                      {#if e.is_weekend && e.status === 'PENDING'}
                         <span class="text-slate-400">Franco / Descanso</span>
                       {:else if e.status === 'IN_PHYSIOTHERAPY'}
                         <span class="text-cyan-800">En Fisioterapia</span>
@@ -356,10 +356,10 @@
                       {/if}
                     </td>
                     <td class="border border-black py-1 px-1.5 font-bold">
-                      {#if e.is_weekend}
+                      {#if e.is_weekend && e.status === 'PENDING'}
                         <span class="text-slate-500">Franco / Descanso</span>
                       {:else if e.status === 'PRESENT'}
-                        <span class="text-emerald-800">Presente</span>
+                        <span class="text-emerald-800">Presente{e.is_weekend ? ' (Fin de semana)' : ''}</span>
                       {:else if e.status === 'LATE'}
                         <span class="text-amber-800">Tardanza ({e.minutes_late}m)</span>
                       {:else if e.status === 'MEDICAL_LEAVE'}
@@ -371,7 +371,7 @@
                       {:else if e.status === 'ABSENT'}
                         <span class="text-rose-800">Ausente</span>
                       {:else if e.status === 'JUSTIFIED_ABSENCE'}
-                        <span class="text-blue-800">Inasistencia justificada</span>
+                        <span class="text-blue-800">Inasistencia justificada (IJ)</span>
                       {:else if e.status === 'TASK_ADJUSTMENT'}
                         <span class="text-blue-800">Adecuación de tareas</span>
                       {:else if e.status === 'NO_PART'}
@@ -423,7 +423,9 @@
               </div>
               <div>
                 <span class="text-slate-700 block text-[9px] uppercase font-bold">Inasistencias:</span>
-                <strong class="text-sm text-rose-800">{currentSheet.days_absent}</strong>
+                <strong class="text-sm text-rose-800">
+                  {currentSheet.days_absent}{#if currentSheet.days_justified_absence && currentSheet.days_justified_absence > 0} ({currentSheet.days_justified_absence} IJ){/if}
+                </strong>
               </div>
             </div>
 

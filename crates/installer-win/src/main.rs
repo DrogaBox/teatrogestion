@@ -15,8 +15,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use gestion_license::{
-    clock, embedded_public_key, fmt_date, issue, keyfile, now_unix, verify_with, License,
-    MachineId, LICENSE_FILE_NAME,
+    clock, keyfile, now_unix, License, MachineId, LICENSE_FILE_NAME,
 };
 use rusqlite::{params, Connection};
 use zeroize::Zeroizing;
@@ -359,44 +358,9 @@ fn find_installed_sqlite_dbs(target_dir: &Path) -> Vec<PathBuf> {
     candidates
 }
 
-fn choose_license_term() -> Result<(u64, i64), String> {
-    println!("\n¿Por cuánto tiempo debe durar la licencia de esta PC?");
-    println!("  1) 1 mes (30 días)");
-    println!("  2) 3 meses (90 días)");
-    println!("  3) 6 meses (180 días)");
-    println!("  4) 1 año (365 días)");
-    println!("  5) Sin vencimiento (Perpetua)");
-    println!("  6) Cantidad de días personalizada…");
-
-    let now = now_unix();
-    loop {
-        print!("Elija una opción [1-6]: ");
-        let _ = io::stdout().flush();
-        let Some(line) = read_line_opt() else { return Err("no hay entrada por consola".into()) };
-        match line.trim() {
-            "1" => return Ok((now + 30 * 86_400, 30)),
-            "2" => return Ok((now + 90 * 86_400, 90)),
-            "3" => return Ok((now + 180 * 86_400, 180)),
-            "4" => return Ok((now + 365 * 86_400, 365)),
-            "5" => return Ok((0, 0)),
-            "6" => loop {
-                print!("Cantidad de días (1 a 3650): ");
-                let _ = io::stdout().flush();
-                let Some(dline) = read_line_opt() else { return Err("no hay entrada por consola".into()) };
-                if let Ok(d) = dline.trim().parse::<u64>() {
-                    if (1..=3650).contains(&d) {
-                        return Ok((now + d * 86_400, d as i64));
-                    }
-                }
-                println!("Por favor ingrese un número entre 1 y 3650.");
-            },
-            _ => println!("Opción no válida, reintente."),
-        }
-    }
-}
-
 /// La base de licencias del pendrive: la misma que usa TeatroCue (`admin/licencias.db`). Solo se **asienta en una que ya
 /// existe**: no se crea ninguna nueva (una segunda base suelta en la raíz del pendrive divergiría de la real).
+#[cfg(test)]
 fn find_registry_db(source_dir: &Path) -> Option<PathBuf> {
     let candidates = [
         source_dir.join("admin").join("licencias.db"),
@@ -407,6 +371,7 @@ fn find_registry_db(source_dir: &Path) -> Option<PathBuf> {
     candidates.into_iter().find(|c| c.is_file())
 }
 
+#[cfg(test)]
 fn record_in_licencias_db(
     db_path: &Path,
     machine: &MachineId,
@@ -688,90 +653,11 @@ fn run_interactive_install(source_dir: &Path) {
     let src_dll = source_dir.join(DLL_NAME);
     let src_ico = source_dir.join(ICO_NAME);
 
-    // --- Emisión / Verificación de Licencia Offline ---
+    // --- Edición libre (sin licencia) ---
+    println!("\n[*] Edición libre: TeatroGestión funciona sin licencia en cualquier equipo.");
     let now = now_unix();
-    let mut generated_license_text: Option<String> = None;
-    let mut license_expires: u64 = 0;
-
-    if let Some(master_key_path) = find_master_key(source_dir) {
-        println!("\n==> Llave maestra encontrada en: {}", master_key_path.display());
-        let mut key = None;
-        for attempt in 1..=MAX_PASSWORD_ATTEMPTS {
-            match ask_password(attempt, "Contraseña maestra del desarrollador: ") {
-                Ok(pwd) => match keyfile::decrypt(&fs::read(&master_key_path).unwrap_or_default(), &pwd) {
-                    Ok(k) => {
-                        println!("  [OK] Llave maestra descifrada correctamente en RAM.");
-                        key = Some(k);
-                        break;
-                    }
-                    Err(e) => println!("  [!] Intento {attempt}/{MAX_PASSWORD_ATTEMPTS}: {e}"),
-                },
-                Err(e) => {
-                    println!("  [!] Error: {e}");
-                    break;
-                }
-            }
-        }
-
-        if let Some(signing_key) = key {
-            let (expires, days) = choose_license_term().unwrap_or((0, 0));
-            license_expires = expires;
-
-            print!("Puesto / sala de esta PC [Cabina / Oficina]: ");
-            let _ = io::stdout().flush();
-            let mut puesto_in = String::new();
-            let _ = io::stdin().lock().read_line(&mut puesto_in);
-            let puesto = if puesto_in.trim().is_empty() {
-                "Cabina / Oficina".to_string()
-            } else {
-                puesto_in.trim().to_string()
-            };
-
-            let issued_text = issue(LICENSEE, &machine, now, expires, &signing_key);
-            drop(signing_key); // Borrado seguro de RAM
-
-            generated_license_text = Some(issued_text.clone());
-
-            if let Some(reg_db) = find_registry_db(source_dir) {
-                match record_in_licencias_db(&reg_db, &machine, &puesto, now, expires, days, &issued_text) {
-                    Ok(()) => println!("  [OK] Emisión asentada en {}", reg_db.display()),
-                    Err(e) => println!("  [i] Aviso: no se pudo escribir en licencias.db ({e})"),
-                }
-            }
-        } else {
-            println!("  [!] No se pudo descifrar la llave maestra.");
-        }
-    }
-
-    let license_content = if let Some(t) = generated_license_text {
-        t
-    } else if let Ok(existing) = fs::read_to_string(source_dir.join(LICENSE_FILE_NAME)) {
-        println!("  [*] Utilizando license.key existente en origen.");
-        existing
-    } else {
-        eprintln!("\n[!] AVISO: No se generó ni se encontró un license.key válido.");
-        eprintln!("    Al iniciar TeatroGestión se requerirá la reactivación de emergencia con el Machine ID.");
-        String::new()
-    };
-
-    if !license_content.is_empty() {
-        if let Some(public_key) = embedded_public_key() {
-            match verify_with(&license_content, &public_key, &machine) {
-                Ok(lic) => {
-                    println!("  [OK] Firma Ed25519 verificada con éxito.");
-                    println!("       Titular: {}", lic.licensee);
-                    if lic.expires_unix == 0 {
-                        println!("       Vigencia: PERPETUA (Sin vencimiento).");
-                    } else {
-                        println!("       Vencimiento: {} (dentro de {} días).", fmt_date(lic.expires_unix), lic.days_left(now).unwrap_or(0));
-                    }
-                }
-                Err(err) => {
-                    println!("  [!] Advertencia: la firma no corresponde a esta PC ({err}).");
-                }
-            }
-        }
-    }
+    let license_expires: u64 = 0;
+    let license_content = String::new();
 
     // --- Destino de Instalación ---
     let default_target = determine_target_dir();
@@ -964,45 +850,8 @@ fn run_silent_install(
 
     fs::create_dir_all(target_dir).map_err(|e| format!("No se pudo crear carpeta de destino: {e}"))?;
 
-    // Licencia
-    let now = now_unix();
-    let (expires, days) = match term_option {
-        1 => (now + 30 * 86_400, 30),
-        2 => (now + 90 * 86_400, 90),
-        3 => (now + 180 * 86_400, 180),
-        4 => (now + 365 * 86_400, 365),
-        5 => (0, 0),
-        6 => (now + custom_days * 86_400, custom_days as i64),
-        _ => (now + 365 * 86_400, 365),
-    };
-
-    if let Some(master_key_path) = find_master_key(source_dir) {
-        let key_bytes = fs::read(&master_key_path).map_err(|e| format!("Error leyendo master.key.enc: {e}"))?;
-        let signing_key = keyfile::decrypt(&key_bytes, master_pass).map_err(|e| format!("Contraseña maestra incorrecta: {e}"))?;
-
-        let issued_text = issue(LICENSEE, &machine, now, expires, &signing_key);
-        drop(signing_key);
-
-        let dest_key = target_dir.join(LICENSE_FILE_NAME);
-        fs::write(&dest_key, &issued_text).map_err(|e| format!("Error guardando license.key: {e}"))?;
-        println!("[OK] Licencia offline Ed25519 generada e instalada.");
-
-        let dummy_lic = License {
-            licensee: LICENSEE.into(),
-            machine: machine.clone(),
-            issued_unix: now,
-            expires_unix: expires,
-        };
-        let stores = clock::default_stores(target_dir);
-        clock::reset(now, &dummy_lic, &stores);
-
-        if let Some(reg_db) = find_registry_db(source_dir) {
-            let _ = record_in_licencias_db(&reg_db, &machine, puesto, now, expires, days, &issued_text);
-            println!("[OK] Registro asentado en licencias.db");
-        }
-    } else {
-        println!("[!] Aviso: master.key.enc no encontrado, omitiendo firma automática.");
-    }
+    let _ = (term_option, custom_days, puesto, master_pass);
+    println!("[*] Edición libre: no se requiere licencia ni contraseña maestra.");
 
     // Copiar archivos
     let dest_exe = target_dir.join(EXE_NAME);

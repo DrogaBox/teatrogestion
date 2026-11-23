@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { todayLocalIso } from '../date';
+  import { computeAttendanceStats } from '../attendanceStats';
   import {
     api,
     type DailyScheduleAggregate,
@@ -63,22 +65,18 @@
   onMount(() => { load(currentDate); });
   $effect(() => { load(currentDate); });
 
-  const count = (...st: string[]) => attendance.filter((a) => st.includes(a.attendance_status)).length;
+  let attStats = $derived(computeAttendanceStats(attendance));
   let total = $derived(attendance.length);
-  let present = $derived(count('PRESENT', 'NOT_IN_CLASS', 'IN_PHYSIOTHERAPY', 'TASK_ADJUSTMENT'));
   let late = $derived(attendance.filter((a) => a.attendance_status === 'LATE'));
   let medical = $derived(attendance.filter((a) => a.attendance_status === 'MEDICAL_LEAVE'));
-  let absent = $derived(attendance.filter((a) => a.attendance_status === 'ABSENT'));
-  let pending = $derived(count('PENDING'));
-  let noPart = $derived(count('NO_PART', 'RETIRED_EXEMPT'));
-  let expected = $derived(total - noPart);
-  let arrived = $derived(present + late.length);
-  let pct = $derived(expected > 0 ? Math.round((arrived / expected) * 100) : 0);
+  let absent = $derived(attendance.filter((a) => a.attendance_status === 'ABSENT' || a.attendance_status === 'JUSTIFIED_ABSENCE'));
+  let pending = $derived(attStats.pendingCount);
+  let expected = $derived(attStats.totalActive);
+  let arrived = $derived(attStats.presentCount);
+  let present = $derived(arrived - late.length);
+  let pct = $derived(attStats.presencePct);
 
-  const todayIso = (() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  })();
+  const todayIso = todayLocalIso();
   let isToday = $derived(currentDate === todayIso);
   const nowHM = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 

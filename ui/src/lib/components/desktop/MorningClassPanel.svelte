@@ -69,7 +69,7 @@
   function openEditModal(c: MorningClassSlot) {
     editingClassId = c.id;
     room = c.room;
-    genderDivision = c.gender_division;
+    genderDivision = c.gender_division === 'NOT_APPLICABLE' ? 'UNIFIED_SPECIAL' : c.gender_division;
     startTime = c.start_time;
     endTime = c.end_time;
     masterId = c.master_id;
@@ -225,7 +225,7 @@
             <select id="class-division-select" bind:value={genderDivision} class="w-full h-8 px-2.5 bg-void border border-grid rounded text-xs font-bold text-ink outline-none focus:border-amber">
               <option value="FEMALE">Mujeres</option>
               <option value="MALE">Varones</option>
-              <option value="NOT_APPLICABLE">General Compañía</option>
+              <option value="UNIFIED_SPECIAL">General Compañía</option>
             </select>
           </div>
         </div>
